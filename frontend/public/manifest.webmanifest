@@ -1,0 +1,9 @@
+{
+  "name": "Simple ARPG Prototype",
+  "short_name": "Simple ARPG",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#06070b",
+  "theme_color": "#0b1220",
+  "lang": "en"
+}
