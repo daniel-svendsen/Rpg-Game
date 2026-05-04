@@ -6,12 +6,13 @@ import {
   monsterBalance,
   progressionBalance
 } from "../../config/balance";
-import { mapConfig, type MapDefinition } from "../../config/mapConfig";
+import { mapConfig } from "../../config/mapConfig";
 import { monsterDefinitions } from "../../config/monsterConfig";
 import { generateItemDropForCharacter } from "../items/itemGenerator";
 import { getItemPowerScore, isUpgradeForCharacter } from "../items/itemPower";
 import { getEquippedUniqueModifiers } from "../items/uniqueEffects";
 import { addOwnedMap } from "../maps/mapProgress";
+import { resolveMapInstance, type ResolvedMapInstance } from "../maps/mapEnhancements";
 import { gainLifeFlaskCharges } from "../player/lifeFlask";
 import { applyExperience } from "../progression/progression";
 import { getSpellName, rollSpellDrop } from "../spells/spellDrops";
@@ -25,6 +26,7 @@ import type {
   CurrencyStack,
   FloatingTextState,
   LootEntry,
+  MapEnhancementInstance,
   MonsterRarity
 } from "../../../shared/types/saveTypes";
 
@@ -48,6 +50,7 @@ interface InternalEnemyState extends ArenaEnemyState {
 
 export interface ArenaRuntimeState {
   mapId: string;
+  resolvedMap: ResolvedMapInstance;
   player: CharacterRecord;
   mapName: string;
   mapTier: number;
@@ -97,7 +100,7 @@ const getChainTargetIds = (
   return selectedIds;
 };
 
-const createEnemy = (map: MapDefinition, rarity: MonsterRarity): InternalEnemyState => {
+const createEnemy = (map: ResolvedMapInstance, rarity: MonsterRarity): InternalEnemyState => {
   const tierBalance = getMapBalanceByTier(map.tier);
   const monsterDefinition =
     monsterDefinitions.find((monster) => monster.rarity === rarity) ?? monsterDefinitions[0];
@@ -123,7 +126,10 @@ const createEnemy = (map: MapDefinition, rarity: MonsterRarity): InternalEnemySt
   const resolveResistance = (type: "Fire" | "Cold" | "Lightning") =>
     Math.min(
       monsterBalance.maxResistance,
-      (baseResistances[type] ?? 0) + tierResistance + rareResistanceBonus
+      (baseResistances[type] ?? 0) +
+        tierResistance +
+        rareResistanceBonus +
+        map.enhancementEffects.enemyResistanceBonus
     );
 
   return {
@@ -136,7 +142,9 @@ const createEnemy = (map: MapDefinition, rarity: MonsterRarity): InternalEnemySt
     damage: Math.round(
       monsterBalance.baseDamage * map.enemyDamageMultiplier * rarityDamageMultiplier
     ),
-    movementSpeed: rarity === "Rare" ? tierBalance.rareMonsterSpeed : tierBalance.normalMonsterSpeed,
+    movementSpeed:
+      (rarity === "Rare" ? tierBalance.rareMonsterSpeed : tierBalance.normalMonsterSpeed) *
+      map.enhancementEffects.enemySpeedMultiplier,
     experienceReward: Math.round(
       (rarity === "Rare"
         ? progressionBalance.rewards.rareExperienceBase
@@ -171,7 +179,8 @@ const addCurrency = (currencies: CurrencyStack[], code: string, amount: number):
 const rollDrops = (
   character: CharacterRecord,
   mapTier: number,
-  rarity: MonsterRarity
+  rarity: MonsterRarity,
+  resolvedMap: ResolvedMapInstance
 ): { character: CharacterRecord; lootEvents: LootEntry[] } => {
   const tierBalance = getMapBalanceByTier(mapTier);
   const isRareMonster = rarity === "Rare";
@@ -181,7 +190,8 @@ const rollDrops = (
   };
   const lootEvents: LootEntry[] = [];
 
-  const shouldDropItem = Math.random() < tierBalance.itemDropRate;
+  const shouldDropItem =
+    Math.random() < tierBalance.itemDropRate * resolvedMap.dropRateMultiplier * resolvedMap.enhancementEffects.itemDropRateMultiplier;
 
   if (shouldDropItem) {
     const itemCount = isRareMonster
@@ -216,6 +226,7 @@ const rollDrops = (
   if (
     Math.random() <
     tierBalance.mapShardDropRate *
+      resolvedMap.enhancementEffects.mapShardDropRateMultiplier *
       (isRareMonster ? itemBalance.rareMonsterMapShardDropMultiplier : 1) *
       uniqueModifiers.mapShardDropMultiplier
   ) {
@@ -232,7 +243,12 @@ const rollDrops = (
     });
   }
 
-  const spellId = rollSpellDrop(nextCharacter, mapTier, rarity);
+  const spellId = rollSpellDrop(
+    nextCharacter,
+    mapTier,
+    rarity,
+    resolvedMap.enhancementEffects.itemDropRateMultiplier
+  );
 
   if (spellId) {
     nextCharacter = {
@@ -263,11 +279,16 @@ const rollDrops = (
   return { character: nextCharacter, lootEvents };
 };
 
-export const createArenaRuntime = (character: CharacterRecord, mapId: string): ArenaRuntimeState => {
-  const map = mapConfig[mapId];
+export const createArenaRuntime = (
+  character: CharacterRecord,
+  mapId: string,
+  enhancements: MapEnhancementInstance[] = []
+): ArenaRuntimeState => {
+  const map = resolveMapInstance(mapConfig[mapId], enhancements);
 
   return {
     mapId,
+    resolvedMap: map,
     player: character,
     mapName: map.name,
     mapTier: map.tier,
@@ -303,11 +324,12 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   let lastCastAtMs = state.lastCastAtMs;
   let lastPlayerDamageAtMs = state.lastPlayerDamageAtMs;
   const mapTier = state.mapTier;
-  const map = mapConfig[state.mapId];
+  const map = state.resolvedMap;
 
   if (enemyPoolRemaining > 0 && nextTime >= nextSpawnAtMs) {
     const tierBalance = getMapBalanceByTier(map.tier);
-    const isRareMonster = Math.random() < tierBalance.rareMonsterChance;
+    const isRareMonster =
+      Math.random() < Math.min(0.95, tierBalance.rareMonsterChance + map.enhancementEffects.rareMonsterChanceBonus);
     const internalEnemy = createEnemy(map, isRareMonster ? "Rare" : "Normal");
     nextEnemies = [...nextEnemies, internalEnemy];
     enemyPoolRemaining -= 1;
@@ -434,7 +456,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
             : balanceConfig.healing.lifeFlask.normalKillCharges) +
             getEquippedUniqueModifiers(nextPlayer).extraLifeFlaskChargesOnKill
         );
-        const dropResult = rollDrops(nextPlayer, mapTier, enemy.rarity);
+        const dropResult = rollDrops(nextPlayer, mapTier, enemy.rarity, map);
         nextPlayer = dropResult.character;
         lootEvents.push(...dropResult.lootEvents);
 
@@ -466,6 +488,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
 
   return {
     mapId: state.mapId,
+    resolvedMap: map,
     player: nextPlayer,
     mapName: state.mapName,
     mapTier,

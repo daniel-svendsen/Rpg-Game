@@ -33,11 +33,14 @@ export const getNextDroppableSpellId = (ownedSpellIds: string[], mapTier: number
 export const rollSpellDrop = (
   character: CharacterRecord,
   mapTier: number,
-  rarity: MonsterRarity
+  rarity: MonsterRarity,
+  dropChanceMultiplier = 1
 ): string | null => {
   const equippedUniqueModifiers = getEquippedUniqueModifiers(character);
   const dropChance =
-    getSpellDropChanceForTier(mapTier, rarity) * equippedUniqueModifiers.spellDropChanceMultiplier;
+    getSpellDropChanceForTier(mapTier, rarity) *
+    equippedUniqueModifiers.spellDropChanceMultiplier *
+    dropChanceMultiplier;
 
   if (Math.random() >= dropChance) {
     return null;

@@ -14,7 +14,8 @@ export const economyBalance = {
     guaranteedRareStartTier: 4
   },
   mapCrafting: {
-    enhanceShardCost: 3,
-    combineShardsCost: 5
+    combineShardsCost: 5,
+    maxEnhancementsPerMap: 3,
+    enhancementShardCosts: [3, 5, 7] as const
   }
 } as const;

@@ -3,6 +3,7 @@ import { createCharacter, loadCharacter, saveCharacter } from "../api/gameApi";
 import { login, register } from "../api/authApi";
 import type { AuthFormState } from "../auth/authTypes";
 import { balanceConfig } from "../game/config/balanceConfig";
+import { getEnhancementShardCost, getMapEnhancementDefinition } from "../game/config/balance";
 import { getEquipmentSlotLabel, getItemSlotLabel } from "../game/config/itemConfig";
 import { mapConfig } from "../game/config/mapConfig";
 import { spellConfig, supportSpellConfig } from "../game/config/spellConfig";
@@ -16,7 +17,17 @@ import {
 } from "../game/domain/items/itemPower";
 import { generateItemDrop } from "../game/domain/items/itemGenerator";
 import { getItemStatLines } from "../game/domain/items/itemStats";
-import { addOwnedMap, consumeOwnedMap, getMapQuantity } from "../game/domain/maps/mapProgress";
+import {
+  addOwnedMap,
+  consumeOwnedMap,
+  getOwnedMapStack,
+  getOwnedMapStackBySignature
+} from "../game/domain/maps/mapProgress";
+import {
+  getMapEnhancementSummary,
+  resolveMapInstance,
+  rollMapEnhancement
+} from "../game/domain/maps/mapEnhancements";
 import { equipItem } from "../game/domain/player/equipment";
 import { canUseLifeFlask, useLifeFlask } from "../game/domain/player/lifeFlask";
 import {
@@ -41,7 +52,8 @@ import type {
   CharacterStats,
   EquipmentSlot,
   InventoryItem,
-  LootEntry
+  LootEntry,
+  MapEnhancementInstance
 } from "../shared/types/saveTypes";
 
 const initialAuthForm: AuthFormState = {
@@ -71,6 +83,7 @@ const equipmentSlots: EquipmentSlot[] = [
 type ScreenMode = "auth" | "character" | "hub" | "arena";
 type HubTab = "maps" | "equipment" | "spells" | "inventory" | "shop" | "character";
 type OverlayPanel = "equipmentPicker" | "mainSpellPicker" | "supportPicker" | null;
+type SelectedMapTarget = "trainingGrounds" | string;
 const accountEmailStorageKey = "arpg-account-email";
 
 const createShopStock = (tier: number): InventoryItem[] =>
@@ -168,28 +181,76 @@ const updateCurrency = (character: CharacterRecord, code: string, delta: number)
 
 type ShopItemState = InventoryItem & { price: number };
 
-const buildOwnedMapRunQueue = (character: CharacterRecord, selectedMapId: string): string[] => {
-  if (selectedMapId === "trainingGrounds") {
+const buildOwnedMapRunQueue = (character: CharacterRecord, selectedMapStackId: SelectedMapTarget): string[] => {
+  if (selectedMapStackId === "trainingGrounds") {
     return [];
   }
 
-  const selectedTier = mapConfig[selectedMapId]?.tier ?? 0;
+  const selectedEntry = getOwnedMapStack(character.mapProgress, selectedMapStackId);
+
+  if (!selectedEntry) {
+    return [];
+  }
+
+  const selectedTier = selectedEntry.tier;
   const sortedEntries = [...character.mapProgress.consumableMaps]
     .filter((entry) => entry.tier === selectedTier)
     .sort((left, right) => {
-      if (left.mapId === selectedMapId && right.mapId !== selectedMapId) {
+      if (left.stackId === selectedMapStackId && right.stackId !== selectedMapStackId) {
         return -1;
       }
 
-      if (right.mapId === selectedMapId && left.mapId !== selectedMapId) {
+      if (right.stackId === selectedMapStackId && left.stackId !== selectedMapStackId) {
         return 1;
+      }
+
+      if (left.mapId !== right.mapId) {
+        return (mapConfig[left.mapId]?.name ?? left.mapId).localeCompare(mapConfig[right.mapId]?.name ?? right.mapId);
+      }
+
+      if (left.enhancements.length !== right.enhancements.length) {
+        return left.enhancements.length - right.enhancements.length;
       }
 
       return (mapConfig[left.mapId]?.name ?? left.mapId).localeCompare(mapConfig[right.mapId]?.name ?? right.mapId);
     });
 
-  return sortedEntries.flatMap((entry) => Array.from({ length: entry.quantity }, () => entry.mapId));
+  return sortedEntries.flatMap((entry) => Array.from({ length: entry.quantity }, () => entry.stackId));
 };
+
+const getPreferredMapSelection = (
+  character: CharacterRecord,
+  previousTarget: SelectedMapTarget,
+  preferredMapId?: string
+): SelectedMapTarget => {
+  if (previousTarget === "trainingGrounds") {
+    return character.mapProgress.consumableMaps[0]?.stackId ?? "trainingGrounds";
+  }
+
+  if (getOwnedMapStack(character.mapProgress, previousTarget)) {
+    return previousTarget;
+  }
+
+  const matchingMapEntry = preferredMapId
+    ? character.mapProgress.consumableMaps.find((entry) => entry.mapId === preferredMapId)
+    : null;
+
+  return matchingMapEntry?.stackId ?? character.mapProgress.consumableMaps[0]?.stackId ?? "trainingGrounds";
+};
+
+const getMapVariantLabel = (enhancementCount: number): string =>
+  enhancementCount === 0 ? "Unmodified" : `Modified +${enhancementCount}`;
+
+const getMapDisplayName = (mapId: string, enhancementCount: number): string => {
+  const baseName = mapConfig[mapId]?.name ?? mapId;
+  return enhancementCount === 0 ? baseName : `${baseName} of Alteration`;
+};
+
+const getMapEnhancementDetailLines = (enhancements: MapEnhancementInstance[]): string[] =>
+  enhancements.flatMap((enhancement) => {
+    const definition = getMapEnhancementDefinition(enhancement.id);
+    return [`Reward: ${definition.rewardText}`, `Danger: ${definition.dangerText}`];
+  });
 
 export const App = () => {
   const [screenMode, setScreenMode] = useState<ScreenMode>("auth");
@@ -204,8 +265,9 @@ export const App = () => {
   const [character, setCharacter] = useState<CharacterRecord | null>(null);
   const [arenaSnapshot, setArenaSnapshot] = useState<ArenaSnapshot | null>(null);
   const [activeMapId, setActiveMapId] = useState<string | null>(null);
+  const [activeMapEnhancements, setActiveMapEnhancements] = useState<MapEnhancementInstance[]>([]);
   const [activeMapRunId, setActiveMapRunId] = useState(0);
-  const [selectedMapId, setSelectedMapId] = useState("trainingGrounds");
+  const [selectedMapTarget, setSelectedMapTarget] = useState<SelectedMapTarget>("trainingGrounds");
   const [recentLoot, setRecentLoot] = useState<LootEntry[]>([]);
   const [shopItems, setShopItems] = useState<ShopItemState[]>([]);
   const [queuedMapIds, setQueuedMapIds] = useState<string[]>([]);
@@ -219,12 +281,37 @@ export const App = () => {
   const arenaRuntimeRef = useRef<ArenaRuntimeState | null>(null);
   const queuedMapIdsRef = useRef<string[]>([]);
 
+  const commitCharacter = (nextCharacter: CharacterRecord | null): void => {
+    latestCharacterRef.current = nextCharacter;
+    setCharacter(nextCharacter);
+  };
+
+  const persistCharacterNow = async (nextCharacter: CharacterRecord, failureMessage: string): Promise<void> => {
+    if (!token) {
+      return;
+    }
+
+    try {
+      await saveCharacter(nextCharacter, token);
+      latestCharacterRef.current = nextCharacter;
+    } catch {
+      setErrorMessage(failureMessage);
+    }
+  };
+
   const remainingStatPoints = useMemo(
     () =>
       balanceConfig.progression.startingStatPoints -
       Object.values(characterStats).reduce((total, value) => total + value, 0),
     [characterStats]
   );
+
+  const selectedMapEntry =
+    character && selectedMapTarget !== "trainingGrounds"
+      ? getOwnedMapStack(character.mapProgress, selectedMapTarget)
+      : null;
+  const selectedMapId = selectedMapEntry?.mapId ?? "trainingGrounds";
+  const selectedMapEnhancements = selectedMapEntry?.enhancements ?? [];
 
   useEffect(() => {
     if (!token) {
@@ -237,7 +324,7 @@ export const App = () => {
 
       if (loadedCharacter) {
         const normalizedCharacter = normalizeCharacterRecord(loadedCharacter);
-        setCharacter(normalizedCharacter);
+        commitCharacter(normalizedCharacter);
         setScreenMode("hub");
         setStatusMessage("");
         setShopItems(
@@ -257,7 +344,7 @@ export const App = () => {
     }
 
     let animationFrame = 0;
-    let runtime = createArenaRuntime(character, activeMapId);
+    let runtime = createArenaRuntime(character, activeMapId, activeMapEnhancements);
     arenaRuntimeRef.current = runtime;
     let lastTimestamp = performance.now();
     let lastUiUpdateAt = 0;
@@ -274,7 +361,7 @@ export const App = () => {
 
       if (timestamp - lastUiUpdateAt > 120 || runtime.snapshot.isComplete) {
         setArenaSnapshot(runtime.snapshot);
-        setCharacter(runtime.snapshot.player);
+          commitCharacter(runtime.snapshot.player);
         lastUiUpdateAt = timestamp;
       }
 
@@ -282,13 +369,13 @@ export const App = () => {
 
       if (runtime.snapshot.isComplete || runtime.snapshot.player.currentHealth <= 0) {
         setArenaSnapshot(runtime.snapshot);
-        setCharacter(runtime.snapshot.player);
+        commitCharacter(runtime.snapshot.player);
 
         const wasDefeated = runtime.snapshot.player.currentHealth <= 0;
         const nextQueuedMapIds = queuedMapIdsRef.current;
 
         if (!wasDefeated && nextQueuedMapIds.length > 0) {
-          const [nextMapId, ...remainingQueue] = nextQueuedMapIds;
+          const [nextMapStackId, ...remainingQueue] = nextQueuedMapIds;
           const nextCharacter = normalizeCharacterRecord(runtime.snapshot.player);
           let preparedCharacter = nextCharacter;
 
@@ -302,19 +389,20 @@ export const App = () => {
             };
           }
 
-          const quantity = getMapQuantity(preparedCharacter.mapProgress, nextMapId);
+          const nextMapStack = getOwnedMapStack(preparedCharacter.mapProgress, nextMapStackId);
 
-          if (quantity > 0) {
-            preparedCharacter = consumeOwnedMap(preparedCharacter, nextMapId);
-            setCharacter(preparedCharacter);
+          if (nextMapStack && nextMapStack.quantity > 0) {
+            preparedCharacter = consumeOwnedMap(preparedCharacter, nextMapStackId);
+            commitCharacter(preparedCharacter);
             setQueuedMapIds(remainingQueue);
-            setActiveMapId(nextMapId);
+            setActiveMapId(nextMapStack.mapId);
+            setActiveMapEnhancements(nextMapStack.enhancements);
             setActiveMapRunId((current) => current + 1);
             setArenaSnapshot(null);
             setErrorMessage(null);
             setScreenMode("arena");
             setStatusMessage(
-              `Entering ${mapConfig[nextMapId].name}. ${remainingQueue.length} map${remainingQueue.length === 1 ? "" : "s"} queued after this run.`
+              `Entering ${mapConfig[nextMapStack.mapId].name}. ${remainingQueue.length} map${remainingQueue.length === 1 ? "" : "s"} queued after this run.`
             );
             return;
           }
@@ -323,6 +411,7 @@ export const App = () => {
         setQueuedMapIds([]);
         setScreenMode("hub");
         setActiveMapId(null);
+        setActiveMapEnhancements([]);
         setStatusMessage(
           wasDefeated
             ? `You were defeated in ${runtime.snapshot.mapName}, but your collected rewards remain saved.`
@@ -338,7 +427,7 @@ export const App = () => {
     animationFrame = requestAnimationFrame(loop);
 
     return () => cancelAnimationFrame(animationFrame);
-  }, [screenMode, character?.id, activeMapId, activeMapRunId]);
+  }, [screenMode, character?.id, activeMapId, activeMapRunId, activeMapEnhancements]);
 
   useEffect(() => {
     if (screenMode !== "arena" || !phaserContainerRef.current || phaserGameRef.current) {
@@ -366,6 +455,16 @@ export const App = () => {
   }, [character]);
 
   useEffect(() => {
+    if (!character || selectedMapTarget === "trainingGrounds") {
+      return;
+    }
+
+    if (!getOwnedMapStack(character.mapProgress, selectedMapTarget)) {
+      setSelectedMapTarget(getPreferredMapSelection(character, selectedMapTarget, selectedMapId));
+    }
+  }, [character, selectedMapId, selectedMapTarget]);
+
+  useEffect(() => {
     queuedMapIdsRef.current = queuedMapIds;
   }, [queuedMapIds]);
 
@@ -382,8 +481,8 @@ export const App = () => {
       }
 
       void saveCharacter(latestCharacter, token)
-        .then((savedCharacter) => {
-          setCharacter(normalizeCharacterRecord(savedCharacter));
+        .then(() => {
+          latestCharacterRef.current = latestCharacter;
         })
         .catch(() => {
           setErrorMessage("Autosave failed. Check that the backend is running.");
@@ -457,7 +556,7 @@ export const App = () => {
       );
 
       const normalizedCharacter = normalizeCharacterRecord(createdCharacter);
-      setCharacter(normalizedCharacter);
+      commitCharacter(normalizedCharacter);
       setScreenMode("hub");
       setShopItems(
         createShopStock(1).map(toShopItemState)
@@ -474,8 +573,8 @@ export const App = () => {
     }
 
     try {
-      const savedCharacter = await saveCharacter(character, token);
-      setCharacter(normalizeCharacterRecord(savedCharacter));
+      await saveCharacter(character, token);
+      latestCharacterRef.current = character;
       setStatusMessage("Progress saved.");
       setErrorMessage(null);
     } catch (error) {
@@ -488,9 +587,10 @@ export const App = () => {
     localStorage.removeItem(accountEmailStorageKey);
     setToken(null);
     setAccountEmail("");
-    setCharacter(null);
+    commitCharacter(null);
     setArenaSnapshot(null);
     setActiveMapId(null);
+    setActiveMapEnhancements([]);
     setShopItems([]);
     setOverlayPanel(null);
     setHubTab("maps");
@@ -499,11 +599,15 @@ export const App = () => {
   };
 
   const startMapRun = (
-    mapId: string,
+    mapTarget: SelectedMapTarget,
     sourceCharacter: CharacterRecord,
     remainingQueue: string[] = []
   ): boolean => {
     let nextCharacter = normalizeCharacterRecord(sourceCharacter);
+    const ownedMapStack =
+      mapTarget !== "trainingGrounds" ? getOwnedMapStack(nextCharacter.mapProgress, mapTarget) : null;
+    const mapId = ownedMapStack?.mapId ?? "trainingGrounds";
+    const mapEnhancements = ownedMapStack?.enhancements ?? [];
 
     if (balanceConfig.healing.refillToFullOnMapStart) {
       nextCharacter = {
@@ -515,20 +619,19 @@ export const App = () => {
       };
     }
 
-    if (mapId !== "trainingGrounds") {
-      const quantity = getMapQuantity(nextCharacter.mapProgress, mapId);
-
-      if (quantity <= 0) {
+    if (mapTarget !== "trainingGrounds") {
+      if (!ownedMapStack || ownedMapStack.quantity <= 0) {
         setErrorMessage("You do not own that map.");
         return false;
       }
 
-      nextCharacter = consumeOwnedMap(nextCharacter, mapId);
+      nextCharacter = consumeOwnedMap(nextCharacter, mapTarget);
     }
 
     setCharacter(nextCharacter);
     setQueuedMapIds(remainingQueue);
     setActiveMapId(mapId);
+    setActiveMapEnhancements(mapEnhancements);
     setActiveMapRunId((current) => current + 1);
     setArenaSnapshot(null);
     setErrorMessage(null);
@@ -546,7 +649,7 @@ export const App = () => {
       return;
     }
 
-    void startMapRun(selectedMapId, character);
+    void startMapRun(selectedMapTarget, character);
   };
 
   const handleRunAllMaps = (): void => {
@@ -554,7 +657,7 @@ export const App = () => {
       return;
     }
 
-    const queue = buildOwnedMapRunQueue(character, selectedMapId);
+    const queue = buildOwnedMapRunQueue(character, selectedMapTarget);
 
     if (queue.length === 0) {
       setErrorMessage("You do not own any consumable maps to run.");
@@ -570,7 +673,7 @@ export const App = () => {
       return;
     }
 
-    setCharacter(equipItem(character, itemId, targetSlotOverride));
+    commitCharacter(equipItem(character, itemId, targetSlotOverride));
     setOverlayPanel(null);
     setStatusMessage("Equipment updated.");
   };
@@ -581,7 +684,7 @@ export const App = () => {
     }
 
     const currentLoadout = character.spellLoadout[0];
-    setCharacter({
+    commitCharacter({
       ...character,
       spellLoadout: [
         {
@@ -607,7 +710,7 @@ export const App = () => {
       nextSupportSpellIds[selectedSupportSlot] = supportSpellId;
     }
 
-    setCharacter({
+    commitCharacter({
       ...character,
       spellLoadout: [
         {
@@ -638,7 +741,7 @@ export const App = () => {
       return;
     }
 
-    setCharacter({
+    commitCharacter({
       ...character,
       gold: character.gold - item.price,
       inventory: [...character.inventory, item]
@@ -653,7 +756,7 @@ export const App = () => {
       return;
     }
 
-    setCharacter({
+    commitCharacter({
       ...character,
       gold: character.gold - balanceConfig.economy.shopRefreshGoldCost
     });
@@ -674,7 +777,7 @@ export const App = () => {
     }
 
     const sellPrice = getItemSellPrice(item);
-    setCharacter({
+    commitCharacter({
       ...character,
       gold: character.gold + sellPrice,
       inventory: character.inventory.filter((entry) => entry.id !== itemId)
@@ -688,7 +791,7 @@ export const App = () => {
     }
 
     const totalGold = character.inventory.reduce((total, item) => total + getItemSellPrice(item), 0);
-    setCharacter({
+    commitCharacter({
       ...character,
       gold: character.gold + totalGold,
       inventory: []
@@ -697,35 +800,68 @@ export const App = () => {
   };
 
   const handleEnhanceSelectedMap = (): void => {
-    if (!character || selectedMapId === "trainingGrounds") {
+    if (!character || selectedMapTarget === "trainingGrounds") {
       return;
     }
 
-    const selectedMap = mapConfig[selectedMapId];
-    const quantity = getMapQuantity(character.mapProgress, selectedMapId);
+    const selectedEntry = getOwnedMapStack(character.mapProgress, selectedMapTarget);
 
-    if (quantity <= 0) {
+    if (!selectedEntry || selectedEntry.quantity <= 0) {
       setErrorMessage("You do not own that map.");
       return;
     }
 
-    if (getCurrencyAmount(character, "mapShard") < balanceConfig.mapCrafting.enhanceShardCost) {
-      setErrorMessage(`You need ${balanceConfig.mapCrafting.enhanceShardCost} Map Shards to enhance a map.`);
+    if (selectedEntry.enhancements.length >= balanceConfig.mapCrafting.maxEnhancementsPerMap) {
+      setErrorMessage(`Maps can only have ${balanceConfig.mapCrafting.maxEnhancementsPerMap} enhancements.`);
       return;
     }
 
-    if (selectedMap.tier >= balanceConfig.mapTierScaling.maxTier) {
-      setErrorMessage(
-        `This prototype currently supports map enhancement up to Tier ${balanceConfig.mapTierScaling.maxTier}.`
-      );
+    const shardCost = getEnhancementShardCost(selectedEntry.enhancements.length);
+
+    if (getCurrencyAmount(character, "mapShard") < shardCost) {
+      setErrorMessage(`You need ${shardCost} Map Shards to enhance this map.`);
       return;
     }
 
-    let nextCharacter = consumeOwnedMap(character, selectedMapId);
-    nextCharacter = updateCurrency(nextCharacter, "mapShard", -balanceConfig.mapCrafting.enhanceShardCost);
-    nextCharacter = addOwnedMap(nextCharacter, `tier${selectedMap.tier + 1}Map`, selectedMap.tier + 1);
-    setCharacter(nextCharacter);
-    setStatusMessage(`Enhanced one ${selectedMap.name} into Tier ${selectedMap.tier + 1} Map.`);
+    const rolledEnhancement = rollMapEnhancement(selectedEntry.enhancements);
+
+    if (!rolledEnhancement) {
+      setErrorMessage("No new enhancements are available for that map.");
+      return;
+    }
+
+    let nextCharacter = consumeOwnedMap(character, selectedEntry.stackId);
+    nextCharacter = updateCurrency(nextCharacter, "mapShard", -shardCost);
+    nextCharacter = addOwnedMap(
+      nextCharacter,
+      selectedEntry.mapId,
+      selectedEntry.tier,
+      [...selectedEntry.enhancements, rolledEnhancement]
+    );
+    const nextSelectedEntry = getOwnedMapStackBySignature(
+      nextCharacter.mapProgress,
+      selectedEntry.mapId,
+      selectedEntry.tier,
+      [...selectedEntry.enhancements, rolledEnhancement]
+    );
+    const fallbackSelectedEntry =
+      nextSelectedEntry ??
+      nextCharacter.mapProgress.consumableMaps.find(
+        (entry) =>
+          entry.mapId === selectedEntry.mapId &&
+          entry.tier === selectedEntry.tier &&
+          entry.enhancements.length === selectedEntry.enhancements.length + 1 &&
+          entry.enhancements.some((enhancement) => enhancement.id === rolledEnhancement.id)
+      ) ??
+      null;
+    commitCharacter(nextCharacter);
+    setSelectedMapTarget(
+      fallbackSelectedEntry?.stackId ?? getPreferredMapSelection(nextCharacter, selectedMapTarget, selectedEntry.mapId)
+    );
+    void persistCharacterNow(nextCharacter, "Map enhancement save failed. Try saving manually before refreshing.");
+    setStatusMessage(
+      `${mapConfig[selectedEntry.mapId].name} gained ${getMapEnhancementSummary([rolledEnhancement])[0]}.`
+    );
   };
 
   const handleConvertShardsToMaps = (): void => {
@@ -753,7 +889,8 @@ export const App = () => {
       nextCharacter = addOwnedMap(nextCharacter, "tier1Map", 1);
     }
 
-    setCharacter(nextCharacter);
+    commitCharacter(nextCharacter);
+    void persistCharacterNow(nextCharacter, "Map crafting save failed. Try saving manually before refreshing.");
     setStatusMessage(`Combined shards into ${mapsToCreate} Tier 1 map${mapsToCreate > 1 ? "s" : ""}.`);
   };
 
@@ -762,7 +899,7 @@ export const App = () => {
       return;
     }
 
-    setCharacter(spendLevelStatPoint(character, statKey));
+    commitCharacter(spendLevelStatPoint(character, statKey));
   };
 
   const handleUpgradeSpell = (spellId: string): void => {
@@ -777,7 +914,7 @@ export const App = () => {
       return;
     }
 
-    setCharacter(nextCharacter);
+    commitCharacter(nextCharacter);
     setStatusMessage(`${getSpellName(spellId)} upgraded to level ${getSpellLevel(nextCharacter, spellId)}.`);
     setErrorMessage(null);
   };
@@ -807,7 +944,7 @@ export const App = () => {
       return;
     }
 
-    setCharacter(nextCharacter);
+    commitCharacter(nextCharacter);
     latestCharacterRef.current = nextCharacter;
 
     if (screenMode === "arena" && arenaRuntimeRef.current) {
@@ -964,6 +1101,11 @@ export const App = () => {
   const renderMapsTab = () => {
     const selectedMap = mapConfig[selectedMapId];
     const consumableMapEntries = character?.mapProgress.consumableMaps ?? [];
+    const selectedResolvedMap = resolveMapInstance(selectedMap, selectedMapEnhancements);
+    const nextEnhancementCost =
+      selectedMapTarget !== "trainingGrounds" && selectedMapEntry
+        ? getEnhancementShardCost(selectedMapEntry.enhancements.length)
+        : null;
 
     return (
       <div className="content stack mobile-content">
@@ -974,52 +1116,92 @@ export const App = () => {
           <div className="selected-map-summary">
             <strong>Selected Map</strong>
             <div className="status-text">
-              {selectedMap.name} {selectedMap.tier > 0 ? `(Tier ${selectedMap.tier})` : "(Infinite)"}
+              {getMapDisplayName(selectedMapId, selectedMapEnhancements.length)}{" "}
+              {selectedMap.tier > 0 ? `(Tier ${selectedMap.tier})` : "(Infinite)"}
             </div>
+            {selectedMapTarget !== "trainingGrounds" ? (
+              <>
+                <div className="status-text">
+                  {getMapVariantLabel(selectedMapEnhancements.length)} | Enhancements {selectedMapEnhancements.length}/
+                  {balanceConfig.mapCrafting.maxEnhancementsPerMap}
+                </div>
+                <div className="status-text">
+                  Monsters {selectedResolvedMap.monsterCount} | Enemy health x
+                  {selectedResolvedMap.enemyHealthMultiplier.toFixed(2)} | Enemy damage x
+                  {selectedResolvedMap.enemyDamageMultiplier.toFixed(2)}
+                </div>
+                {getMapEnhancementSummary(selectedMapEnhancements).map((line) => (
+                  <div key={`selected-map-enhancement-${line}`} className="status-text">
+                    Mod: {line}
+                  </div>
+                ))}
+                {getMapEnhancementDetailLines(selectedMapEnhancements).map((line) => (
+                  <div key={`selected-map-detail-${line}`} className="status-text">
+                    {line}
+                  </div>
+                ))}
+              </>
+            ) : null}
           </div>
           <div className="actions">
             <button className="primary-button" onClick={handleStartMap}>
               Start
             </button>
-            {selectedMapId !== "trainingGrounds" ? (
+            {selectedMapTarget !== "trainingGrounds" ? (
               <button className="secondary-button" onClick={handleRunAllMaps}>
                 Run all maps in this tier
               </button>
             ) : null}
-            <button className="secondary-button" onClick={handleEnhanceSelectedMap}>
-              Enhance
-            </button>
+            {selectedMapTarget !== "trainingGrounds" ? (
+              <button className="secondary-button" onClick={handleEnhanceSelectedMap}>
+                Enhance ({nextEnhancementCost} shards)
+              </button>
+            ) : null}
           </div>
           {queuedMapIds.length > 0 ? (
             <p className="status-text">
               Auto-run queue active: {queuedMapIds.length} map{queuedMapIds.length === 1 ? "" : "s"} remaining.
             </p>
           ) : null}
-          <div className={selectedMapId === "trainingGrounds" ? "map-card selected-map-card" : "map-card"}>
+          <div className={selectedMapTarget === "trainingGrounds" ? "map-card selected-map-card" : "map-card"}>
             <div className="inventory-row">
               <div>
                 <strong>Training Grounds</strong>
                 <div className="status-text">Infinite practice run. Drops Tier 1 maps.</div>
               </div>
-              <button className="secondary-button" onClick={() => setSelectedMapId("trainingGrounds")}>
-                {selectedMapId === "trainingGrounds" ? "Selected" : "Select"}
+              <button className="secondary-button" onClick={() => setSelectedMapTarget("trainingGrounds")}>
+                {selectedMapTarget === "trainingGrounds" ? "Selected" : "Select"}
               </button>
             </div>
           </div>
           {consumableMapEntries.map((entry) => (
             <div
-              key={entry.mapId}
-              className={selectedMapId === entry.mapId ? "map-card selected-map-card" : "map-card"}
+              key={entry.stackId}
+              className={selectedMapTarget === entry.stackId ? "map-card selected-map-card" : "map-card"}
             >
               <div className="inventory-row">
                 <div>
-                  <strong>{mapConfig[entry.mapId]?.name ?? entry.mapId}</strong>
+                  <strong>{getMapDisplayName(entry.mapId, entry.enhancements.length)}</strong>
                   <div className="status-text">
                     Tier {entry.tier} • Quantity {entry.quantity}
                   </div>
                 </div>
-                <button className="secondary-button" onClick={() => setSelectedMapId(entry.mapId)}>
-                  {selectedMapId === entry.mapId ? "Selected" : "Select"}
+                <div className="status-text">
+                  {getMapVariantLabel(entry.enhancements.length)} | Enhancements {entry.enhancements.length}/
+                  {balanceConfig.mapCrafting.maxEnhancementsPerMap}
+                </div>
+                {getMapEnhancementSummary(entry.enhancements).map((line) => (
+                  <div key={`${entry.stackId}-${line}`} className="status-text">
+                    Mod: {line}
+                  </div>
+                ))}
+                {getMapEnhancementDetailLines(entry.enhancements).map((line) => (
+                  <div key={`${entry.stackId}-detail-${line}`} className="status-text">
+                    {line}
+                  </div>
+                ))}
+                <button className="secondary-button" onClick={() => setSelectedMapTarget(entry.stackId)}>
+                  {selectedMapTarget === entry.stackId ? "Selected" : "Select"}
                 </button>
               </div>
             </div>
@@ -1611,6 +1793,7 @@ export const App = () => {
                   setQueuedMapIds([]);
                   setScreenMode("hub");
                   setActiveMapId(null);
+                  setActiveMapEnhancements([]);
                 }}
               >
                 Back to hub

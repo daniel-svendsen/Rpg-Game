@@ -139,9 +139,13 @@ public class CharacterProfileService {
         List<Map<String, Object>> consumableMaps = request.mapProgress().consumableMaps().stream()
                 .map(map -> {
                     Map<String, Object> mapStack = new HashMap<>();
+                    mapStack.put("stackId", map.stackId());
                     mapStack.put("mapId", map.mapId());
                     mapStack.put("tier", map.tier());
                     mapStack.put("quantity", map.quantity());
+                    mapStack.put("enhancements", map.enhancements().stream()
+                            .map(enhancement -> Map.of("id", enhancement.id()))
+                            .toList());
                     return mapStack;
                 })
                 .toList();

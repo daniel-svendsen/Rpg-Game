@@ -88,10 +88,24 @@ export interface SpellProgressState {
   level: number;
 }
 
+export type MapEnhancementId =
+  | "overflowingSpoils"
+  | "gildedHunt"
+  | "scholarMarch"
+  | "shardstorm"
+  | "chargedBestiary"
+  | "heavyResistance";
+
+export interface MapEnhancementInstance {
+  id: MapEnhancementId;
+}
+
 export interface OwnedMapStack {
+  stackId: string;
   mapId: string;
   tier: number;
   quantity: number;
+  enhancements: MapEnhancementInstance[];
 }
 
 export interface MapProgressState {
