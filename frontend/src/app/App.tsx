@@ -65,6 +65,7 @@ const equipmentSlots: EquipmentSlot[] = [
 type ScreenMode = "auth" | "character" | "hub" | "arena";
 type HubTab = "maps" | "equipment" | "spells" | "inventory" | "shop" | "character";
 type OverlayPanel = "equipmentPicker" | "mainSpellPicker" | "supportPicker" | null;
+const accountEmailStorageKey = "arpg-account-email";
 
 const createShopStock = (tier: number): InventoryItem[] =>
   Array.from({ length: 3 }, (_, index) =>
@@ -158,6 +159,7 @@ export const App = () => {
   const [authMode, setAuthMode] = useState<"login" | "register">("register");
   const [authForm, setAuthForm] = useState<AuthFormState>(initialAuthForm);
   const [token, setToken] = useState<string | null>(localStorage.getItem("arpg-token"));
+  const [accountEmail, setAccountEmail] = useState<string>(localStorage.getItem(accountEmailStorageKey) ?? "");
   const [characterName, setCharacterName] = useState("Warden");
   const [characterStats, setCharacterStats] = useState<CharacterStats>(initialStats);
   const [character, setCharacter] = useState<CharacterRecord | null>(null);
@@ -195,7 +197,7 @@ export const App = () => {
         const normalizedCharacter = normalizeCharacterRecord(loadedCharacter);
         setCharacter(normalizedCharacter);
         setScreenMode("hub");
-        setStatusMessage("Progress loaded from the backend.");
+        setStatusMessage("");
         setShopItems(
           createShopStock(Math.max(1, normalizedCharacter.mapProgress.highestUnlockedTier + 1)).map(toShopItemState)
         );
@@ -272,6 +274,14 @@ export const App = () => {
   }, [screenMode]);
 
   useEffect(() => {
+    if (screenMode !== "hub" && screenMode !== "arena") {
+      return;
+    }
+
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [screenMode, hubTab]);
+
+  useEffect(() => {
     latestCharacterRef.current = character;
   }, [character]);
 
@@ -331,7 +341,9 @@ export const App = () => {
           : await login(authForm.email, authForm.password);
 
       localStorage.setItem("arpg-token", response.token);
+      localStorage.setItem(accountEmailStorageKey, authForm.email);
       setToken(response.token);
+      setAccountEmail(authForm.email);
       setStatusMessage(authMode === "register" ? "Account created." : "Login successful.");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Authentication failed.");
@@ -385,6 +397,21 @@ export const App = () => {
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Save failed.");
     }
+  };
+
+  const handleLogout = (): void => {
+    localStorage.removeItem("arpg-token");
+    localStorage.removeItem(accountEmailStorageKey);
+    setToken(null);
+    setAccountEmail("");
+    setCharacter(null);
+    setArenaSnapshot(null);
+    setActiveMapId(null);
+    setShopItems([]);
+    setOverlayPanel(null);
+    setHubTab("maps");
+    setStatusMessage("Logged out.");
+    setErrorMessage(null);
   };
 
   const handleStartMap = (): void => {
@@ -640,6 +667,19 @@ export const App = () => {
     setErrorMessage(null);
   };
 
+  const renderInlineFeedback = () => {
+    if (!statusMessage && !errorMessage) {
+      return null;
+    }
+
+    return (
+      <section className="panel stack mobile-feedback-panel">
+        {statusMessage ? <p className="status-text">{statusMessage}</p> : null}
+        {errorMessage ? <p className="error-text">{errorMessage}</p> : null}
+      </section>
+    );
+  };
+
   const handleUseLifeFlask = (): void => {
     if (!character) {
       return;
@@ -816,6 +856,20 @@ export const App = () => {
         {renderHealthHud()}
         <section className="panel stack">
           <h4>Maps</h4>
+          <div className="selected-map-summary">
+            <strong>Selected Map</strong>
+            <div className="status-text">
+              {selectedMap.name} {selectedMap.tier > 0 ? `(Tier ${selectedMap.tier})` : "(Infinite)"}
+            </div>
+          </div>
+          <div className="actions">
+            <button className="primary-button" onClick={handleStartMap}>
+              Start
+            </button>
+            <button className="secondary-button" onClick={handleEnhanceSelectedMap}>
+              Enhance
+            </button>
+          </div>
           <div className={selectedMapId === "trainingGrounds" ? "map-card selected-map-card" : "map-card"}>
             <div className="inventory-row">
               <div>
@@ -845,20 +899,6 @@ export const App = () => {
               </div>
             </div>
           ))}
-          <div className="selected-map-summary">
-            <strong>Selected Map</strong>
-            <div className="status-text">
-              {selectedMap.name} {selectedMap.tier > 0 ? `(Tier ${selectedMap.tier})` : "(Infinite)"} 
-            </div>
-          </div>
-          <div className="actions">
-            <button className="primary-button" onClick={handleStartMap}>
-              Start
-            </button>
-            <button className="secondary-button" onClick={handleEnhanceSelectedMap}>
-              Enhance
-            </button>
-          </div>
         </section>
         <section className="panel stack">
           <h4>Map Crafting</h4>
@@ -1076,6 +1116,17 @@ export const App = () => {
       {renderHubTopBar()}
       {renderHealthHud()}
       <section className="panel stack">
+        <h4>Account</h4>
+        <div className="status-text">Email: {accountEmail || "Current session"}</div>
+        <div className="status-text">Character: {character?.name ?? "None"}</div>
+        <div className="status-text">Level: {character?.level ?? 0}</div>
+        <div className="actions">
+          <button className="secondary-button" onClick={handleLogout}>
+            Log out
+          </button>
+        </div>
+      </section>
+      <section className="panel stack">
         <h4>Level Up Stats</h4>
         <p className="status-text">Unspent points: {character?.unspentStatPoints ?? 0}</p>
         {(["strength", "agility", "vitality", "dexterity"] as const).map((statKey) => (
@@ -1105,7 +1156,7 @@ export const App = () => {
       { id: "spells", label: "Spells" },
       { id: "inventory", label: "Bag" },
       { id: "shop", label: "Shop" },
-      { id: "character", label: "Stats" }
+      { id: "character", label: "Account" }
     ];
 
     return (
@@ -1269,11 +1320,11 @@ export const App = () => {
 
   const renderAuthPanel = () => (
     <div className="content">
+      {renderInlineFeedback()}
       <section className="panel stack">
-        <h2>Simple ARPG Prototype</h2>
+        <h2>Simple ARPG</h2>
         <p>
-          This milestone uses React for menus, Phaser 4 for arena rendering, and a Spring Boot API
-          for authentication and saved progress.
+          Build a character, run maps, collect loot, and shape your main spell with support links.
         </p>
       </section>
       <section className="panel stack">
@@ -1311,6 +1362,7 @@ export const App = () => {
 
   const renderCharacterCreation = () => (
     <div className="content">
+      {renderInlineFeedback()}
       <section className="panel stack">
         <h3>Create character</h3>
         <input
@@ -1343,6 +1395,7 @@ export const App = () => {
 
   const renderHub = () => (
     <div className="hub-shell">
+      <div className="content mobile-only-feedback">{renderInlineFeedback()}</div>
       {hubTab === "maps" ? renderMapsTab() : null}
       {hubTab === "equipment" ? renderEquipmentTab() : null}
       {hubTab === "spells" ? renderSpellsTab() : null}
@@ -1359,6 +1412,7 @@ export const App = () => {
 
     return (
       <div className="content arena-layout">
+        <div className="mobile-only-feedback">{renderInlineFeedback()}</div>
         <section className="panel arena-host">
           <div className="arena-overlay">
             <div className="overlay-chip">
@@ -1428,12 +1482,6 @@ export const App = () => {
           <h1>Simple ARPG</h1>
           <p className="status-text">{statusMessage}</p>
           {errorMessage ? <p className="error-text">{errorMessage}</p> : null}
-        </section>
-        <section className="panel">
-          <h4>Architecture notes</h4>
-          <p className="status-text">
-            Gameplay rules live in plain TypeScript systems first. Phaser only draws the current combat state.
-          </p>
         </section>
       </aside>
       {screenMode === "auth" ? renderAuthPanel() : null}
