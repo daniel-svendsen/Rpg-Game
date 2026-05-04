@@ -6,10 +6,19 @@ export const createInitialMapProgress = (): MapProgressState => ({
   consumableMaps: []
 });
 
+const sortConsumableMaps = (consumableMaps: OwnedMapStack[]): OwnedMapStack[] =>
+  [...consumableMaps].sort((left, right) => {
+    if (left.tier !== right.tier) {
+      return left.tier - right.tier;
+    }
+
+    return left.mapId.localeCompare(right.mapId);
+  });
+
 export const normalizeMapProgress = (mapProgress: Partial<MapProgressState> | undefined): MapProgressState => ({
   highestUnlockedTier: mapProgress?.highestUnlockedTier ?? 0,
   lastCompletedTier: mapProgress?.lastCompletedTier ?? 0,
-  consumableMaps: mapProgress?.consumableMaps ?? []
+  consumableMaps: sortConsumableMaps(mapProgress?.consumableMaps ?? [])
 });
 
 export const getMapQuantity = (mapProgress: MapProgressState, mapId: string): number =>
@@ -19,13 +28,15 @@ const mergeMapStack = (consumableMaps: OwnedMapStack[], incoming: OwnedMapStack)
   const existing = consumableMaps.find((entry) => entry.mapId === incoming.mapId);
 
   if (!existing) {
-    return [...consumableMaps, incoming];
+    return sortConsumableMaps([...consumableMaps, incoming]);
   }
 
-  return consumableMaps.map((entry) =>
-    entry.mapId === incoming.mapId
-      ? { ...entry, quantity: entry.quantity + incoming.quantity }
-      : entry
+  return sortConsumableMaps(
+    consumableMaps.map((entry) =>
+      entry.mapId === incoming.mapId
+        ? { ...entry, quantity: entry.quantity + incoming.quantity }
+        : entry
+    )
   );
 };
 
@@ -58,6 +69,13 @@ export const consumeOwnedMap = (character: CharacterRecord, mapId: string): Char
           entry.mapId === mapId ? { ...entry, quantity: entry.quantity - 1 } : entry
         )
         .filter((entry) => entry.quantity > 0)
+        .sort((left, right) => {
+          if (left.tier !== right.tier) {
+            return left.tier - right.tier;
+          }
+
+          return left.mapId.localeCompare(right.mapId);
+        })
     }
   };
 };

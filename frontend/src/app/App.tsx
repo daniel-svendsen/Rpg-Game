@@ -153,6 +153,29 @@ const updateCurrency = (character: CharacterRecord, code: string, delta: number)
 
 type ShopItemState = InventoryItem & { price: number };
 
+const buildOwnedMapRunQueue = (character: CharacterRecord, selectedMapId: string): string[] => {
+  if (selectedMapId === "trainingGrounds") {
+    return [];
+  }
+
+  const selectedTier = mapConfig[selectedMapId]?.tier ?? 0;
+  const sortedEntries = [...character.mapProgress.consumableMaps]
+    .filter((entry) => entry.tier === selectedTier)
+    .sort((left, right) => {
+      if (left.mapId === selectedMapId && right.mapId !== selectedMapId) {
+        return -1;
+      }
+
+      if (right.mapId === selectedMapId && left.mapId !== selectedMapId) {
+        return 1;
+      }
+
+      return (mapConfig[left.mapId]?.name ?? left.mapId).localeCompare(mapConfig[right.mapId]?.name ?? right.mapId);
+    });
+
+  return sortedEntries.flatMap((entry) => Array.from({ length: entry.quantity }, () => entry.mapId));
+};
+
 export const App = () => {
   const [screenMode, setScreenMode] = useState<ScreenMode>("auth");
   const [hubTab, setHubTab] = useState<HubTab>("maps");
@@ -166,9 +189,11 @@ export const App = () => {
   const [character, setCharacter] = useState<CharacterRecord | null>(null);
   const [arenaSnapshot, setArenaSnapshot] = useState<ArenaSnapshot | null>(null);
   const [activeMapId, setActiveMapId] = useState<string | null>(null);
+  const [activeMapRunId, setActiveMapRunId] = useState(0);
   const [selectedMapId, setSelectedMapId] = useState("trainingGrounds");
   const [recentLoot, setRecentLoot] = useState<LootEntry[]>([]);
   const [shopItems, setShopItems] = useState<ShopItemState[]>([]);
+  const [queuedMapIds, setQueuedMapIds] = useState<string[]>([]);
   const [selectedEquipmentSlot, setSelectedEquipmentSlot] = useState<EquipmentSlot>("Weapon");
   const [selectedSupportSlot, setSelectedSupportSlot] = useState<0 | 1>(0);
   const [statusMessage, setStatusMessage] = useState("Create an account or log in to begin.");
@@ -177,6 +202,7 @@ export const App = () => {
   const phaserGameRef = useRef<PhaserGame | null>(null);
   const latestCharacterRef = useRef<CharacterRecord | null>(null);
   const arenaRuntimeRef = useRef<ArenaRuntimeState | null>(null);
+  const queuedMapIdsRef = useRef<string[]>([]);
 
   const remainingStatPoints = useMemo(
     () =>
@@ -242,10 +268,48 @@ export const App = () => {
       if (runtime.snapshot.isComplete || runtime.snapshot.player.currentHealth <= 0) {
         setArenaSnapshot(runtime.snapshot);
         setCharacter(runtime.snapshot.player);
+
+        const wasDefeated = runtime.snapshot.player.currentHealth <= 0;
+        const nextQueuedMapIds = queuedMapIdsRef.current;
+
+        if (!wasDefeated && nextQueuedMapIds.length > 0) {
+          const [nextMapId, ...remainingQueue] = nextQueuedMapIds;
+          const nextCharacter = normalizeCharacterRecord(runtime.snapshot.player);
+          let preparedCharacter = nextCharacter;
+
+          if (balanceConfig.healing.refillToFullOnMapStart) {
+            preparedCharacter = {
+              ...preparedCharacter,
+              currentHealth: preparedCharacter.derivedStats.maxHealth,
+              lifeFlask: {
+                currentCharges: balanceConfig.healing.lifeFlask.maxCharges
+              }
+            };
+          }
+
+          const quantity = getMapQuantity(preparedCharacter.mapProgress, nextMapId);
+
+          if (quantity > 0) {
+            preparedCharacter = consumeOwnedMap(preparedCharacter, nextMapId);
+            setCharacter(preparedCharacter);
+            setQueuedMapIds(remainingQueue);
+            setActiveMapId(nextMapId);
+            setActiveMapRunId((current) => current + 1);
+            setArenaSnapshot(null);
+            setErrorMessage(null);
+            setScreenMode("arena");
+            setStatusMessage(
+              `Entering ${mapConfig[nextMapId].name}. ${remainingQueue.length} map${remainingQueue.length === 1 ? "" : "s"} queued after this run.`
+            );
+            return;
+          }
+        }
+
+        setQueuedMapIds([]);
         setScreenMode("hub");
         setActiveMapId(null);
         setStatusMessage(
-          runtime.snapshot.player.currentHealth <= 0
+          wasDefeated
             ? `You were defeated in ${runtime.snapshot.mapName}, but your collected rewards remain saved.`
             : `${runtime.snapshot.mapName} complete. You kept everything you found.`
         );
@@ -259,7 +323,7 @@ export const App = () => {
     animationFrame = requestAnimationFrame(loop);
 
     return () => cancelAnimationFrame(animationFrame);
-  }, [screenMode, character?.id, activeMapId]);
+  }, [screenMode, character?.id, activeMapId, activeMapRunId]);
 
   useEffect(() => {
     if (screenMode !== "arena" || !phaserContainerRef.current || phaserGameRef.current) {
@@ -285,6 +349,10 @@ export const App = () => {
   useEffect(() => {
     latestCharacterRef.current = character;
   }, [character]);
+
+  useEffect(() => {
+    queuedMapIdsRef.current = queuedMapIds;
+  }, [queuedMapIds]);
 
   useEffect(() => {
     if (!token || !character || (screenMode !== "arena" && screenMode !== "hub")) {
@@ -415,12 +483,12 @@ export const App = () => {
     setErrorMessage(null);
   };
 
-  const handleStartMap = (): void => {
-    if (!character) {
-      return;
-    }
-
-    let nextCharacter = normalizeCharacterRecord(character);
+  const startMapRun = (
+    mapId: string,
+    sourceCharacter: CharacterRecord,
+    remainingQueue: string[] = []
+  ): boolean => {
+    let nextCharacter = normalizeCharacterRecord(sourceCharacter);
 
     if (balanceConfig.healing.refillToFullOnMapStart) {
       nextCharacter = {
@@ -432,23 +500,54 @@ export const App = () => {
       };
     }
 
-    if (selectedMapId !== "trainingGrounds") {
-      const quantity = getMapQuantity(nextCharacter.mapProgress, selectedMapId);
+    if (mapId !== "trainingGrounds") {
+      const quantity = getMapQuantity(nextCharacter.mapProgress, mapId);
 
       if (quantity <= 0) {
         setErrorMessage("You do not own that map.");
-        return;
+        return false;
       }
 
-      nextCharacter = consumeOwnedMap(nextCharacter, selectedMapId);
+      nextCharacter = consumeOwnedMap(nextCharacter, mapId);
     }
 
     setCharacter(nextCharacter);
-    setActiveMapId(selectedMapId);
+    setQueuedMapIds(remainingQueue);
+    setActiveMapId(mapId);
+    setActiveMapRunId((current) => current + 1);
     setArenaSnapshot(null);
     setErrorMessage(null);
     setScreenMode("arena");
-    setStatusMessage(`Entering ${mapConfig[selectedMapId].name}.`);
+    setStatusMessage(
+      remainingQueue.length > 0
+        ? `Entering ${mapConfig[mapId].name}. ${remainingQueue.length} map${remainingQueue.length === 1 ? "" : "s"} queued after this run.`
+        : `Entering ${mapConfig[mapId].name}.`
+    );
+    return true;
+  };
+
+  const handleStartMap = (): void => {
+    if (!character) {
+      return;
+    }
+
+    void startMapRun(selectedMapId, character);
+  };
+
+  const handleRunAllMaps = (): void => {
+    if (!character) {
+      return;
+    }
+
+    const queue = buildOwnedMapRunQueue(character, selectedMapId);
+
+    if (queue.length === 0) {
+      setErrorMessage("You do not own any consumable maps to run.");
+      return;
+    }
+
+    const [firstMapId, ...remainingQueue] = queue;
+    void startMapRun(firstMapId, character, remainingQueue);
   };
 
   const handleEquipItem = (itemId: string, targetSlotOverride?: EquipmentSlot): void => {
@@ -867,10 +966,20 @@ export const App = () => {
             <button className="primary-button" onClick={handleStartMap}>
               Start
             </button>
+            {selectedMapId !== "trainingGrounds" ? (
+              <button className="secondary-button" onClick={handleRunAllMaps}>
+                Run all maps in this tier
+              </button>
+            ) : null}
             <button className="secondary-button" onClick={handleEnhanceSelectedMap}>
               Enhance
             </button>
           </div>
+          {queuedMapIds.length > 0 ? (
+            <p className="status-text">
+              Auto-run queue active: {queuedMapIds.length} map{queuedMapIds.length === 1 ? "" : "s"} remaining.
+            </p>
+          ) : null}
           <div className={selectedMapId === "trainingGrounds" ? "map-card selected-map-card" : "map-card"}>
             <div className="inventory-row">
               <div>
@@ -1483,6 +1592,7 @@ export const App = () => {
               <button
                 className="secondary-button"
                 onClick={() => {
+                  setQueuedMapIds([]);
                   setScreenMode("hub");
                   setActiveMapId(null);
                 }}
