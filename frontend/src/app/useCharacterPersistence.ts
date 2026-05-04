@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import { saveCharacter } from "../api/gameApi";
+import { normalizeCharacterRecord } from "../game/domain/player/playerTypes";
 import type { CharacterRecord } from "../shared/types/saveTypes";
 
 interface UseCharacterPersistenceOptions {
@@ -35,8 +36,9 @@ export const useCharacterPersistence = ({
     }
 
     try {
-      await saveCharacter(nextCharacter, token);
-      latestCharacterRef.current = nextCharacter;
+      const savedCharacter = normalizeCharacterRecord(await saveCharacter(nextCharacter, token));
+      latestCharacterRef.current = savedCharacter;
+      setCharacter(savedCharacter);
     } catch {
       onAutosaveError(failureMessage);
     }
@@ -47,8 +49,9 @@ export const useCharacterPersistence = ({
       return;
     }
 
-    await saveCharacter(nextCharacter, token);
-    latestCharacterRef.current = nextCharacter;
+    const savedCharacter = normalizeCharacterRecord(await saveCharacter(nextCharacter, token));
+    latestCharacterRef.current = savedCharacter;
+    setCharacter(savedCharacter);
   };
 
   useEffect(() => {
@@ -64,8 +67,10 @@ export const useCharacterPersistence = ({
       }
 
       void saveCharacter(latestCharacter, token)
-        .then(() => {
-          latestCharacterRef.current = latestCharacter;
+        .then((savedCharacter) => {
+          const normalizedCharacter = normalizeCharacterRecord(savedCharacter);
+          latestCharacterRef.current = normalizedCharacter;
+          setCharacter(normalizedCharacter);
         })
         .catch(() => {
           onAutosaveError("Autosave failed. Check that the backend is running.");

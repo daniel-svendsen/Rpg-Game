@@ -163,6 +163,8 @@ public class CharacterProfileService {
         itemMap.put("rarity", item.rarity());
         itemMap.put("tier", item.tier());
         itemMap.put("tags", item.tags());
+        itemMap.put("uniqueEffectId", item.uniqueEffectId());
+        itemMap.put("uniqueEffectDescription", item.uniqueEffectDescription());
         itemMap.put("statBonuses", item.statBonuses());
         return itemMap;
     }

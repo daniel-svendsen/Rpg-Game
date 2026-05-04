@@ -8,8 +8,7 @@ import type {
   MapEnhancementInstance,
   OwnedMapStack
 } from "../shared/types/saveTypes";
-
-type SelectedMapTarget = "trainingGrounds" | string;
+import type { SelectedMapTarget } from "./appTypes";
 
 interface MapsTabProps {
   topBar: ReactNode;

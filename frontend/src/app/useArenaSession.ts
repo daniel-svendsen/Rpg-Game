@@ -1,0 +1,155 @@
+import { useEffect, type Dispatch, type MutableRefObject, type SetStateAction } from "react";
+import { balanceConfig } from "../game/config/balanceConfig";
+import { mapConfig } from "../game/config/mapConfig";
+import { createArenaRuntime, stepArenaRuntime, type ArenaRuntimeState } from "../game/domain/combat/arenaSimulation";
+import { consumeOwnedMap, getOwnedMapStack } from "../game/domain/maps/mapProgress";
+import { normalizeCharacterRecord } from "../game/domain/player/playerTypes";
+import type { ArenaSnapshot, CharacterRecord, LootEntry, MapEnhancementInstance } from "../shared/types/saveTypes";
+import type { ScreenMode } from "./appTypes";
+
+interface UseArenaSessionParams {
+  screenMode: ScreenMode;
+  character: CharacterRecord | null;
+  activeMapId: string | null;
+  activeMapEnhancements: MapEnhancementInstance[];
+  activeMapRunId: number;
+  arenaRuntimeRef: MutableRefObject<ArenaRuntimeState | null>;
+  queuedMapIdsRef: MutableRefObject<string[]>;
+  commitCharacter: (nextCharacter: CharacterRecord | null) => void;
+  setRecentLoot: Dispatch<SetStateAction<LootEntry[]>>;
+  setArenaSnapshot: Dispatch<SetStateAction<ArenaSnapshot | null>>;
+  setQueuedMapIds: Dispatch<SetStateAction<string[]>>;
+  setActiveMapId: Dispatch<SetStateAction<string | null>>;
+  setActiveMapEnhancements: Dispatch<SetStateAction<MapEnhancementInstance[]>>;
+  setActiveMapRunId: Dispatch<SetStateAction<number>>;
+  setScreenMode: Dispatch<SetStateAction<ScreenMode>>;
+  setStatusMessage: Dispatch<SetStateAction<string>>;
+  setErrorMessage: Dispatch<SetStateAction<string | null>>;
+}
+
+export const useArenaSession = ({
+  screenMode,
+  character,
+  activeMapId,
+  activeMapEnhancements,
+  activeMapRunId,
+  arenaRuntimeRef,
+  queuedMapIdsRef,
+  commitCharacter,
+  setRecentLoot,
+  setArenaSnapshot,
+  setQueuedMapIds,
+  setActiveMapId,
+  setActiveMapEnhancements,
+  setActiveMapRunId,
+  setScreenMode,
+  setStatusMessage,
+  setErrorMessage
+}: UseArenaSessionParams): void => {
+  useEffect(() => {
+    if (screenMode !== "arena" || !character || !activeMapId) {
+      return;
+    }
+
+    let animationFrame = 0;
+    let runtime = createArenaRuntime(character, activeMapId, activeMapEnhancements);
+    arenaRuntimeRef.current = runtime;
+    let lastTimestamp = performance.now();
+    let lastUiUpdateAt = 0;
+
+    const loop = (timestamp: number) => {
+      const deltaMs = Math.min(50, timestamp - lastTimestamp);
+      lastTimestamp = timestamp;
+      runtime = stepArenaRuntime(arenaRuntimeRef.current ?? runtime, deltaMs);
+      arenaRuntimeRef.current = runtime;
+
+      if (runtime.snapshot.lootEvents.length > 0) {
+        setRecentLoot((current) => [...runtime.snapshot.lootEvents, ...current].slice(0, 20));
+      }
+
+      if (timestamp - lastUiUpdateAt > 120 || runtime.snapshot.isComplete) {
+        setArenaSnapshot(runtime.snapshot);
+        commitCharacter(runtime.snapshot.player);
+        lastUiUpdateAt = timestamp;
+      }
+
+      if (runtime.snapshot.isComplete || runtime.snapshot.player.currentHealth <= 0) {
+        setArenaSnapshot(runtime.snapshot);
+        commitCharacter(runtime.snapshot.player);
+
+        const wasDefeated = runtime.snapshot.player.currentHealth <= 0;
+        const nextQueuedMapIds = queuedMapIdsRef.current;
+
+        if (!wasDefeated && nextQueuedMapIds.length > 0) {
+          const [nextMapStackId, ...remainingQueue] = nextQueuedMapIds;
+          const nextCharacter = normalizeCharacterRecord(runtime.snapshot.player);
+          let preparedCharacter = nextCharacter;
+
+          if (balanceConfig.healing.refillToFullOnMapStart) {
+            preparedCharacter = {
+              ...preparedCharacter,
+              currentHealth: preparedCharacter.derivedStats.maxHealth,
+              lifeFlask: {
+                currentCharges: balanceConfig.healing.lifeFlask.maxCharges
+              }
+            };
+          }
+
+          const nextMapStack = getOwnedMapStack(preparedCharacter.mapProgress, nextMapStackId);
+
+          if (nextMapStack && nextMapStack.quantity > 0) {
+            preparedCharacter = consumeOwnedMap(preparedCharacter, nextMapStackId);
+            commitCharacter(preparedCharacter);
+            setQueuedMapIds(remainingQueue);
+            setActiveMapId(nextMapStack.mapId);
+            setActiveMapEnhancements(nextMapStack.enhancements);
+            setActiveMapRunId((current) => current + 1);
+            setArenaSnapshot(null);
+            setErrorMessage(null);
+            setScreenMode("arena");
+            setStatusMessage(
+              `Entering ${mapConfig[nextMapStack.mapId].name}. ${remainingQueue.length} map${remainingQueue.length === 1 ? "" : "s"} queued after this run.`
+            );
+            return;
+          }
+        }
+
+        setQueuedMapIds([]);
+        setScreenMode("hub");
+        setActiveMapId(null);
+        setActiveMapEnhancements([]);
+        setStatusMessage(
+          wasDefeated
+            ? `You were defeated in ${runtime.snapshot.mapName}, but your collected rewards remain saved.`
+            : `${runtime.snapshot.mapName} complete. You kept everything you found.`
+        );
+        return;
+      }
+
+      animationFrame = requestAnimationFrame(loop);
+    };
+
+    setArenaSnapshot(runtime.snapshot);
+    animationFrame = requestAnimationFrame(loop);
+
+    return () => cancelAnimationFrame(animationFrame);
+  }, [
+    screenMode,
+    character,
+    activeMapId,
+    activeMapEnhancements,
+    activeMapRunId,
+    arenaRuntimeRef,
+    queuedMapIdsRef,
+    commitCharacter,
+    setRecentLoot,
+    setArenaSnapshot,
+    setQueuedMapIds,
+    setActiveMapId,
+    setActiveMapEnhancements,
+    setActiveMapRunId,
+    setScreenMode,
+    setStatusMessage,
+    setErrorMessage
+  ]);
+};

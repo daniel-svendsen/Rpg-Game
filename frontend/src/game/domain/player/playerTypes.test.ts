@@ -54,4 +54,38 @@ describe("playerTypes", () => {
       balanceConfig.statScaling.baseHealth + balanceConfig.statScaling.vitalityHealthMultiplier
     );
   });
+
+  it("keeps unique item fields and reapplies unique equipment modifiers during normalization", () => {
+    const character = createTestCharacter({
+      currentHealth: 150,
+      derivedStats: {
+        maxHealth: 150,
+        castSpeedMultiplier: 1,
+        critChance: 0,
+        spellPowerMultiplier: 1
+      },
+      equippedItems: {
+        BodyArmor: {
+          id: "unique-body-1",
+          name: "Titan Carapace",
+          slot: "BodyArmor",
+          rarity: "Unique",
+          tier: 4,
+          tags: ["Physical", "Unique"],
+          uniqueEffectId: "titanCarapace",
+          uniqueEffectDescription: "You take 14% less contact damage and gain +18% max life.",
+          statBonuses: {
+            vitality: 6,
+            maxHealth: 24
+          }
+        }
+      }
+    });
+
+    const normalized = normalizeCharacterRecord(character);
+
+    expect(normalized.equippedItems.BodyArmor?.uniqueEffectId).toBe("titanCarapace");
+    expect(normalized.equippedItems.BodyArmor?.uniqueEffectDescription).toContain("14% less contact damage");
+    expect(normalized.derivedStats.maxHealth).toBeGreaterThan(character.derivedStats.maxHealth);
+  });
 });

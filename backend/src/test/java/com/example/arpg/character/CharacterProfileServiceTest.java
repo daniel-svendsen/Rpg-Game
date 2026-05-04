@@ -92,4 +92,94 @@ class CharacterProfileServiceTest {
                 "dexterity", 5
         ));
     }
+
+    @Test
+    void saveProgressPreservesUniqueItemEffectFields() {
+        CharacterProfileEntity entity = new CharacterProfileEntity();
+        UserAccountEntity user = new UserAccountEntity();
+        user.setEmail("player@example.com");
+        entity.setUser(user);
+
+        CharacterStatsRequest baseStats = new CharacterStatsRequest(1, 1, 1, 1);
+        Map<String, Object> derivedStats = Map.of(
+                "maxHealth", 120,
+                "castSpeedMultiplier", 1.0,
+                "critChance", 0.01,
+                "spellPowerMultiplier", 1.0
+        );
+        InventoryItemRequest uniqueItem = new InventoryItemRequest(
+                "unique-ring-1",
+                "Twinstar Loop",
+                "Ring",
+                "Unique",
+                3,
+                List.of("Lightning", "Projectile", "Unique"),
+                "twinstarLoop",
+                "Projectile spells fire +2 projectiles but deal 10% less damage.",
+                Map.of("dexterity", 4, "critChance", 0.03)
+        );
+        SaveCharacterProgressRequest request = new SaveCharacterProgressRequest(
+                "Warden",
+                3,
+                15,
+                140,
+                0,
+                100,
+                250,
+                new LifeFlaskRequest(10),
+                baseStats,
+                new DerivedStatsRequest(1, 1.0, 0.0, 1.0),
+                List.of(uniqueItem),
+                Map.of("Ring1", uniqueItem),
+                List.of("stormChain"),
+                List.of("fasterCasting"),
+                List.of(new SpellProgressRequest("stormChain", 2)),
+                List.of(new SpellLinkRequest("stormChain", List.of("fasterCasting"))),
+                List.of(),
+                new MapProgressRequest(1, 1, List.of())
+        );
+
+        when(characterProfileRepository.findById(7L)).thenReturn(Optional.of(entity));
+        when(characterStatCalculator.deriveStats(baseStats)).thenReturn(derivedStats);
+        when(characterStatCalculator.toBaseStatsMap(baseStats)).thenReturn(Map.of(
+                "strength", 1,
+                "agility", 1,
+                "vitality", 1,
+                "dexterity", 1
+        ));
+        when(characterStatCalculator.clampCurrentHealth(100, derivedStats)).thenReturn(100);
+        when(characterProfileRepository.save(any(CharacterProfileEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        characterProfileService.saveProgress("player@example.com", 7L, request);
+
+        ArgumentCaptor<CharacterProfileEntity> savedEntity = ArgumentCaptor.forClass(CharacterProfileEntity.class);
+        verify(characterProfileRepository).save(savedEntity.capture());
+        assertThat(savedEntity.getValue().getInventory()).containsExactly(
+                Map.of(
+                        "id", "unique-ring-1",
+                        "name", "Twinstar Loop",
+                        "slot", "Ring",
+                        "rarity", "Unique",
+                        "tier", 3,
+                        "tags", List.of("Lightning", "Projectile", "Unique"),
+                        "uniqueEffectId", "twinstarLoop",
+                        "uniqueEffectDescription", "Projectile spells fire +2 projectiles but deal 10% less damage.",
+                        "statBonuses", Map.of("dexterity", 4, "critChance", 0.03)
+                )
+        );
+        assertThat(savedEntity.getValue().getEquippedItems()).containsEntry(
+                "Ring1",
+                Map.of(
+                        "id", "unique-ring-1",
+                        "name", "Twinstar Loop",
+                        "slot", "Ring",
+                        "rarity", "Unique",
+                        "tier", 3,
+                        "tags", List.of("Lightning", "Projectile", "Unique"),
+                        "uniqueEffectId", "twinstarLoop",
+                        "uniqueEffectDescription", "Projectile spells fire +2 projectiles but deal 10% less damage.",
+                        "statBonuses", Map.of("dexterity", 4, "critChance", 0.03)
+                )
+        );
+    }
 }

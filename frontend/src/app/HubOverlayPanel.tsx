@@ -5,8 +5,7 @@ import { getItemPowerScore, getPowerChangeForCharacterItem } from "../game/domai
 import { getItemStatLines } from "../game/domain/items/itemStats";
 import { getSpellDescription, getSpellName } from "../game/domain/spells/spellDrops";
 import type { CharacterRecord, EquipmentSlot } from "../shared/types/saveTypes";
-
-type OverlayPanel = "equipmentPicker" | "mainSpellPicker" | "supportPicker" | null;
+import type { OverlayPanel } from "./appTypes";
 
 interface HubOverlayPanelProps {
   character: CharacterRecord | null;

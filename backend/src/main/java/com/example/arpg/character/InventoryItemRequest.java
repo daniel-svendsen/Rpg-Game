@@ -15,7 +15,8 @@ public record InventoryItemRequest(
         @NotBlank String rarity,
         @Min(1) int tier,
         @NotEmpty List<@NotBlank String> tags,
+        String uniqueEffectId,
+        String uniqueEffectDescription,
         @NotNull Map<String, Object> statBonuses
 ) {
 }
-
