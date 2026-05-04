@@ -1,12 +1,19 @@
 import { balanceConfig } from "../../config/balanceConfig";
+import {
+  getMapBalanceByTier,
+  itemBalance,
+  mapBalance,
+  monsterBalance,
+  progressionBalance
+} from "../../config/balance";
 import { mapConfig, type MapDefinition } from "../../config/mapConfig";
 import { monsterDefinitions } from "../../config/monsterConfig";
-import { generateItemDrop } from "../items/itemGenerator";
+import { generateItemDropForCharacter } from "../items/itemGenerator";
 import { getItemPowerScore, isUpgradeForCharacter } from "../items/itemPower";
 import { addOwnedMap } from "../maps/mapProgress";
 import { gainLifeFlaskCharges } from "../player/lifeFlask";
 import { applyExperience } from "../progression/progression";
-import { getNextDroppableSpellId, getSpellName } from "../spells/spellDrops";
+import { getSpellName, rollSpellDrop } from "../spells/spellDrops";
 import { resolveSpell } from "../spells/spellEngine";
 import { createClientId } from "../../../shared/utils/id";
 import type {
@@ -84,20 +91,24 @@ const getChainTargetIds = (
 };
 
 const createEnemy = (map: MapDefinition, rarity: MonsterRarity): InternalEnemyState => {
+  const tierBalance = getMapBalanceByTier(map.tier);
   const monsterDefinition =
     monsterDefinitions.find((monster) => monster.rarity === rarity) ?? monsterDefinitions[0];
-  const rarityHealthMultiplier = rarity === "Rare" ? 2.3 : 1;
-  const rarityDamageMultiplier = rarity === "Rare" ? 1.6 : 1;
+  const rarityHealthMultiplier =
+    rarity === "Rare"
+      ? monsterBalance.rareHealthMultiplier
+      : monsterBalance.normalHealthMultiplier;
+  const rarityDamageMultiplier =
+    rarity === "Rare"
+      ? monsterBalance.rareDamageMultiplier
+      : monsterBalance.normalDamageMultiplier;
   const spawnEdge = Math.floor(Math.random() * 4);
   const spawnX =
     spawnEdge < 2 ? (spawnEdge === 0 ? 40 : ARENA_WIDTH - 40) : Math.random() * ARENA_WIDTH;
   const spawnY =
     spawnEdge >= 2 ? (spawnEdge === 2 ? 40 : ARENA_HEIGHT - 40) : Math.random() * ARENA_HEIGHT;
   const maxHealth = Math.round(
-    balanceConfig.monsterScaling.baseHealth *
-      map.enemyHealthMultiplier *
-      rarityHealthMultiplier *
-      balanceConfig.monsterScaling.healthPerTierMultiplier ** map.tier
+    monsterBalance.baseHealth * map.enemyHealthMultiplier * rarityHealthMultiplier
   );
 
   return {
@@ -108,20 +119,18 @@ const createEnemy = (map: MapDefinition, rarity: MonsterRarity): InternalEnemySt
     maxHealth,
     rarity,
     damage: Math.round(
-      balanceConfig.monsterScaling.baseDamage *
-        map.enemyDamageMultiplier *
-        rarityDamageMultiplier *
-        balanceConfig.monsterScaling.damagePerTierMultiplier ** map.tier
+      monsterBalance.baseDamage * map.enemyDamageMultiplier * rarityDamageMultiplier
     ),
-    movementSpeed: balanceConfig.monsterScaling.baseMovementSpeed + (rarity === "Rare" ? 8 : 0),
+    movementSpeed: rarity === "Rare" ? tierBalance.rareMonsterSpeed : tierBalance.normalMonsterSpeed,
     experienceReward: Math.round(
       (rarity === "Rare"
-        ? balanceConfig.combatRewards.rareExperienceBase
-        : balanceConfig.combatRewards.normalExperienceBase) * map.experienceMultiplier
+        ? progressionBalance.rewards.rareExperienceBase
+        : progressionBalance.rewards.normalExperienceBase) * map.experienceMultiplier
     ),
     goldReward: Math.round(
-      (rarity === "Rare" ? balanceConfig.combatRewards.rareGoldBase : balanceConfig.combatRewards.normalGoldBase) *
-        map.goldMultiplier
+      (rarity === "Rare"
+        ? progressionBalance.rewards.rareGoldBase
+        : progressionBalance.rewards.normalGoldBase) * map.goldMultiplier
     ),
     lastContactDamageAt: 0
   };
@@ -144,28 +153,26 @@ const rollDrops = (
   mapTier: number,
   rarity: MonsterRarity
 ): { character: CharacterRecord; lootEvents: LootEntry[] } => {
+  const tierBalance = getMapBalanceByTier(mapTier);
   const isRareMonster = rarity === "Rare";
   let nextCharacter = {
     ...character
   };
   const lootEvents: LootEntry[] = [];
 
-  const shouldDropItem =
-    Math.random() <
-    balanceConfig.itemDrops.baseChance +
-      (isRareMonster ? balanceConfig.itemDrops.rareMonsterBonusChance : 0);
+  const shouldDropItem = Math.random() < tierBalance.itemDropRate;
 
   if (shouldDropItem) {
     const itemCount = isRareMonster
       ? Math.floor(
           Math.random() *
-            (balanceConfig.rareMonsterDropRules.rareItemDropsMax -
-              balanceConfig.rareMonsterDropRules.rareItemDropsMin +
-              1)
-        ) + balanceConfig.rareMonsterDropRules.rareItemDropsMin
+            (tierBalance.rareItemDropsMax - tierBalance.rareItemDropsMin + 1)
+        ) + tierBalance.rareItemDropsMin
       : 1;
 
-    const items = Array.from({ length: itemCount }, () => generateItemDrop(Math.max(1, mapTier), isRareMonster));
+    const items = Array.from({ length: itemCount }, () =>
+      generateItemDropForCharacter(nextCharacter, Math.max(1, mapTier), isRareMonster)
+    );
     nextCharacter = {
       ...nextCharacter,
       inventory: [...nextCharacter.inventory, ...items]
@@ -187,7 +194,8 @@ const rollDrops = (
 
   if (
     Math.random() <
-    balanceConfig.currencyDrops.shardDropChance * (isRareMonster ? 1.5 : 1)
+    tierBalance.mapShardDropRate *
+      (isRareMonster ? itemBalance.rareMonsterMapShardDropMultiplier : 1)
   ) {
     nextCharacter = {
       ...nextCharacter,
@@ -202,9 +210,9 @@ const rollDrops = (
     });
   }
 
-  const spellId = getNextDroppableSpellId(nextCharacter.unlockedSpellIds);
+  const spellId = rollSpellDrop(nextCharacter, mapTier, rarity);
 
-  if (spellId && Math.random() < balanceConfig.spellDropRates.baseChance) {
+  if (spellId) {
     nextCharacter = {
       ...nextCharacter,
       unlockedSpellIds: [...nextCharacter.unlockedSpellIds, spellId]
@@ -218,7 +226,7 @@ const rollDrops = (
     });
   }
 
-  if (mapTier < balanceConfig.mapTierScaling.maxTier && Math.random() < balanceConfig.mapDrops.higherTierChance) {
+  if (mapTier < mapBalance.maxTier && Math.random() < tierBalance.mapDropRate) {
     const nextTier = mapTier + 1;
     nextCharacter = addOwnedMap(nextCharacter, `tier${nextTier}Map`, nextTier);
     lootEvents.push({
@@ -276,11 +284,12 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   const map = mapConfig[state.mapId];
 
   if (enemyPoolRemaining > 0 && nextTime >= nextSpawnAtMs) {
-    const isRareMonster = Math.random() < balanceConfig.rareMonsterDropRules.rareMonsterChance;
+    const tierBalance = getMapBalanceByTier(map.tier);
+    const isRareMonster = Math.random() < tierBalance.rareMonsterChance;
     const internalEnemy = createEnemy(map, isRareMonster ? "Rare" : "Normal");
     nextEnemies = [...nextEnemies, internalEnemy];
     enemyPoolRemaining -= 1;
-    nextSpawnAtMs = nextTime + 550;
+    nextSpawnAtMs = nextTime + monsterBalance.spawnIntervalMs;
   }
 
   nextEnemies = nextEnemies.map((enemy) => {

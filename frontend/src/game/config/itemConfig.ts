@@ -1,4 +1,5 @@
 import type { EquipmentSlot, ItemRarity, Tag } from "../../shared/types/saveTypes";
+import { itemBalance } from "./balance";
 
 export interface ItemBaseDefinition {
   id: string;
@@ -11,6 +12,26 @@ export interface CurrencyDefinition {
   code: string;
   name: string;
   tags: Tag[];
+}
+
+export interface UniqueItemDefinition {
+  id: string;
+  name: string;
+  slot: EquipmentSlot;
+  minTier: number;
+  dropWeight: number;
+  tags: Tag[];
+  uniqueEffectId: string;
+  uniqueEffectDescription: string;
+  statBonuses: {
+    strength?: number;
+    agility?: number;
+    vitality?: number;
+    dexterity?: number;
+    maxHealth?: number;
+    critChance?: number;
+    spellPowerMultiplier?: number;
+  };
 }
 
 export const itemBases: ItemBaseDefinition[] = [
@@ -27,3 +48,4 @@ export const currencyDefinitions: CurrencyDefinition[] = [
   { code: "mapShard", name: "Map Shard", tags: ["Currency", "MapModifier"] }
 ];
 
+export const uniqueItemDefinitions: UniqueItemDefinition[] = [...itemBalance.uniqueItems];

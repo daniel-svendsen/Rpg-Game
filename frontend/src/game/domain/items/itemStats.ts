@@ -1,4 +1,4 @@
-import { balanceConfig } from "../../config/balanceConfig";
+import { getMapBalanceByTier } from "../../config/balance";
 import type { InventoryItem } from "../../../shared/types/saveTypes";
 
 const orderedStatKeys = [
@@ -16,9 +16,9 @@ type ItemStatKey = (typeof orderedStatKeys)[number];
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
 export const getStatTier = (statKey: ItemStatKey, value: number, itemTier: number): number => {
-  const tierRanges = (balanceConfig.itemTierStatRanges[
-    itemTier as keyof typeof balanceConfig.itemTierStatRanges
-  ] ?? balanceConfig.itemTierStatRanges[1]) as Partial<Record<ItemStatKey, readonly [number, number]>>;
+  const tierRanges = getMapBalanceByTier(itemTier).itemStatRanges as Partial<
+    Record<ItemStatKey, readonly [number, number]>
+  >;
   const range = tierRanges[statKey];
 
   if (!range) {
@@ -32,17 +32,20 @@ export const getStatTier = (statKey: ItemStatKey, value: number, itemTier: numbe
 };
 
 export const getItemStatLines = (item: InventoryItem): string[] =>
-  orderedStatKeys.flatMap((statKey) => {
-    const value = item.statBonuses[statKey];
+  [
+    ...orderedStatKeys.flatMap((statKey) => {
+      const value = item.statBonuses[statKey];
 
-    if (value === undefined) {
-      return [];
-    }
+      if (value === undefined) {
+        return [];
+      }
 
-    const formattedValue =
-      statKey === "critChance" || statKey === "spellPowerMultiplier"
-        ? `+${Number(value).toFixed(2)}`
-        : `+${value}`;
+      const formattedValue =
+        statKey === "critChance" || statKey === "spellPowerMultiplier"
+          ? `+${Number(value).toFixed(2)}`
+          : `+${value}`;
 
-    return [`${statKey} ${formattedValue} (Tier ${getStatTier(statKey, Number(value), item.tier)})`];
-  });
+      return [`${statKey} ${formattedValue} (Tier ${getStatTier(statKey, Number(value), item.tier)})`];
+    }),
+    ...(item.uniqueEffectDescription ? [`Unique: ${item.uniqueEffectDescription}`] : [])
+  ];

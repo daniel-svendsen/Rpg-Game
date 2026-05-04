@@ -50,6 +50,8 @@ export interface InventoryItem {
   rarity: ItemRarity;
   tier: number;
   tags: Tag[];
+  uniqueEffectId?: string;
+  uniqueEffectDescription?: string;
   statBonuses: Partial<CharacterStats> & {
     maxHealth?: number;
     critChance?: number;

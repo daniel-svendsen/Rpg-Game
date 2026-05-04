@@ -1,4 +1,5 @@
 import type { MonsterRarity, Tag } from "../../shared/types/saveTypes";
+import { monsterBalance } from "./balance";
 
 export interface MonsterDefinition {
   id: string;
@@ -14,14 +15,13 @@ export const monsterDefinitions: MonsterDefinition[] = [
     name: "Scrap Crawler",
     tags: ["Physical"],
     rarity: "Normal",
-    radius: 18
+    radius: monsterBalance.normalRadius
   },
   {
     id: "voidStalker",
     name: "Void Stalker",
     tags: ["Rare", "Physical"],
     rarity: "Rare",
-    radius: 24
+    radius: monsterBalance.rareRadius
   }
 ];
-

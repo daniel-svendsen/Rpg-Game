@@ -1,33 +1,120 @@
-import { balanceConfig } from "../../config/balanceConfig";
-import { itemBases } from "../../config/itemConfig";
-import type { InventoryItem, ItemRarity } from "../../../shared/types/saveTypes";
+import { getMapBalanceByTier, itemBalance } from "../../config/balance";
+import { itemBases, uniqueItemDefinitions } from "../../config/itemConfig";
+import type { CharacterRecord, InventoryItem, ItemRarity } from "../../../shared/types/saveTypes";
 import { createClientId } from "../../../shared/utils/id";
+import { getEquippedUniqueModifiers } from "../items/uniqueEffects";
+import { pickWeighted } from "../loot/weightedTables";
 
 const randomInRange = ([min, max]: readonly [number, number]): number =>
   Number((Math.random() * (max - min) + min).toFixed(2));
 
-const generateRarity = (isRareMonster: boolean): ItemRarity => {
-  const roll = Math.random();
+const generateRarity = (tier: number, isRareMonster: boolean): ItemRarity => {
+  const tierBalance = getMapBalanceByTier(tier);
+  const rarityMultiplier = itemBalance.rareMonsterRarityWeightMultiplier;
 
-  if (roll < balanceConfig.uniqueItemDrop.baseChance + (isRareMonster ? balanceConfig.uniqueItemDrop.rareMonsterBonusChance : 0)) {
-    return "Unique";
+  return (
+    pickWeighted<ItemRarity>([
+    {
+      key: "Normal",
+      weight:
+        tierBalance.normalItemDropRate * (isRareMonster ? rarityMultiplier.normal : 1)
+    },
+    {
+      key: "Magic",
+      weight:
+        tierBalance.magicItemDropRate * (isRareMonster ? rarityMultiplier.magic : 1)
+    },
+    {
+      key: "Rare",
+      weight:
+        tierBalance.rareItemDropRate * (isRareMonster ? rarityMultiplier.rare : 1)
+    },
+    {
+      key: "Unique",
+      weight:
+        tierBalance.uniqueItemDropRate * (isRareMonster ? rarityMultiplier.unique : 1)
+    }
+    ]) ?? "Normal"
+  );
+};
+
+const generateUniqueItemDrop = (tier: number, uniqueDropWeightMultiplier = 1): InventoryItem | null => {
+  const uniqueDefinition =
+    pickWeighted(
+      uniqueItemDefinitions
+        .filter((item) => item.minTier <= tier)
+        .map((item) => ({ key: item, weight: item.dropWeight * uniqueDropWeightMultiplier }))
+    );
+
+  if (!uniqueDefinition) {
+    return null;
   }
 
-  if (isRareMonster && roll < 0.42) {
-    return "Rare";
-  }
-
-  if (roll < 0.24) {
-    return "Magic";
-  }
-
-  return "Normal";
+  return {
+    id: `${uniqueDefinition.id}-${createClientId()}`,
+    name: uniqueDefinition.name,
+    slot: uniqueDefinition.slot,
+    rarity: "Unique",
+    tier,
+    tags: uniqueDefinition.tags,
+    uniqueEffectId: uniqueDefinition.uniqueEffectId,
+    uniqueEffectDescription: uniqueDefinition.uniqueEffectDescription,
+    statBonuses: uniqueDefinition.statBonuses
+  };
 };
 
 export const generateItemDrop = (tier: number, isRareMonster: boolean): InventoryItem => {
   const base = itemBases[Math.floor(Math.random() * itemBases.length)];
-  const ranges = balanceConfig.itemTierStatRanges[tier as keyof typeof balanceConfig.itemTierStatRanges] ?? balanceConfig.itemTierStatRanges[1];
-  const rarity = generateRarity(isRareMonster);
+  const tierBalance = getMapBalanceByTier(tier);
+  const ranges = tierBalance.itemStatRanges;
+  const rarity = generateRarity(tier, isRareMonster);
+
+  if (rarity === "Unique") {
+    const uniqueItem = generateUniqueItemDrop(tier);
+
+    if (uniqueItem) {
+      return uniqueItem;
+    }
+  }
+
+  return {
+    id: `${base.id}-${createClientId()}`,
+    name: `${rarity} ${base.name}`,
+    slot: base.slot,
+    rarity,
+    tier,
+    tags: rarity === "Unique" ? [...base.tags, "Unique"] : base.tags,
+    statBonuses: {
+      strength: Math.round(randomInRange(ranges.strength)),
+      agility: Math.round(randomInRange(ranges.agility)),
+      vitality: Math.round(randomInRange(ranges.vitality)),
+      dexterity: Math.round(randomInRange(ranges.dexterity)),
+      maxHealth: Math.round(randomInRange(ranges.maxHealth)),
+      critChance: randomInRange(ranges.critChance),
+      spellPowerMultiplier: randomInRange(ranges.spellPowerMultiplier)
+    }
+  };
+};
+
+export const generateItemDropForCharacter = (
+  character: CharacterRecord,
+  tier: number,
+  isRareMonster: boolean
+): InventoryItem => {
+  const uniqueModifiers = getEquippedUniqueModifiers(character);
+  const tierBalance = getMapBalanceByTier(tier);
+  const rarity = generateRarity(tier, isRareMonster);
+
+  if (rarity === "Unique") {
+    const uniqueItem = generateUniqueItemDrop(tier, uniqueModifiers.uniqueDropWeightMultiplier);
+
+    if (uniqueItem) {
+      return uniqueItem;
+    }
+  }
+
+  const base = itemBases[Math.floor(Math.random() * itemBases.length)];
+  const ranges = tierBalance.itemStatRanges;
 
   return {
     id: `${base.id}-${createClientId()}`,

@@ -1,5 +1,6 @@
 import { spellConfig, supportSpellConfig } from "../../config/spellConfig";
 import type { CharacterRecord } from "../../../shared/types/saveTypes";
+import { getEquippedUniqueModifiers } from "../items/uniqueEffects";
 import { getSpellLevel } from "./spellProgression";
 
 export interface ResolvedSpell {
@@ -21,6 +22,7 @@ export const resolveSpell = (
   supportSpellIds: string[]
 ): ResolvedSpell => {
   const baseSpell = spellConfig[mainSpellId];
+  const equippedUniqueModifiers = getEquippedUniqueModifiers(character);
   const spellLevel = getSpellLevel(character, mainSpellId);
   const levelBonus = spellLevel - 1;
   const scaledBaseDamage = baseSpell.baseDamage * (1 + baseSpell.levelScaling.damageMultiplierPerLevel * levelBonus);
@@ -53,7 +55,22 @@ export const resolveSpell = (
     critChance += support.apply.criticalChanceBonus ?? 0;
   });
 
-    return {
+  if (baseSpell.tags.includes("Chain")) {
+    chainCount += equippedUniqueModifiers.bonusChainsForChainSpells;
+    chainRange += equippedUniqueModifiers.bonusChainRangeForChainSpells;
+  }
+
+  if (baseSpell.tags.includes("Area")) {
+    areaRadius += equippedUniqueModifiers.bonusAreaRadiusForAreaSpells;
+  }
+
+  if (baseSpell.tags.includes("Area") || baseSpell.tags.includes("Fire")) {
+    damageMultiplier *= 1 + equippedUniqueModifiers.moreDamageForAreaAndFireSpells;
+  }
+
+  critChance += equippedUniqueModifiers.bonusCritChanceForSpells;
+
+  return {
     id: baseSpell.id,
     name: baseSpell.name,
     level: spellLevel,

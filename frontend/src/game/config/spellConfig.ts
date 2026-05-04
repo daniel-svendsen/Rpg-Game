@@ -37,7 +37,6 @@ export interface SupportSpellDefinition {
 }
 
 export const starterSpellIds = ["stormChain", "emberBurst"] as const;
-export const droppableSpellIds = ["glacierNova"] as const;
 
 export const spellConfig: Record<string, SpellDefinition> = {
   stormChain: {
@@ -98,6 +97,66 @@ export const spellConfig: Record<string, SpellDefinition> = {
       chainRangePerLevel: 0,
       areaRadiusPerLevel: 5,
       critChancePerLevel: 0.007
+    }
+  },
+  arcLance: {
+    id: "arcLance",
+    name: "Arc Lance",
+    tags: ["Lightning", "Projectile", "Critical", "SpellDamage"],
+    description: "Fires a focused lightning spear with high critical scaling.",
+    baseDamage: 28,
+    cooldownMs: 1500,
+    projectileCount: 1,
+    chainCount: 0,
+    chainRange: 0,
+    areaRadius: 0,
+    criticalBonus: 0.09,
+    levelScaling: {
+      damageMultiplierPerLevel: 0.24,
+      cooldownMultiplierStep: 0.02,
+      chainRangePerLevel: 0,
+      areaRadiusPerLevel: 0,
+      critChancePerLevel: 0.008
+    }
+  },
+  ashenOrbit: {
+    id: "ashenOrbit",
+    name: "Ashen Orbit",
+    tags: ["Fire", "Area", "Explosion", "SpellDamage"],
+    description: "Ignites a wider blast with heavy damage and slower cadence.",
+    baseDamage: 36,
+    cooldownMs: 1800,
+    projectileCount: 0,
+    chainCount: 0,
+    chainRange: 0,
+    areaRadius: 62,
+    criticalBonus: 0.04,
+    levelScaling: {
+      damageMultiplierPerLevel: 0.26,
+      cooldownMultiplierStep: 0.018,
+      chainRangePerLevel: 0,
+      areaRadiusPerLevel: 6,
+      critChancePerLevel: 0.004
+    }
+  },
+  tempestBloom: {
+    id: "tempestBloom",
+    name: "Tempest Bloom",
+    tags: ["Lightning", "Cold", "Area", "Chain", "SpellDamage"],
+    description: "Detonates into a storm bloom that shocks clustered enemies.",
+    baseDamage: 42,
+    cooldownMs: 1950,
+    projectileCount: 0,
+    chainCount: 2,
+    chainRange: 120,
+    areaRadius: 58,
+    criticalBonus: 0.08,
+    levelScaling: {
+      damageMultiplierPerLevel: 0.28,
+      cooldownMultiplierStep: 0.018,
+      chainRangePerLevel: 10,
+      areaRadiusPerLevel: 6,
+      critChancePerLevel: 0.008
     }
   }
 };

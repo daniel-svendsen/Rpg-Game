@@ -1,4 +1,4 @@
-import { balanceConfig } from "./balanceConfig";
+import { getMapTierBalance, mapBalance } from "./balance";
 
 export interface MapDefinition {
   id: string;
@@ -13,35 +13,38 @@ export interface MapDefinition {
   enemyDamageMultiplier: number;
 }
 
-const createTierMapDefinition = (tier: number): MapDefinition => ({
-  id: `tier${tier}Map`,
-  name: `Tier ${tier} Map`,
-  tier,
-  monsterCount:
-    balanceConfig.mapTierScaling.enemyCountBase + tier * balanceConfig.mapTierScaling.enemyCountPerTier,
-  monsterLevel: tier + 1,
-  dropRateMultiplier: 1 + tier * balanceConfig.mapTierScaling.dropRateMultiplierPerTier,
-  experienceMultiplier: 1 + tier * balanceConfig.mapTierScaling.experienceMultiplierPerTier,
-  goldMultiplier: 1 + tier * balanceConfig.mapTierScaling.goldMultiplierPerTier,
-  enemyHealthMultiplier: 1 + tier * balanceConfig.mapTierScaling.enemyHealthMultiplierPerTier,
-  enemyDamageMultiplier: 1 + tier * balanceConfig.mapTierScaling.enemyDamageMultiplierPerTier
-});
+const createTierMapDefinition = (tier: number): MapDefinition => {
+  const tierBalance = getMapTierBalance(tier);
+
+  return {
+    id: `tier${tier}Map`,
+    name: `Tier ${tier} Map`,
+    tier,
+    monsterCount: tierBalance.monsterCount,
+    monsterLevel: tierBalance.monsterLevel,
+    dropRateMultiplier: 1,
+    experienceMultiplier: tierBalance.experienceGainMultiplier,
+    goldMultiplier: tierBalance.goldGainMultiplier,
+    enemyHealthMultiplier: tierBalance.enemyHealthMultiplier,
+    enemyDamageMultiplier: tierBalance.enemyDamageMultiplier
+  };
+};
 
 export const mapConfig: Record<string, MapDefinition> = {
   trainingGrounds: {
     id: "trainingGrounds",
     name: "Training Grounds",
     tier: 0,
-    monsterCount: 20,
-    monsterLevel: 1,
+    monsterCount: mapBalance.trainingGrounds.monsterCount,
+    monsterLevel: mapBalance.trainingGrounds.monsterLevel,
     dropRateMultiplier: 1,
-    experienceMultiplier: 1,
-    goldMultiplier: 1,
-    enemyHealthMultiplier: 1,
-    enemyDamageMultiplier: 1
+    experienceMultiplier: mapBalance.trainingGrounds.experienceGainMultiplier,
+    goldMultiplier: mapBalance.trainingGrounds.goldGainMultiplier,
+    enemyHealthMultiplier: mapBalance.trainingGrounds.enemyHealthMultiplier,
+    enemyDamageMultiplier: mapBalance.trainingGrounds.enemyDamageMultiplier
   },
   ...Object.fromEntries(
-    Array.from({ length: balanceConfig.mapTierScaling.maxTier }, (_, index) => {
+    Array.from({ length: mapBalance.maxTier }, (_, index) => {
       const tier = index + 1;
       const map = createTierMapDefinition(tier);
       return [map.id, map];
