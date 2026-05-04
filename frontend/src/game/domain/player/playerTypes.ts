@@ -1,20 +1,12 @@
-import type { CharacterRecord, CharacterStats, DerivedStats } from "../../../shared/types/saveTypes";
+import type { CharacterRecord, CharacterStats } from "../../../shared/types/saveTypes";
 import { starterSpellIds, starterSupportSpellIds, supportSpellConfig } from "../../config/spellConfig";
-import { balanceConfig } from "../../config/balanceConfig";
 import { createInitialMapProgress, normalizeMapProgress } from "../maps/mapProgress";
 import { getExperienceRequiredForLevel } from "../progression/progression";
 import { createInitialLifeFlask, normalizeLifeFlask } from "./lifeFlask";
 import { normalizeSpellId } from "../spells/spellDrops";
 import { createInitialSpellProgress, normalizeSpellProgress } from "../spells/spellProgression";
-
-export const deriveStats = (baseStats: CharacterStats): DerivedStats => ({
-  maxHealth:
-    balanceConfig.statScaling.baseHealth +
-    baseStats.vitality * balanceConfig.statScaling.vitalityHealthMultiplier,
-  castSpeedMultiplier: 1 + baseStats.agility * balanceConfig.statScaling.agilityCastSpeedMultiplier,
-  critChance: baseStats.dexterity * balanceConfig.statScaling.dexterityCritChanceMultiplier,
-  spellPowerMultiplier: 1 + baseStats.strength * balanceConfig.statScaling.strengthSpellPowerMultiplier
-});
+import { applyEquipmentState } from "./equipment";
+import { deriveStats } from "./statCalculation";
 
 export const createNewCharacter = (name: string, baseStats: CharacterStats): CharacterRecord => {
   const derivedStats = deriveStats(baseStats);
@@ -56,7 +48,7 @@ export const normalizeCharacterRecord = (character: CharacterRecord): CharacterR
     )
   ];
 
-  return {
+  return applyEquipmentState({
     ...character,
     unlockedSpellIds: normalizedUnlockedSpellIds,
     spellLoadout: character.spellLoadout.map((link) => ({
@@ -67,7 +59,7 @@ export const normalizeCharacterRecord = (character: CharacterRecord): CharacterR
     lifeFlask: normalizeLifeFlask(character.lifeFlask?.currentCharges),
     spellProgress: normalizeSpellProgress(character.spellProgress, normalizedUnlockedSpellIds),
     mapProgress: normalizeMapProgress(character.mapProgress)
-  };
+  });
 };
 
 export const spendLevelStatPoint = (
@@ -82,15 +74,10 @@ export const spendLevelStatPoint = (
     ...character.baseStats,
     [statKey]: character.baseStats[statKey] + 1
   };
-  const nextDerivedStats = deriveStats(nextBaseStats);
-  const healthRatio =
-    character.derivedStats.maxHealth > 0 ? character.currentHealth / character.derivedStats.maxHealth : 1;
-
-  return {
+  return applyEquipmentState({
     ...character,
     baseStats: nextBaseStats,
-    derivedStats: nextDerivedStats,
     unspentStatPoints: character.unspentStatPoints - 1,
-    currentHealth: Math.max(1, Math.round(nextDerivedStats.maxHealth * healthRatio))
-  };
+    currentHealth: character.currentHealth
+  });
 };

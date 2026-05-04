@@ -1,6 +1,7 @@
 import type { CharacterRecord } from "../../../shared/types/saveTypes";
 import { balanceConfig } from "../../config/balanceConfig";
-import { deriveStats } from "../player/playerTypes";
+import { applyEquipmentState } from "../player/equipment";
+import { deriveStats } from "../player/statCalculation";
 
 export const getExperienceRequiredForLevel = (level: number): number =>
   Math.round(
@@ -26,7 +27,7 @@ export const levelUp = (character: CharacterRecord): CharacterRecord => {
   const derivedStats = deriveStats(character.baseStats);
   const nextMaxHealth = derivedStats.maxHealth + balanceConfig.progression.healthPerLevel * (nextLevel - 1);
 
-  return {
+  return applyEquipmentState({
     ...character,
     level: nextLevel,
     experience: character.experience - character.experienceToNextLevel,
@@ -37,6 +38,5 @@ export const levelUp = (character: CharacterRecord): CharacterRecord => {
       maxHealth: nextMaxHealth
     },
     currentHealth: nextMaxHealth
-  };
+  });
 };
-

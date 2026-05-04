@@ -1,0 +1,11 @@
+import type { CharacterStats, DerivedStats } from "../../../shared/types/saveTypes";
+import { balanceConfig } from "../../config/balanceConfig";
+
+export const deriveStats = (baseStats: CharacterStats): DerivedStats => ({
+  maxHealth:
+    balanceConfig.statScaling.baseHealth +
+    baseStats.vitality * balanceConfig.statScaling.vitalityHealthMultiplier,
+  castSpeedMultiplier: 1 + baseStats.agility * balanceConfig.statScaling.agilityCastSpeedMultiplier,
+  critChance: baseStats.dexterity * balanceConfig.statScaling.dexterityCritChanceMultiplier,
+  spellPowerMultiplier: 1 + baseStats.strength * balanceConfig.statScaling.strengthSpellPowerMultiplier
+});

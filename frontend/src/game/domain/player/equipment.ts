@@ -1,7 +1,8 @@
 import type { CharacterRecord, CharacterStats, InventoryItem } from "../../../shared/types/saveTypes";
+import { balanceConfig } from "../../config/balanceConfig";
 import { getItemPowerScore } from "../items/itemPower";
 import { getEquippedUniqueModifiers } from "../items/uniqueEffects";
-import { deriveStats } from "./playerTypes";
+import { deriveStats } from "./statCalculation";
 
 const applyEquipmentBonuses = (
   baseStats: CharacterStats,
@@ -25,12 +26,17 @@ export const applyEquipmentState = (character: CharacterRecord): CharacterRecord
   const derivedStats = deriveStats(statAdjustedBase);
   const uniqueModifiers = getEquippedUniqueModifiers(character);
   const healthRatio =
-    character.derivedStats.maxHealth > 0 ? character.currentHealth / character.derivedStats.maxHealth : 1;
+    character.derivedStats.maxHealth > 0
+      ? Math.min(1, character.currentHealth / character.derivedStats.maxHealth)
+      : 1;
   const bonusHealth = Object.values(character.equippedItems).reduce(
     (total, item) => total + (item?.statBonuses.maxHealth ?? 0),
     0
   );
-  const nextMaxHealth = Math.round((derivedStats.maxHealth + bonusHealth) * uniqueModifiers.maxHealthMultiplier);
+  const levelHealthBonus = balanceConfig.progression.healthPerLevel * Math.max(0, character.level - 1);
+  const nextMaxHealth = Math.round(
+    (derivedStats.maxHealth + levelHealthBonus + bonusHealth) * uniqueModifiers.maxHealthMultiplier
+  );
 
   return {
     ...character,
