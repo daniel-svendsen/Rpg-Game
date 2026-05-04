@@ -10,17 +10,17 @@ export interface DroppableSpellEntry {
 
 export const spellDropBalance = {
   baseDropChanceByTier: {
-    0: percent(5),
-    1: percent(5.2),
-    2: percent(5.4),
-    3: percent(5.6),
-    4: percent(5.8),
-    5: percent(6),
-    6: percent(6.2),
-    7: percent(6.4),
-    8: percent(6.6),
-    9: percent(6.8),
-    10: percent(7)
+    0: percent(2.2),
+    1: percent(2.4),
+    2: percent(2.6),
+    3: percent(2.8),
+    4: percent(3),
+    5: percent(3.2),
+    6: percent(3.5),
+    7: percent(3.8),
+    8: percent(4.1),
+    9: percent(4.4),
+    10: percent(4.7)
   } as const,
   rareMonsterDropChanceMultiplier: 1.2,
   pool: [

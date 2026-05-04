@@ -46,16 +46,22 @@ export const useArenaSession = ({
   setStatusMessage,
   setErrorMessage
 }: UseArenaSessionParams): void => {
+  const snapshotUpdateIntervalMs = 33;
+  const characterSyncIntervalMs = 120;
+
   useEffect(() => {
     if (screenMode !== "arena" || !character || !activeMapId) {
       return;
     }
 
     let animationFrame = 0;
+    // Anchor the run to the character state at map start. During combat we keep
+    // mutating player state, so this effect must not restart on each character update.
     let runtime = createArenaRuntime(character, activeMapId, activeMapEnhancements);
     arenaRuntimeRef.current = runtime;
     let lastTimestamp = performance.now();
-    let lastUiUpdateAt = 0;
+    let lastSnapshotUpdateAt = 0;
+    let lastCharacterSyncAt = 0;
 
     const loop = (timestamp: number) => {
       const deltaMs = Math.min(50, timestamp - lastTimestamp);
@@ -67,10 +73,14 @@ export const useArenaSession = ({
         setRecentLoot((current) => [...runtime.snapshot.lootEvents, ...current].slice(0, 20));
       }
 
-      if (timestamp - lastUiUpdateAt > 120 || runtime.snapshot.isComplete) {
+      if (timestamp - lastSnapshotUpdateAt >= snapshotUpdateIntervalMs || runtime.snapshot.isComplete) {
         setArenaSnapshot(runtime.snapshot);
+        lastSnapshotUpdateAt = timestamp;
+      }
+
+      if (timestamp - lastCharacterSyncAt >= characterSyncIntervalMs || runtime.snapshot.isComplete) {
         commitCharacter(runtime.snapshot.player);
-        lastUiUpdateAt = timestamp;
+        lastCharacterSyncAt = timestamp;
       }
 
       if (runtime.snapshot.isComplete || runtime.snapshot.player.currentHealth <= 0) {
@@ -135,7 +145,6 @@ export const useArenaSession = ({
     return () => cancelAnimationFrame(animationFrame);
   }, [
     screenMode,
-    character,
     activeMapId,
     activeMapEnhancements,
     activeMapRunId,

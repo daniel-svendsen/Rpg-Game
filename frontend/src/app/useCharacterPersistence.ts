@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MutableRefObject } from "react";
+import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
 import { saveCharacter } from "../api/gameApi";
 import { normalizeCharacterRecord } from "../game/domain/player/playerTypes";
 import type { CharacterRecord } from "../shared/types/saveTypes";
@@ -25,26 +25,29 @@ export const useCharacterPersistence = ({
   const [character, setCharacter] = useState<CharacterRecord | null>(null);
   const latestCharacterRef = useRef<CharacterRecord | null>(null);
 
-  const commitCharacter = (nextCharacter: CharacterRecord | null): void => {
+  const commitCharacter = useCallback((nextCharacter: CharacterRecord | null): void => {
     latestCharacterRef.current = nextCharacter;
     setCharacter(nextCharacter);
-  };
+  }, []);
 
-  const persistCharacterNow = async (nextCharacter: CharacterRecord, failureMessage: string): Promise<void> => {
-    if (!token) {
-      return;
-    }
+  const persistCharacterNow = useCallback(
+    async (nextCharacter: CharacterRecord, failureMessage: string): Promise<void> => {
+      if (!token) {
+        return;
+      }
 
-    try {
-      const savedCharacter = normalizeCharacterRecord(await saveCharacter(nextCharacter, token));
-      latestCharacterRef.current = savedCharacter;
-      setCharacter(savedCharacter);
-    } catch {
-      onAutosaveError(failureMessage);
-    }
-  };
+      try {
+        const savedCharacter = normalizeCharacterRecord(await saveCharacter(nextCharacter, token));
+        latestCharacterRef.current = savedCharacter;
+        setCharacter(savedCharacter);
+      } catch {
+        onAutosaveError(failureMessage);
+      }
+    },
+    [onAutosaveError, token]
+  );
 
-  const saveCharacterManually = async (nextCharacter: CharacterRecord): Promise<void> => {
+  const saveCharacterManually = useCallback(async (nextCharacter: CharacterRecord): Promise<void> => {
     if (!token) {
       return;
     }
@@ -52,7 +55,7 @@ export const useCharacterPersistence = ({
     const savedCharacter = normalizeCharacterRecord(await saveCharacter(nextCharacter, token));
     latestCharacterRef.current = savedCharacter;
     setCharacter(savedCharacter);
-  };
+  }, [token]);
 
   useEffect(() => {
     if (!token || !character || !isAutosaveEnabled) {
