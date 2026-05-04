@@ -20,13 +20,16 @@ public class CharacterProfileService {
 
     private final CharacterProfileRepository characterProfileRepository;
     private final UserAccountRepository userAccountRepository;
+    private final CharacterStatCalculator characterStatCalculator;
 
     public CharacterProfileService(
             CharacterProfileRepository characterProfileRepository,
-            UserAccountRepository userAccountRepository
+            UserAccountRepository userAccountRepository,
+            CharacterStatCalculator characterStatCalculator
     ) {
         this.characterProfileRepository = characterProfileRepository;
         this.userAccountRepository = userAccountRepository;
+        this.characterStatCalculator = characterStatCalculator;
     }
 
     @Transactional(readOnly = true)
@@ -54,8 +57,9 @@ public class CharacterProfileService {
         character.setUnspentStatPoints(0);
         character.setGold(0);
         character.setLifeFlask(Map.of("currentCharges", 18));
-        character.setBaseStats(request.baseStats());
-        character.setDerivedStats(calculateDerivedStats(request.baseStats()));
+        Map<String, Object> derivedStats = characterStatCalculator.deriveStats(request.baseStats());
+        character.setBaseStats(characterStatCalculator.toBaseStatsMap(request.baseStats()));
+        character.setDerivedStats(derivedStats);
         character.setCurrentHealth((int) character.getDerivedStats().get("maxHealth"));
         character.setInventory(List.of());
         character.setEquippedItems(Map.of());
@@ -86,21 +90,12 @@ public class CharacterProfileService {
         character.setExperience(request.experience());
         character.setExperienceToNextLevel(request.experienceToNextLevel());
         character.setUnspentStatPoints(request.unspentStatPoints());
-        character.setCurrentHealth(request.currentHealth());
+        Map<String, Object> derivedStats = characterStatCalculator.deriveStats(request.baseStats());
+        character.setCurrentHealth(characterStatCalculator.clampCurrentHealth(request.currentHealth(), derivedStats));
         character.setGold(request.gold());
         character.setLifeFlask(Map.of("currentCharges", request.lifeFlask().currentCharges()));
-        character.setBaseStats(Map.of(
-                "strength", request.baseStats().strength(),
-                "agility", request.baseStats().agility(),
-                "vitality", request.baseStats().vitality(),
-                "dexterity", request.baseStats().dexterity()
-        ));
-        character.setDerivedStats(Map.of(
-                "maxHealth", request.derivedStats().maxHealth(),
-                "castSpeedMultiplier", request.derivedStats().castSpeedMultiplier(),
-                "critChance", request.derivedStats().critChance(),
-                "spellPowerMultiplier", request.derivedStats().spellPowerMultiplier()
-        ));
+        character.setBaseStats(characterStatCalculator.toBaseStatsMap(request.baseStats()));
+        character.setDerivedStats(derivedStats);
         character.setInventory(request.inventory().stream().map(this::toItemMap).toList());
         Map<String, Object> equippedItems = new HashMap<>();
         request.equippedItems().forEach((slot, item) -> equippedItems.put(slot, toItemMap(item)));
@@ -158,20 +153,6 @@ public class CharacterProfileService {
         character.setUpdatedAt(Instant.now());
 
         return toResponse(characterProfileRepository.save(character));
-    }
-
-    private Map<String, Object> calculateDerivedStats(Map<String, Object> baseStats) {
-        int strength = ((Number) baseStats.getOrDefault("strength", 0)).intValue();
-        int agility = ((Number) baseStats.getOrDefault("agility", 0)).intValue();
-        int vitality = ((Number) baseStats.getOrDefault("vitality", 0)).intValue();
-        int dexterity = ((Number) baseStats.getOrDefault("dexterity", 0)).intValue();
-
-        return Map.of(
-                "maxHealth", 100 + vitality * 14,
-                "castSpeedMultiplier", 1 + agility * 0.015,
-                "critChance", dexterity * 0.004,
-                "spellPowerMultiplier", 1 + strength * 0.025
-        );
     }
 
     private Map<String, Object> toItemMap(InventoryItemRequest item) {

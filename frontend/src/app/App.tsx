@@ -1,33 +1,30 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { createCharacter, loadCharacter, saveCharacter } from "../api/gameApi";
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
+import { createCharacter, loadCharacter } from "../api/gameApi";
 import { login, register } from "../api/authApi";
 import type { AuthFormState } from "../auth/authTypes";
+import { HealthHud } from "./HealthHud";
+import { HubOverlayPanel } from "./HubOverlayPanel";
+import { InventoryTab } from "./InventoryTab";
+import { MapsTab } from "./MapsTab";
+import { ShopTab } from "./ShopTab";
+import { SpellsTab } from "./SpellsTab";
+import { useCharacterPersistence } from "./useCharacterPersistence";
 import { balanceConfig } from "../game/config/balanceConfig";
 import { getEnhancementShardCost, getMapEnhancementDefinition } from "../game/config/balance";
-import { getEquipmentSlotLabel, getItemSlotLabel } from "../game/config/itemConfig";
+import { getEquipmentSlotLabel } from "../game/config/itemConfig";
 import { mapConfig } from "../game/config/mapConfig";
 import { spellConfig, supportSpellConfig } from "../game/config/spellConfig";
 import { createArenaRuntime, stepArenaRuntime } from "../game/domain/combat/arenaSimulation";
 import type { ArenaRuntimeState } from "../game/domain/combat/arenaSimulation";
-import {
-  getComparisonEquippedItem,
-  getItemPowerScore,
-  getPowerChangeForCharacterItem,
-  isUpgradeForCharacter
-} from "../game/domain/items/itemPower";
+import { getItemPowerScore } from "../game/domain/items/itemPower";
 import { generateItemDrop } from "../game/domain/items/itemGenerator";
-import { getItemStatLines } from "../game/domain/items/itemStats";
 import {
   addOwnedMap,
   consumeOwnedMap,
   getOwnedMapStack,
   getOwnedMapStackBySignature
 } from "../game/domain/maps/mapProgress";
-import {
-  getMapEnhancementSummary,
-  resolveMapInstance,
-  rollMapEnhancement
-} from "../game/domain/maps/mapEnhancements";
+import { getMapEnhancementSummary, rollMapEnhancement } from "../game/domain/maps/mapEnhancements";
 import { equipItem } from "../game/domain/player/equipment";
 import { canUseLifeFlask, useLifeFlask } from "../game/domain/player/lifeFlask";
 import {
@@ -35,7 +32,7 @@ import {
   normalizeCharacterRecord,
   spendLevelStatPoint
 } from "../game/domain/player/playerTypes";
-import { getSpellDescription, getSpellName } from "../game/domain/spells/spellDrops";
+import { getSpellName } from "../game/domain/spells/spellDrops";
 import { resolveSpell } from "../game/domain/spells/spellEngine";
 import {
   canUpgradeSpell,
@@ -45,7 +42,6 @@ import {
   getSpellUpgradeTierRequirement,
   upgradeSpell
 } from "../game/domain/spells/spellProgression";
-import { PhaserGame } from "../game/phaser/PhaserGame";
 import type {
   ArenaSnapshot,
   CharacterRecord,
@@ -55,6 +51,8 @@ import type {
   LootEntry,
   MapEnhancementInstance
 } from "../shared/types/saveTypes";
+
+const ArenaScreen = lazy(() => import("./ArenaScreen"));
 
 const initialAuthForm: AuthFormState = {
   email: "",
@@ -262,7 +260,6 @@ export const App = () => {
   const [accountEmail, setAccountEmail] = useState<string>(localStorage.getItem(accountEmailStorageKey) ?? "");
   const [characterName, setCharacterName] = useState("Warden");
   const [characterStats, setCharacterStats] = useState<CharacterStats>(initialStats);
-  const [character, setCharacter] = useState<CharacterRecord | null>(null);
   const [arenaSnapshot, setArenaSnapshot] = useState<ArenaSnapshot | null>(null);
   const [activeMapId, setActiveMapId] = useState<string | null>(null);
   const [activeMapEnhancements, setActiveMapEnhancements] = useState<MapEnhancementInstance[]>([]);
@@ -275,29 +272,14 @@ export const App = () => {
   const [selectedSupportSlot, setSelectedSupportSlot] = useState<0 | 1>(0);
   const [statusMessage, setStatusMessage] = useState("Create an account or log in to begin.");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const phaserContainerRef = useRef<HTMLDivElement | null>(null);
-  const phaserGameRef = useRef<PhaserGame | null>(null);
-  const latestCharacterRef = useRef<CharacterRecord | null>(null);
   const arenaRuntimeRef = useRef<ArenaRuntimeState | null>(null);
   const queuedMapIdsRef = useRef<string[]>([]);
-
-  const commitCharacter = (nextCharacter: CharacterRecord | null): void => {
-    latestCharacterRef.current = nextCharacter;
-    setCharacter(nextCharacter);
-  };
-
-  const persistCharacterNow = async (nextCharacter: CharacterRecord, failureMessage: string): Promise<void> => {
-    if (!token) {
-      return;
-    }
-
-    try {
-      await saveCharacter(nextCharacter, token);
-      latestCharacterRef.current = nextCharacter;
-    } catch {
-      setErrorMessage(failureMessage);
-    }
-  };
+  const { character, latestCharacterRef, commitCharacter, persistCharacterNow, saveCharacterManually } =
+    useCharacterPersistence({
+      token,
+      isAutosaveEnabled: screenMode === "arena" || screenMode === "hub",
+      onAutosaveError: setErrorMessage
+    });
 
   const remainingStatPoints = useMemo(
     () =>
@@ -364,9 +346,6 @@ export const App = () => {
           commitCharacter(runtime.snapshot.player);
         lastUiUpdateAt = timestamp;
       }
-
-      phaserGameRef.current?.updateSnapshot(runtime.snapshot);
-
       if (runtime.snapshot.isComplete || runtime.snapshot.player.currentHealth <= 0) {
         setArenaSnapshot(runtime.snapshot);
         commitCharacter(runtime.snapshot.player);
@@ -430,29 +409,12 @@ export const App = () => {
   }, [screenMode, character?.id, activeMapId, activeMapRunId, activeMapEnhancements]);
 
   useEffect(() => {
-    if (screenMode !== "arena" || !phaserContainerRef.current || phaserGameRef.current) {
-      return;
-    }
-
-    phaserGameRef.current = new PhaserGame(phaserContainerRef.current);
-
-    return () => {
-      phaserGameRef.current?.destroy();
-      phaserGameRef.current = null;
-    };
-  }, [screenMode]);
-
-  useEffect(() => {
     if (screenMode !== "hub" && screenMode !== "arena") {
       return;
     }
 
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [screenMode, hubTab]);
-
-  useEffect(() => {
-    latestCharacterRef.current = character;
-  }, [character]);
 
   useEffect(() => {
     if (!character || selectedMapTarget === "trainingGrounds") {
@@ -467,30 +429,6 @@ export const App = () => {
   useEffect(() => {
     queuedMapIdsRef.current = queuedMapIds;
   }, [queuedMapIds]);
-
-  useEffect(() => {
-    if (!token || !character || (screenMode !== "arena" && screenMode !== "hub")) {
-      return;
-    }
-
-    const intervalId = window.setInterval(() => {
-      const latestCharacter = latestCharacterRef.current;
-
-      if (!latestCharacter) {
-        return;
-      }
-
-      void saveCharacter(latestCharacter, token)
-        .then(() => {
-          latestCharacterRef.current = latestCharacter;
-        })
-        .catch(() => {
-          setErrorMessage("Autosave failed. Check that the backend is running.");
-        });
-    }, 10_000);
-
-    return () => window.clearInterval(intervalId);
-  }, [token, screenMode, character?.id]);
 
   const updateStat = (key: keyof CharacterStats, delta: number) => {
     setCharacterStats((current) => {
@@ -568,13 +506,12 @@ export const App = () => {
   };
 
   const handleManualSave = async (): Promise<void> => {
-    if (!token || !character) {
+    if (!character) {
       return;
     }
 
     try {
-      await saveCharacter(character, token);
-      latestCharacterRef.current = character;
+      await saveCharacterManually(character);
       setStatusMessage("Progress saved.");
       setErrorMessage(null);
     } catch (error) {
@@ -628,7 +565,7 @@ export const App = () => {
       nextCharacter = consumeOwnedMap(nextCharacter, mapTarget);
     }
 
-    setCharacter(nextCharacter);
+    commitCharacter(nextCharacter);
     setQueuedMapIds(remainingQueue);
     setActiveMapId(mapId);
     setActiveMapEnhancements(mapEnhancements);
@@ -1030,62 +967,6 @@ export const App = () => {
     );
   };
 
-  const renderHealthHud = () => {
-    const currentCharacter = arenaSnapshot?.player ?? character;
-    const currentHealth = currentCharacter?.currentHealth ?? 0;
-    const maxHealth = currentCharacter?.derivedStats.maxHealth ?? 1;
-    const healthPercentage = Math.max(0, Math.min(100, (currentHealth / maxHealth) * 100));
-    const currentFlaskCharges = currentCharacter?.lifeFlask.currentCharges ?? 0;
-
-    return (
-      <div className="panel">
-        <h4>Health</h4>
-        <div className="health-bar">
-          <div className="health-fill" style={{ width: `${healthPercentage}%` }} />
-        </div>
-        <p className="status-text">
-          {currentHealth} / {maxHealth}
-        </p>
-        {currentCharacter ? (
-          <div className="stack compact-stack">
-            <div className="status-text">
-              {`Life Flask: ${currentFlaskCharges}/${balanceConfig.healing.lifeFlask.maxCharges} charges`}
-            </div>
-            <button
-              className="secondary-button"
-              disabled={!canUseLifeFlask(currentCharacter)}
-              onClick={handleUseLifeFlask}
-              type="button"
-            >
-              {`Use Flask (${balanceConfig.healing.lifeFlask.chargesPerUse} charges)`}
-            </button>
-          </div>
-        ) : null}
-      </div>
-    );
-  };
-
-  const renderLootPanel = () => (
-    <section className="panel stack">
-      <h4>Recent Loot</h4>
-      {recentLoot.length === 0 ? <p className="status-text">No loot recorded yet.</p> : null}
-      {recentLoot.map((loot) => (
-        <div key={loot.id} className="loot-entry">
-          <div className="inventory-row">
-            <strong>{loot.name}</strong>
-            <span>{loot.kind}</span>
-          </div>
-          {loot.details.map((detail) => (
-            <div key={`${loot.id}-${detail}`} className="status-text">
-              {detail}
-            </div>
-          ))}
-          {loot.isUpgrade ? <div className="upgrade-text">Possible upgrade</div> : null}
-        </div>
-      ))}
-    </section>
-  );
-
   const renderHubTopBar = () => (
     <section className="panel mobile-header">
       <div>
@@ -1098,7 +979,34 @@ export const App = () => {
     </section>
   );
 
-  const renderMapsTab = () => {
+  const renderMapsTab = () => (
+    <MapsTab
+      topBar={renderHubTopBar()}
+      healthHud={
+        <HealthHud
+          character={arenaSnapshot?.player ?? character}
+          canUseLifeFlask={character ? canUseLifeFlask(arenaSnapshot?.player ?? character) : false}
+          onUseLifeFlask={handleUseLifeFlask}
+        />
+      }
+      character={character}
+      selectedMapTarget={selectedMapTarget}
+      selectedMapId={selectedMapId}
+      selectedMapEntry={selectedMapEntry}
+      selectedMapEnhancements={selectedMapEnhancements}
+      queuedMapCount={queuedMapIds.length}
+      mapShardAmount={character ? getCurrencyAmount(character, "mapShard") : 0}
+      getMapDisplayName={getMapDisplayName}
+      getMapVariantLabel={getMapVariantLabel}
+      getMapEnhancementDetailLines={getMapEnhancementDetailLines}
+      onStartMap={handleStartMap}
+      onRunAllMaps={handleRunAllMaps}
+      onEnhanceSelectedMap={handleEnhanceSelectedMap}
+      onSelectMap={setSelectedMapTarget}
+      onConvertShardsToMaps={handleConvertShardsToMaps}
+    />
+  );
+  /*
     const selectedMap = mapConfig[selectedMapId];
     const consumableMapEntries = character?.mapProgress.consumableMaps ?? [];
     const selectedResolvedMap = resolveMapInstance(selectedMap, selectedMapEnhancements);
@@ -1110,7 +1018,11 @@ export const App = () => {
     return (
       <div className="content stack mobile-content">
         {renderHubTopBar()}
-        {renderHealthHud()}
+        <HealthHud
+          character={arenaSnapshot?.player ?? character}
+          canUseLifeFlask={character ? canUseLifeFlask(arenaSnapshot?.player ?? character) : false}
+          onUseLifeFlask={handleUseLifeFlask}
+        />
         <section className="panel stack">
           <h4>Maps</h4>
           <div className="selected-map-summary">
@@ -1218,6 +1130,7 @@ export const App = () => {
     );
   };
 
+  */
   const renderEquipmentTab = () => (
     <div className="content stack mobile-content">
       {renderHubTopBar()}
@@ -1241,7 +1154,23 @@ export const App = () => {
     </div>
   );
 
-  const renderSpellsTab = () => {
+  const renderSpellsTab = () => (
+    <SpellsTab
+      topBar={renderHubTopBar()}
+      character={character}
+      getSpellAccentClassName={getSpellAccentClassName}
+      getSupportAccentClassName={getSupportAccentClassName}
+      getSpellDetailLines={getSpellDetailLines}
+      renderSpellUpgradeActions={renderSpellUpgradeActions}
+      onSelectMainSpell={handleSelectMainSpell}
+      onOpenMainSpellPicker={() => setOverlayPanel("mainSpellPicker")}
+      onOpenSupportPicker={(slotIndex) => {
+        setSelectedSupportSlot(slotIndex);
+        setOverlayPanel("supportPicker");
+      }}
+    />
+  );
+  /*
     const activeMainSpellId = character?.spellLoadout[0]?.mainSpellId ?? "";
     const supportSlots = character?.spellLoadout[0]?.supportSpellIds ?? [];
 
@@ -1341,118 +1270,39 @@ export const App = () => {
     );
   };
 
+  */
   const renderInventoryTab = () => (
-    <div className="content stack mobile-content">
-      {renderHubTopBar()}
-      <section className="panel stack">
-        <div className="inventory-row">
-          <h4>Inventory</h4>
-        </div>
-        {(character?.inventory ?? []).map((item) => (
-          <div key={item.id} className="loot-entry">
-            <div className="inventory-row">
-              <strong>{item.name}</strong>
-              <span>{item.slot ? getItemSlotLabel(item.slot) : "Stored"}</span>
-            </div>
-            <div className="status-text">Power {getItemPowerScore(item).toFixed(0)}</div>
-            {getItemStatLines(item).map((line) => (
-              <div key={`${item.id}-${line}`} className="status-text">
-                {line}
-              </div>
-            ))}
-            <div className="actions">
-              {item.slot ? (
-                <button
-                  className="secondary-button"
-                  onClick={() => {
-                    if (!character) {
-                      return;
-                    }
-
-                    if (item.slot === "Ring") {
-                      handleEquipItem(
-                        item.id,
-                        character.equippedItems.Ring1 && !character.equippedItems.Ring2 ? "Ring2" : "Ring1"
-                      );
-                      return;
-                    }
-
-                    setSelectedEquipmentSlot(item.slot as EquipmentSlot);
-                    handleEquipItem(item.id, item.slot as EquipmentSlot);
-                  }}
-                >
-                  Equip
-                </button>
-              ) : null}
-              <button className="secondary-button" onClick={() => handleSellItem(item.id)}>
-                Sell for {getItemSellPrice(item)} gold
-              </button>
-            </div>
-            {character && isUpgradeForCharacter(character, item) ? (
-              <div className="upgrade-text">Possible upgrade</div>
-            ) : null}
-          </div>
-        ))}
-      </section>
-      {renderLootPanel()}
-    </div>
+    <InventoryTab
+      topBar={renderHubTopBar()}
+      character={character}
+      recentLoot={recentLoot}
+      getItemSellPrice={getItemSellPrice}
+      onSellItem={handleSellItem}
+      onEquipItem={handleEquipItem}
+      onSelectEquipmentSlot={setSelectedEquipmentSlot}
+    />
   );
 
   const renderShopTab = () => (
-    <div className="content stack mobile-content">
-      {renderHubTopBar()}
-      <section className="panel stack">
-        <div className="inventory-row">
-          <h4>Shop</h4>
-          <button className="secondary-button" onClick={handleSellAllItems}>
-            Sell all
-          </button>
-        </div>
-        {shopItems.map((item) => {
-          const comparisonItem = character ? getComparisonEquippedItem(character, item) : null;
-          const powerChange = character ? getPowerChangeForCharacterItem(character, item) : null;
-
-          return (
-            <div key={item.id} className="loot-entry">
-              <div className="inventory-row">
-                <strong>{item.name}</strong>
-                <span>{item.price} gold</span>
-              </div>
-              <div className="status-text">Power {getItemPowerScore(item).toFixed(0)}</div>
-              {character ? <div className="status-text">{formatPowerChange(powerChange)}</div> : null}
-              {comparisonItem ? (
-                <div className="status-text">
-                  Compared to equipped {getItemSlotLabel(comparisonItem.slot ?? item.slot ?? "Weapon").toLowerCase()}:{" "}
-                  {comparisonItem.name}
-                </div>
-              ) : item.slot ? (
-                <div className="status-text">No equipped {getItemSlotLabel(item.slot).toLowerCase()} yet.</div>
-              ) : null}
-              {getItemStatLines(item).map((line) => (
-                <div key={`${item.id}-${line}`} className="status-text">
-                  {line}
-                </div>
-              ))}
-              <button className="secondary-button" onClick={() => handleBuyShopItem(item.id)}>
-                Buy
-              </button>
-              {character && isUpgradeForCharacter(character, item) ? (
-                <div className="upgrade-text">Possible upgrade</div>
-              ) : null}
-            </div>
-          );
-        })}
-        <button className="secondary-button" onClick={handleRefreshShop}>
-          Refresh shop ({balanceConfig.economy.shopRefreshGoldCost} gold)
-        </button>
-      </section>
-    </div>
+    <ShopTab
+      topBar={renderHubTopBar()}
+      character={character}
+      shopItems={shopItems}
+      formatPowerChange={formatPowerChange}
+      onBuyShopItem={handleBuyShopItem}
+      onSellAllItems={handleSellAllItems}
+      onRefreshShop={handleRefreshShop}
+    />
   );
 
   const renderCharacterTab = () => (
     <div className="content stack mobile-content">
       {renderHubTopBar()}
-      {renderHealthHud()}
+      <HealthHud
+        character={arenaSnapshot?.player ?? character}
+        canUseLifeFlask={character ? canUseLifeFlask(arenaSnapshot?.player ?? character) : false}
+        onUseLifeFlask={handleUseLifeFlask}
+      />
       <section className="panel stack">
         <h4>Account</h4>
         <div className="status-text">Email: {accountEmail || "Current session"}</div>
@@ -1512,140 +1362,23 @@ export const App = () => {
     );
   };
 
-  const renderOverlayPanel = () => {
-    if (!character || !overlayPanel) {
-      return null;
-    }
-
-    if (overlayPanel === "equipmentPicker") {
-      const selectedSlotItems = character.inventory
-        .filter((item) =>
-          selectedEquipmentSlot === "Ring1" || selectedEquipmentSlot === "Ring2"
-            ? item.slot === "Ring"
-            : item.slot === selectedEquipmentSlot
-        )
-        .sort((left, right) => getItemPowerScore(right) - getItemPowerScore(left));
-
-      return (
-        <div className="mobile-overlay" onClick={() => setOverlayPanel(null)}>
-          <div className="mobile-panel" onClick={(event) => event.stopPropagation()}>
-            <div className="inventory-row">
-              <h3>{getEquipmentSlotLabel(selectedEquipmentSlot)}</h3>
-              <button className="secondary-button" onClick={() => setOverlayPanel(null)}>
-                Close
-              </button>
-            </div>
-            {selectedSlotItems.length === 0 ? <p className="status-text">No items for this slot yet.</p> : null}
-            {selectedSlotItems.map((item) => (
-              <div key={item.id} className="loot-entry">
-                <div className="inventory-row">
-                  <strong>{item.name}</strong>
-                  <span>Power {getItemPowerScore(item).toFixed(0)}</span>
-                </div>
-                <div className="status-text">
-                  {formatPowerChange(
-                    character && item.slot ? getPowerChangeForCharacterItem(character, item) : null
-                  )}
-                </div>
-                {getItemStatLines(item).map((line) => (
-                  <div key={`${item.id}-${line}`} className="status-text">
-                    {line}
-                  </div>
-                ))}
-                <button className="primary-button" onClick={() => handleEquipItem(item.id, selectedEquipmentSlot)}>
-                  Equip
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (overlayPanel === "mainSpellPicker") {
-      const activeMainSpellId = character.spellLoadout[0]?.mainSpellId ?? "";
-
-      return (
-        <div className="mobile-overlay" onClick={() => setOverlayPanel(null)}>
-          <div className="mobile-panel" onClick={(event) => event.stopPropagation()}>
-            <div className="inventory-row">
-              <h3>Main Spell</h3>
-              <button className="secondary-button" onClick={() => setOverlayPanel(null)}>
-                Close
-              </button>
-            </div>
-            {(character.unlockedSpellIds ?? []).map((spellId) => (
-              <div key={spellId} className="loot-entry">
-                <div className="inventory-row">
-                  <div className="materia-picker-row">
-                    <span className={`materia-orb support-materia ${getSpellAccentClassName(spellId)}`} />
-                    <div className="stack compact-stack">
-                      <strong>{getSpellName(spellId)}</strong>
-                      <div className="status-text">{getSpellDescription(spellId)}</div>
-                    </div>
-                  </div>
-                  <button
-                    className="primary-button"
-                    onClick={() => {
-                      handleSelectMainSpell(spellId);
-                      setOverlayPanel(null);
-                    }}
-                  >
-                    {activeMainSpellId === spellId ? "Active" : "Equip"}
-                  </button>
-                </div>
-                <div className="fact-grid">
-                  {getSpellDetailLines(spellId, []).map((line) => (
-                    <span key={`${spellId}-picker-${line}`} className="fact-chip">
-                      {line}
-                    </span>
-                  ))}
-                </div>
-                {renderSpellUpgradeActions(spellId)}
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="mobile-overlay" onClick={() => setOverlayPanel(null)}>
-        <div className="mobile-panel" onClick={(event) => event.stopPropagation()}>
-          <div className="inventory-row">
-            <h3>Support Slot {selectedSupportSlot + 1}</h3>
-            <button className="secondary-button" onClick={() => setOverlayPanel(null)}>
-              Close
-            </button>
-          </div>
-          {(character.unlockedSupportSpellIds ?? []).map((supportSpellId) => {
-            const supportSpell = supportSpellConfig[supportSpellId];
-
-            if (!supportSpell) {
-              return null;
-            }
-
-            return (
-              <div key={supportSpell.id} className="loot-entry">
-                <div className="inventory-row">
-                  <div className="materia-picker-row">
-                    <span className={`materia-orb support-materia ${getSupportAccentClassName(supportSpell.id)}`} />
-                    <div className="stack compact-stack">
-                      <strong>{supportSpell.name}</strong>
-                      <div className="status-text">{supportSpell.tags.join(", ")}</div>
-                    </div>
-                  </div>
-                  <button className="primary-button" onClick={() => handleSelectSupportSpell(supportSpell.id)}>
-                    Select
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
+  const renderOverlayPanel = () => (
+    <HubOverlayPanel
+      character={character}
+      overlayPanel={overlayPanel}
+      selectedEquipmentSlot={selectedEquipmentSlot}
+      selectedSupportSlot={selectedSupportSlot}
+      getSpellAccentClassName={getSpellAccentClassName}
+      getSupportAccentClassName={getSupportAccentClassName}
+      formatPowerChange={formatPowerChange}
+      getSpellDetailLines={getSpellDetailLines}
+      renderSpellUpgradeActions={renderSpellUpgradeActions}
+      onClose={() => setOverlayPanel(null)}
+      onEquipItem={handleEquipItem}
+      onSelectMainSpell={handleSelectMainSpell}
+      onSelectSupportSpell={handleSelectSupportSpell}
+    />
+  );
 
   const renderAuthPanel = () => (
     <div className="content">
@@ -1737,72 +1470,33 @@ export const App = () => {
   );
 
   const renderArena = () => {
-    const activeSpellId = character?.spellLoadout[0]?.mainSpellId ?? "";
-
     return (
-      <div className="content arena-layout">
-        <div className="mobile-only-feedback">{renderInlineFeedback()}</div>
-        <section className="panel arena-host">
-          <div className="arena-overlay">
-            <div className="overlay-chip">
-              <strong>{character?.name}</strong>
-              <span>{activeSpellId ? getSpellName(activeSpellId) : "No spell"}</span>
-            </div>
+      <Suspense
+        fallback={
+          <div className="content">
+            <section className="panel stack">
+              <h3>Loading arena</h3>
+              <p className="status-text">Preparing combat scene and mobile HUD.</p>
+            </section>
           </div>
-          <div ref={phaserContainerRef} />
-        </section>
-        <aside className="stack">
-          {renderHealthHud()}
-          <section className="panel">
-            <h4>Active spell</h4>
-            <div className="badge-row">
-              <span className="badge">{character ? getSpellName(character.spellLoadout[0]?.mainSpellId ?? "") : ""}</span>
-            </div>
-            <div className="fact-grid">
-              {character
-                ? getSpellDetailLines(
-                    character.spellLoadout[0]?.mainSpellId ?? "",
-                    character.spellLoadout[0]?.supportSpellIds ?? []
-                  ).map((line) => (
-                    <span key={`arena-${line}`} className="fact-chip">
-                      {line}
-                    </span>
-                  ))
-                : null}
-            </div>
-            <p className="status-text">
-              Supports: {(character?.spellLoadout[0]?.supportSpellIds ?? [])
-                .map((id) => supportSpellConfig[id]?.name ?? id)
-                .join(", ") || "None"}
-            </p>
-          </section>
-          <section className="panel">
-            <h4>Map state</h4>
-            <p>
-              {arenaSnapshot?.mapName} Tier {arenaSnapshot?.mapTier}
-            </p>
-            <p>Enemies alive: {arenaSnapshot?.enemies.length ?? 0}</p>
-            <p>{arenaSnapshot?.isComplete ? "Map complete." : "Map in progress."}</p>
-            <div className="actions">
-              <button className="primary-button" onClick={() => void handleManualSave()}>
-                Save progress
-              </button>
-              <button
-                className="secondary-button"
-                onClick={() => {
-                  setQueuedMapIds([]);
-                  setScreenMode("hub");
-                  setActiveMapId(null);
-                  setActiveMapEnhancements([]);
-                }}
-              >
-                Back to hub
-              </button>
-            </div>
-          </section>
-          {renderLootPanel()}
-        </aside>
-      </div>
+        }
+      >
+        <ArenaScreen
+          arenaSnapshot={arenaSnapshot}
+          character={character}
+          recentLoot={recentLoot}
+          feedback={renderInlineFeedback()}
+          onManualSave={handleManualSave}
+          onUseLifeFlask={handleUseLifeFlask}
+          getSpellDetailLines={getSpellDetailLines}
+          onBackToHub={() => {
+            setQueuedMapIds([]);
+            setScreenMode("hub");
+            setActiveMapId(null);
+            setActiveMapEnhancements([]);
+          }}
+        />
+      </Suspense>
     );
   };
 

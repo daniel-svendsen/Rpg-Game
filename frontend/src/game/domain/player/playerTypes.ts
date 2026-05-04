@@ -40,12 +40,12 @@ export const createNewCharacter = (name: string, baseStats: CharacterStats): Cha
 
 export const normalizeCharacterRecord = (character: CharacterRecord): CharacterRecord => {
   const normalizedUnlockedSpellIds = [...new Set(character.unlockedSpellIds.map(normalizeSpellId))];
+  const savedSupportIds = character.unlockedSupportSpellIds?.length
+    ? character.unlockedSupportSpellIds
+    : [...starterSupportSpellIds];
+  const validSupportIds = savedSupportIds.filter((supportSpellId) => supportSpellConfig[supportSpellId]);
   const normalizedUnlockedSupportSpellIds = [
-    ...new Set(
-      (character.unlockedSupportSpellIds?.length ? character.unlockedSupportSpellIds : [...starterSupportSpellIds]).filter(
-        (supportSpellId) => supportSpellConfig[supportSpellId]
-      )
-    )
+    ...new Set(validSupportIds.length > 0 ? validSupportIds : [...starterSupportSpellIds])
   ];
 
   return applyEquipmentState({
