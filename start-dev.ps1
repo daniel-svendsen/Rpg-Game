@@ -43,12 +43,16 @@ $frontendApiBaseUrl = $properties["VITE_API_BASE_URL"]
 $frontendWorkingDirectory = Join-Path $projectRoot "frontend"
 $backendWorkingDirectory = Join-Path $projectRoot "backend"
 
+if (-not [string]::IsNullOrWhiteSpace($frontendApiBaseUrl) -and $frontendApiBaseUrl -match "^https?://(localhost|127\.0\.0\.1)(:\d+)?/?$") {
+    $frontendApiBaseUrl = ""
+}
+
 Remove-Item $frontendLogPath, $frontendErrorLogPath, $backendLogPath, $backendErrorLogPath -Force -ErrorAction SilentlyContinue
 
 $frontendCommand = if ([string]::IsNullOrWhiteSpace($frontendApiBaseUrl)) {
-    "Set-Location '$frontendWorkingDirectory'; npm run dev"
+    "Set-Location '$frontendWorkingDirectory'; npm run dev -- --host 0.0.0.0"
 } else {
-    "`$env:VITE_API_BASE_URL='$frontendApiBaseUrl'; Set-Location '$frontendWorkingDirectory'; npm run dev"
+    "`$env:VITE_API_BASE_URL='$frontendApiBaseUrl'; Set-Location '$frontendWorkingDirectory'; npm run dev -- --host 0.0.0.0"
 }
 
 $backendCommand = if ($CleanBackend) {

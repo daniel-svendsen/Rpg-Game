@@ -89,6 +89,40 @@ If something fails to start, check:
 - `.run/frontend.error.log`
 - `.run/backend.error.log`
 
+## Test On Your Phone
+
+Phone testing uses local-only overrides so the shared default backend config stays loopback-only.
+
+1. Create or update `dev.local.properties` in the repo root:
+
+```properties
+APP_SERVER_ADDRESS=0.0.0.0
+APP_CLIENT_ALLOWED_ORIGIN_PATTERNS=http://localhost:*,http://127.0.0.1:*,http://192.168.*:*,http://10.*:*,http://172.16.*:*,http://172.17.*:*,http://172.18.*:*,http://172.19.*:*,http://172.20.*:*,http://172.21.*:*,http://172.22.*:*,http://172.23.*:*,http://172.24.*:*,http://172.25.*:*,http://172.26.*:*,http://172.27.*:*,http://172.28.*:*,http://172.29.*:*,http://172.30.*:*,http://172.31.*:*,capacitor://localhost,ionic://localhost
+```
+
+2. Make sure your phone and computer are on the same WiFi
+3. Start the project:
+
+```powershell
+.\clean-start-dev.ps1
+```
+
+4. Find your computer's local IP:
+
+```powershell
+ipconfig
+```
+
+Look for the IPv4 address, for example `192.168.1.25`
+
+5. Open this in your phone browser:
+
+```text
+http://192.168.1.25:5173
+```
+
+The frontend will automatically call the backend on the same host at port `8080`, so you do not need to manually change `VITE_API_BASE_URL` just for phone testing unless you want to override it.
+
 ## Start And Stop
 
 The project now uses one standard local workflow from the repo root.

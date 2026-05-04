@@ -8,6 +8,7 @@ import { gainLifeFlaskCharges } from "../player/lifeFlask";
 import { applyExperience } from "../progression/progression";
 import { getNextDroppableSpellId, getSpellName } from "../spells/spellDrops";
 import { resolveSpell } from "../spells/spellEngine";
+import { createClientId } from "../../../shared/utils/id";
 import type {
   ArenaEnemyState,
   ArenaSnapshot,
@@ -100,7 +101,7 @@ const createEnemy = (map: MapDefinition, rarity: MonsterRarity): InternalEnemySt
   );
 
   return {
-    id: `${monsterDefinition.id}-${crypto.randomUUID()}`,
+    id: `${monsterDefinition.id}-${createClientId()}`,
     x: spawnX,
     y: spawnY,
     health: maxHealth,
@@ -193,7 +194,7 @@ const rollDrops = (
       currencies: addCurrency(nextCharacter.currencies, "mapShard", 1)
     };
     lootEvents.push({
-      id: `currency-${crypto.randomUUID()}`,
+      id: `currency-${createClientId()}`,
       kind: "Currency",
       name: "Map Shard",
       details: ["Used for future map upgrades and crafting"],
@@ -209,7 +210,7 @@ const rollDrops = (
       unlockedSpellIds: [...nextCharacter.unlockedSpellIds, spellId]
     };
     lootEvents.push({
-      id: `spell-${spellId}-${crypto.randomUUID()}`,
+      id: `spell-${spellId}-${createClientId()}`,
       kind: "Spell",
       name: getSpellName(spellId),
       details: ["Unlocked permanently in your spell inventory"],
@@ -221,7 +222,7 @@ const rollDrops = (
     const nextTier = mapTier + 1;
     nextCharacter = addOwnedMap(nextCharacter, `tier${nextTier}Map`, nextTier);
     lootEvents.push({
-      id: `map-${nextTier}-${crypto.randomUUID()}`,
+      id: `map-${nextTier}-${createClientId()}`,
       kind: "Map",
       name: `Tier ${nextTier} Map`,
       details: ["Consumable map added to your map inventory"],

@@ -1,6 +1,7 @@
 import { balanceConfig } from "../../config/balanceConfig";
 import { itemBases } from "../../config/itemConfig";
 import type { InventoryItem, ItemRarity } from "../../../shared/types/saveTypes";
+import { createClientId } from "../../../shared/utils/id";
 
 const randomInRange = ([min, max]: readonly [number, number]): number =>
   Number((Math.random() * (max - min) + min).toFixed(2));
@@ -29,7 +30,7 @@ export const generateItemDrop = (tier: number, isRareMonster: boolean): Inventor
   const rarity = generateRarity(isRareMonster);
 
   return {
-    id: `${base.id}-${crypto.randomUUID()}`,
+    id: `${base.id}-${createClientId()}`,
     name: `${rarity} ${base.name}`,
     slot: base.slot,
     rarity,

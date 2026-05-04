@@ -17,16 +17,12 @@ spring:
     locations: classpath:db/migration
 
 server:
+  address: ${APP_SERVER_ADDRESS:127.0.0.1}
   port: ${APP_PORT:8080}
 
 app:
   client:
-    allowed-origins:
-      - http://localhost:5173
-      - http://127.0.0.1:5173
-      - http://localhost
-      - capacitor://localhost
-      - ionic://localhost
+    allowed-origin-patterns: ${APP_CLIENT_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*,capacitor://localhost,ionic://localhost}
   jwt:
     secret: ${APP_JWT_SECRET:change-this-secret-before-production}
     expiration-seconds: ${APP_JWT_EXPIRATION_SECONDS:86400}

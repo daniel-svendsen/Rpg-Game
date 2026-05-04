@@ -1,4 +1,20 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
+const resolveApiBaseUrl = (): string => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+
+  if (import.meta.env.DEV) {
+    return "";
+  }
+
+  if (typeof window !== "undefined") {
+    return `${window.location.protocol}//${window.location.hostname}:8080`;
+  }
+
+  return "http://localhost:8080";
+};
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 export const getApiBaseUrl = (): string => API_BASE_URL;
 
@@ -27,4 +43,3 @@ export const jsonRequest = async <T>(
 
   return (await response.json()) as T;
 };
-
