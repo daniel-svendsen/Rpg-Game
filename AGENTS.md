@@ -32,6 +32,7 @@
 - `frontend/src/game/domain` is the source of truth for gameplay rules.
 - `frontend/src/game/phaser` is a rendering adapter and scene integration layer only.
 - `frontend/src/game/config` owns balance, spells, maps, monsters, and item configuration.
+- `frontend/src/app` should stay focused on screen composition, persistence orchestration, and mobile UI flow.
 - Keep gameplay rules, progression rules, and balance decisions out of rendering code when practical.
 - Keep backend persistence contracts explicit and versionable.
 - Prefer early hybrid PostgreSQL persistence:
@@ -137,6 +138,8 @@
 - After making changes, run relevant checks when practical and make a best effort to verify they pass.
 - Common checks for this repo:
   - frontend build
+  - frontend domain tests
+  - backend tests
   - backend startup or migration awareness
   - save/load awareness when persistence changes
 

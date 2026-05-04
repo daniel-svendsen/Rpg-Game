@@ -15,6 +15,7 @@ The current build already includes:
 - account register/login
 - character creation with stat allocation
 - saved character progression
+- shared frontend domain tests for progression and save-related flows
 - one arena-style combat loop with automatic spell casting
 - enemy spawning, movement, damage, death, loot, gold, and experience
 - centralized balance config
@@ -210,6 +211,20 @@ cd frontend
 npm run build
 ```
 
+Frontend domain tests:
+
+```powershell
+cd frontend
+npm test
+```
+
+Backend automated tests:
+
+```powershell
+cd backend
+mvn test
+```
+
 Backend runs through Spring Boot from the shared startup script. If backend persistence changes were added, restart the backend so Flyway can apply new migrations.
 
 ## Persistence Notes
@@ -250,6 +265,7 @@ The goal is not just to show game features, but also to show that I can:
 - define architecture and guardrails for AI-assisted coding
 - keep gameplay rules centralized and maintainable
 - separate rendering from domain logic
+- keep large UI flows split into focused React components instead of one oversized app shell
 - evolve persistence contracts safely
 - use AI as a development accelerator without losing control of design decisions
 
@@ -263,9 +279,13 @@ The main project instructions for future AI agents live in:
 - [start-dev.ps1](/C:/Users/danie/Documents/New%20project/start-dev.ps1)
 - [clean-start-dev.ps1](/C:/Users/danie/Documents/New%20project/clean-start-dev.ps1)
 - [stop-dev.ps1](/C:/Users/danie/Documents/New%20project/stop-dev.ps1)
+- [frontend/src/app/App.tsx](/C:/Users/danie/Documents/New%20project/frontend/src/app/App.tsx)
+- [frontend/src/app/useCharacterPersistence.ts](/C:/Users/danie/Documents/New%20project/frontend/src/app/useCharacterPersistence.ts)
 - [frontend/src/game/config/balanceConfig.ts](/C:/Users/danie/Documents/New%20project/frontend/src/game/config/balanceConfig.ts)
 - [frontend/src/game/config/spellConfig.ts](/C:/Users/danie/Documents/New%20project/frontend/src/game/config/spellConfig.ts)
 - [frontend/src/game/domain/combat/arenaSimulation.ts](/C:/Users/danie/Documents/New%20project/frontend/src/game/domain/combat/arenaSimulation.ts)
+- [frontend/src/game/domain/maps/mapProgress.test.ts](/C:/Users/danie/Documents/New%20project/frontend/src/game/domain/maps/mapProgress.test.ts)
+- [frontend/src/game/domain/spells/spellProgression.test.ts](/C:/Users/danie/Documents/New%20project/frontend/src/game/domain/spells/spellProgression.test.ts)
 - [backend/src/main/resources/db/migration](/C:/Users/danie/Documents/New%20project/backend/src/main/resources/db/migration)
 
 ## Future Android Packaging
