@@ -204,7 +204,7 @@ const rollDrops = (
         kind: "Item",
         name: item.name,
         details: [
-          `Tier ${item.tier} ${item.slot ? getItemSlotLabel(item.slot) : "Item"}`,
+          `Item Tier ${item.tier} ${item.slot ? getItemSlotLabel(item.slot) : "Item"}`,
           `Power ${getItemPowerScore(item).toFixed(0)}`,
           ...Object.entries(item.statBonuses).map(([key, value]) => `${key} +${value}`)
         ],

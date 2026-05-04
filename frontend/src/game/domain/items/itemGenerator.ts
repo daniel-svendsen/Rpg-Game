@@ -4,9 +4,78 @@ import type { CharacterRecord, InventoryItem, ItemRarity } from "../../../shared
 import { createClientId } from "../../../shared/utils/id";
 import { getEquippedUniqueModifiers } from "../items/uniqueEffects";
 import { pickWeighted } from "../loot/weightedTables";
+import type { Tag } from "../../../shared/types/saveTypes";
 
 const randomInRange = ([min, max]: readonly [number, number]): number =>
   Number((Math.random() * (max - min) + min).toFixed(2));
+
+const pickRandom = <T,>(values: readonly T[]): T => values[Math.floor(Math.random() * values.length)];
+
+const statNameParts = {
+  strength: ["Titan", "Crushing", "Stonebound"],
+  agility: ["Fleet", "Windstep", "Quickened"],
+  vitality: ["Stalwart", "Ironheart", "Enduring"],
+  dexterity: ["Deadeye", "Keen", "Surehand"],
+  maxHealth: ["Bulwark", "Lifewoven", "Stout"],
+  critChance: ["Razor", "Nightglass", "Precise"],
+  spellPowerMultiplier: ["Runebound", "Arcanist", "Spellforged"]
+} as const;
+
+const tagNameParts: Partial<Record<Tag, readonly string[]>> = {
+  Fire: ["Ember", "Cinder", "Ashen"],
+  Cold: ["Glacial", "Frost", "Winter"],
+  Lightning: ["Storm", "Volt", "Thunder"],
+  Critical: ["Assassin", "Executioner", "Keen"],
+  CastSpeed: ["Swift", "Haste", "Quickening"],
+  SpellDamage: ["Mystic", "Sorcerer", "Runic"],
+  Physical: ["Iron", "Steel", "Warden"]
+};
+
+const rarityTitleParts = {
+  Normal: ["Worn", "Simple", "Plain"],
+  Magic: ["Enchanted", "Gleaming", "Charged"],
+  Rare: ["Mythic", "Ancient", "Sovereign"]
+} as const;
+
+const getPrimaryStatKey = (statBonuses: InventoryItem["statBonuses"]): keyof typeof statNameParts => {
+  const scoredStats: Array<[keyof typeof statNameParts, number]> = [
+    ["strength", (statBonuses.strength ?? 0) * 1.2],
+    ["agility", (statBonuses.agility ?? 0) * 1.2],
+    ["vitality", (statBonuses.vitality ?? 0) * 1.4],
+    ["dexterity", (statBonuses.dexterity ?? 0) * 1.2],
+    ["maxHealth", (statBonuses.maxHealth ?? 0) * 0.2],
+    ["critChance", (statBonuses.critChance ?? 0) * 120],
+    ["spellPowerMultiplier", (statBonuses.spellPowerMultiplier ?? 0) * 100]
+  ];
+
+  return scoredStats.sort((left, right) => right[1] - left[1])[0]?.[0] ?? "strength";
+};
+
+const getFlavorPartFromTags = (tags: Tag[]): string | null => {
+  const matchingParts = tags.flatMap((tag) => tagNameParts[tag] ?? []);
+  return matchingParts.length > 0 ? pickRandom(matchingParts) : null;
+};
+
+const buildGeneratedItemName = (
+  baseName: string,
+  rarity: Exclude<ItemRarity, "Unique">,
+  tags: Tag[],
+  statBonuses: InventoryItem["statBonuses"]
+): string => {
+  const rarityPart = pickRandom(rarityTitleParts[rarity]);
+  const statPart = pickRandom(statNameParts[getPrimaryStatKey(statBonuses)]);
+  const tagPart = getFlavorPartFromTags(tags);
+
+  if (rarity === "Normal") {
+    return `${tagPart ?? rarityPart} ${baseName}`;
+  }
+
+  if (rarity === "Magic") {
+    return `${tagPart ?? rarityPart} ${statPart} ${baseName}`;
+  }
+
+  return `${rarityPart} ${tagPart ?? statPart} ${baseName} of the ${statPart}`;
+};
 
 const generateRarity = (tier: number, isRareMonster: boolean): ItemRarity => {
   const tierBalance = getMapBalanceByTier(tier);
@@ -77,22 +146,26 @@ export const generateItemDrop = (tier: number, isRareMonster: boolean): Inventor
     }
   }
 
+  const generatedRarity: Exclude<ItemRarity, "Unique"> = rarity === "Unique" ? "Rare" : rarity;
+
+  const statBonuses = {
+    strength: Math.round(randomInRange(ranges.strength)),
+    agility: Math.round(randomInRange(ranges.agility)),
+    vitality: Math.round(randomInRange(ranges.vitality)),
+    dexterity: Math.round(randomInRange(ranges.dexterity)),
+    maxHealth: Math.round(randomInRange(ranges.maxHealth)),
+    critChance: randomInRange(ranges.critChance),
+    spellPowerMultiplier: randomInRange(ranges.spellPowerMultiplier)
+  };
+
   return {
     id: `${base.id}-${createClientId()}`,
-    name: `${rarity} ${base.name}`,
+    name: buildGeneratedItemName(base.name, generatedRarity, base.tags, statBonuses),
     slot: base.slot,
-    rarity,
+    rarity: generatedRarity,
     tier,
-    tags: rarity === "Unique" ? [...base.tags, "Unique"] : base.tags,
-    statBonuses: {
-      strength: Math.round(randomInRange(ranges.strength)),
-      agility: Math.round(randomInRange(ranges.agility)),
-      vitality: Math.round(randomInRange(ranges.vitality)),
-      dexterity: Math.round(randomInRange(ranges.dexterity)),
-      maxHealth: Math.round(randomInRange(ranges.maxHealth)),
-      critChance: randomInRange(ranges.critChance),
-      spellPowerMultiplier: randomInRange(ranges.spellPowerMultiplier)
-    }
+    tags: base.tags,
+    statBonuses
   };
 };
 
@@ -115,22 +188,25 @@ export const generateItemDropForCharacter = (
 
   const base = itemBases[Math.floor(Math.random() * itemBases.length)];
   const ranges = tierBalance.itemStatRanges;
+  const generatedRarity: Exclude<ItemRarity, "Unique"> = rarity === "Unique" ? "Rare" : rarity;
+
+  const statBonuses = {
+    strength: Math.round(randomInRange(ranges.strength)),
+    agility: Math.round(randomInRange(ranges.agility)),
+    vitality: Math.round(randomInRange(ranges.vitality)),
+    dexterity: Math.round(randomInRange(ranges.dexterity)),
+    maxHealth: Math.round(randomInRange(ranges.maxHealth)),
+    critChance: randomInRange(ranges.critChance),
+    spellPowerMultiplier: randomInRange(ranges.spellPowerMultiplier)
+  };
 
   return {
     id: `${base.id}-${createClientId()}`,
-    name: `${rarity} ${base.name}`,
+    name: buildGeneratedItemName(base.name, generatedRarity, base.tags, statBonuses),
     slot: base.slot,
-    rarity,
+    rarity: generatedRarity,
     tier,
-    tags: rarity === "Unique" ? [...base.tags, "Unique"] : base.tags,
-    statBonuses: {
-      strength: Math.round(randomInRange(ranges.strength)),
-      agility: Math.round(randomInRange(ranges.agility)),
-      vitality: Math.round(randomInRange(ranges.vitality)),
-      dexterity: Math.round(randomInRange(ranges.dexterity)),
-      maxHealth: Math.round(randomInRange(ranges.maxHealth)),
-      critChance: randomInRange(ranges.critChance),
-      spellPowerMultiplier: randomInRange(ranges.spellPowerMultiplier)
-    }
+    tags: base.tags,
+    statBonuses
   };
 };

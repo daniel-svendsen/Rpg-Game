@@ -8,7 +8,12 @@ import { mapConfig } from "../game/config/mapConfig";
 import { spellConfig, supportSpellConfig } from "../game/config/spellConfig";
 import { createArenaRuntime, stepArenaRuntime } from "../game/domain/combat/arenaSimulation";
 import type { ArenaRuntimeState } from "../game/domain/combat/arenaSimulation";
-import { getItemPowerScore, isUpgradeForCharacter } from "../game/domain/items/itemPower";
+import {
+  getComparisonEquippedItem,
+  getItemPowerScore,
+  getPowerChangeForCharacterItem,
+  isUpgradeForCharacter
+} from "../game/domain/items/itemPower";
 import { generateItemDrop } from "../game/domain/items/itemGenerator";
 import { getItemStatLines } from "../game/domain/items/itemStats";
 import { addOwnedMap, consumeOwnedMap, getMapQuantity } from "../game/domain/maps/mapProgress";
@@ -79,7 +84,9 @@ const createShopStock = (tier: number): InventoryItem[] =>
 const toShopItemState = (item: InventoryItem): ShopItemState => ({
   ...item,
   price: Math.round(
-    balanceConfig.economy.shopBasePrice + getItemPowerScore(item) * balanceConfig.economy.shopPowerPriceMultiplier
+    (balanceConfig.economy.shopBasePrice +
+      getItemPowerScore(item) * balanceConfig.economy.shopPowerPriceMultiplier) *
+      balanceConfig.economy.shopRarityPriceMultiplier[item.rarity]
   )
 });
 
@@ -127,7 +134,15 @@ const getCurrencyAmount = (character: CharacterRecord, code: string): number =>
   character.currencies.find((entry) => entry.code === code)?.amount ?? 0;
 
 const getItemSellPrice = (item: InventoryItem): number =>
-  Math.max(4, Math.round(getItemPowerScore(item) * 0.35));
+  Math.max(
+    balanceConfig.economy.itemSellPriceFloor,
+    Math.round(getItemPowerScore(item) * balanceConfig.economy.itemSellPriceMultiplier)
+  );
+
+const formatPowerChange = (powerChange: number | null): string =>
+  powerChange === null
+    ? "Power change: New slot item"
+    : `Power change: ${powerChange > 0 ? "+" : ""}${powerChange.toFixed(0)}`;
 
 const updateCurrency = (character: CharacterRecord, code: string, delta: number): CharacterRecord => {
   const existing = character.currencies.find((entry) => entry.code === code);
@@ -1211,23 +1226,40 @@ export const App = () => {
             Sell all
           </button>
         </div>
-        {shopItems.map((item) => (
-          <div key={item.id} className="loot-entry">
-            <div className="inventory-row">
-              <strong>{item.name}</strong>
-              <span>{item.price} gold</span>
-            </div>
-            <div className="status-text">Power {getItemPowerScore(item).toFixed(0)}</div>
-            {getItemStatLines(item).map((line) => (
-              <div key={`${item.id}-${line}`} className="status-text">
-                {line}
+        {shopItems.map((item) => {
+          const comparisonItem = character ? getComparisonEquippedItem(character, item) : null;
+          const powerChange = character ? getPowerChangeForCharacterItem(character, item) : null;
+
+          return (
+            <div key={item.id} className="loot-entry">
+              <div className="inventory-row">
+                <strong>{item.name}</strong>
+                <span>{item.price} gold</span>
               </div>
-            ))}
-            <button className="secondary-button" onClick={() => handleBuyShopItem(item.id)}>
-              Buy
-            </button>
-          </div>
-        ))}
+              <div className="status-text">Power {getItemPowerScore(item).toFixed(0)}</div>
+              {character ? <div className="status-text">{formatPowerChange(powerChange)}</div> : null}
+              {comparisonItem ? (
+                <div className="status-text">
+                  Compared to equipped {getItemSlotLabel(comparisonItem.slot ?? item.slot ?? "Weapon").toLowerCase()}:{" "}
+                  {comparisonItem.name}
+                </div>
+              ) : item.slot ? (
+                <div className="status-text">No equipped {getItemSlotLabel(item.slot).toLowerCase()} yet.</div>
+              ) : null}
+              {getItemStatLines(item).map((line) => (
+                <div key={`${item.id}-${line}`} className="status-text">
+                  {line}
+                </div>
+              ))}
+              <button className="secondary-button" onClick={() => handleBuyShopItem(item.id)}>
+                Buy
+              </button>
+              {character && isUpgradeForCharacter(character, item) ? (
+                <div className="upgrade-text">Possible upgrade</div>
+              ) : null}
+            </div>
+          );
+        })}
         <button className="secondary-button" onClick={handleRefreshShop}>
           Refresh shop ({balanceConfig.economy.shopRefreshGoldCost} gold)
         </button>
@@ -1311,7 +1343,6 @@ export const App = () => {
             : item.slot === selectedEquipmentSlot
         )
         .sort((left, right) => getItemPowerScore(right) - getItemPowerScore(left));
-      const equippedItem = character.equippedItems[selectedEquipmentSlot];
 
       return (
         <div className="mobile-overlay" onClick={() => setOverlayPanel(null)}>
@@ -1330,24 +1361,9 @@ export const App = () => {
                   <span>Power {getItemPowerScore(item).toFixed(0)}</span>
                 </div>
                 <div className="status-text">
-                  {(() => {
-                    const powerChange =
-                      getItemPowerScore(item) -
-                      getItemPowerScore(
-                        equippedItem ??
-                          ({
-                            id: "empty",
-                            name: "Empty",
-                            slot: selectedEquipmentSlot,
-                            rarity: "Normal",
-                            tier: 1,
-                            tags: [],
-                            statBonuses: {}
-                          } as InventoryItem)
-                      );
-
-                    return `Power change: ${powerChange > 0 ? "+" : ""}${powerChange.toFixed(0)}`;
-                  })()}
+                  {formatPowerChange(
+                    character && item.slot ? getPowerChangeForCharacterItem(character, item) : null
+                  )}
                 </div>
                 {getItemStatLines(item).map((line) => (
                   <div key={`${item.id}-${line}`} className="status-text">

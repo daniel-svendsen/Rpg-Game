@@ -15,7 +15,7 @@ type ItemStatKey = (typeof orderedStatKeys)[number];
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
-export const getStatTier = (statKey: ItemStatKey, value: number, itemTier: number): number => {
+export const getStatRollRank = (statKey: ItemStatKey, value: number, itemTier: number): number => {
   const tierRanges = getMapBalanceByTier(itemTier).itemStatRanges as Partial<
     Record<ItemStatKey, readonly [number, number]>
   >;
@@ -45,7 +45,7 @@ export const getItemStatLines = (item: InventoryItem): string[] =>
           ? `+${Number(value).toFixed(2)}`
           : `+${value}`;
 
-      return [`${statKey} ${formattedValue} (Tier ${getStatTier(statKey, Number(value), item.tier)})`];
+      return [`${statKey} ${formattedValue} (Roll ${getStatRollRank(statKey, Number(value), item.tier)}/5)`];
     }),
     ...(item.uniqueEffectDescription ? [`Unique: ${item.uniqueEffectDescription}`] : [])
   ];

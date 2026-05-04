@@ -15,27 +15,54 @@ export const getItemPowerScore = (item: InventoryItem): number => {
   );
 };
 
-export const isUpgradeForCharacter = (character: CharacterRecord, item: InventoryItem): boolean => {
+export const getComparisonEquippedItem = (
+  character: CharacterRecord,
+  item: InventoryItem
+): InventoryItem | null => {
   if (!item.slot) {
-    return false;
+    return null;
   }
 
   if (item.slot === "Ring") {
     const ringItems = [character.equippedItems.Ring1, character.equippedItems.Ring2].filter(Boolean) as InventoryItem[];
 
-    if (ringItems.length < 2) {
-      return true;
+    if (ringItems.length === 0) {
+      return null;
     }
 
-    const weakestRing = ringItems.sort((left, right) => getItemPowerScore(left) - getItemPowerScore(right))[0];
-    return getItemPowerScore(item) > getItemPowerScore(weakestRing);
+    if (ringItems.length === 1) {
+      return ringItems[0];
+    }
+
+    return [...ringItems].sort((left, right) => getItemPowerScore(left) - getItemPowerScore(right))[0];
   }
 
-  const equippedItem = character.equippedItems[item.slot];
+  return character.equippedItems[item.slot] ?? null;
+};
+
+export const getPowerChangeForCharacterItem = (
+  character: CharacterRecord,
+  item: InventoryItem
+): number | null => {
+  const equippedItem = getComparisonEquippedItem(character, item);
 
   if (!equippedItem) {
+    return null;
+  }
+
+  return getItemPowerScore(item) - getItemPowerScore(equippedItem);
+};
+
+export const isUpgradeForCharacter = (character: CharacterRecord, item: InventoryItem): boolean => {
+  if (!item.slot) {
+    return false;
+  }
+
+  const powerChange = getPowerChangeForCharacterItem(character, item);
+
+  if (powerChange === null) {
     return true;
   }
 
-  return getItemPowerScore(item) > getItemPowerScore(equippedItem);
+  return powerChange > 0;
 };
