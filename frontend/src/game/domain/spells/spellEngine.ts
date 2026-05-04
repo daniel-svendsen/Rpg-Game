@@ -6,6 +6,7 @@ import { getSpellLevel } from "./spellProgression";
 export interface ResolvedSpell {
   id: string;
   name: string;
+  tags: string[];
   level: number;
   damage: number;
   cooldownMs: number;
@@ -14,6 +15,11 @@ export interface ResolvedSpell {
   chainRange: number;
   areaRadius: number;
   critChance: number;
+  resistancePenetration: {
+    Fire: number;
+    Cold: number;
+    Lightning: number;
+  };
 }
 
 export const resolveSpell = (
@@ -68,11 +74,17 @@ export const resolveSpell = (
     damageMultiplier *= 1 + equippedUniqueModifiers.moreDamageForAreaAndFireSpells;
   }
 
+  if (baseSpell.tags.includes("Projectile")) {
+    projectileCount += equippedUniqueModifiers.bonusProjectilesForProjectileSpells;
+    damageMultiplier *= Math.max(0.1, 1 - equippedUniqueModifiers.lessDamageForProjectileSpells);
+  }
+
   critChance += equippedUniqueModifiers.bonusCritChanceForSpells;
 
   return {
     id: baseSpell.id,
     name: baseSpell.name,
+    tags: [...baseSpell.tags],
     level: spellLevel,
     damage: Math.round(scaledBaseDamage * damageMultiplier),
     cooldownMs,
@@ -80,6 +92,11 @@ export const resolveSpell = (
     chainCount,
     chainRange,
     areaRadius,
-    critChance
+    critChance,
+    resistancePenetration: {
+      Fire: baseSpell.tags.includes("Fire") ? equippedUniqueModifiers.resistancePenetrationForFireSpells : 0,
+      Cold: 0,
+      Lightning: 0
+    }
   };
 };

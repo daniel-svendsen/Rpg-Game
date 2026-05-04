@@ -3,6 +3,7 @@ import { createCharacter, loadCharacter, saveCharacter } from "../api/gameApi";
 import { login, register } from "../api/authApi";
 import type { AuthFormState } from "../auth/authTypes";
 import { balanceConfig } from "../game/config/balanceConfig";
+import { getEquipmentSlotLabel, getItemSlotLabel } from "../game/config/itemConfig";
 import { mapConfig } from "../game/config/mapConfig";
 import { spellConfig, supportSpellConfig } from "../game/config/spellConfig";
 import { createArenaRuntime, stepArenaRuntime } from "../game/domain/combat/arenaSimulation";
@@ -450,12 +451,12 @@ export const App = () => {
     setStatusMessage(`Entering ${mapConfig[selectedMapId].name}.`);
   };
 
-  const handleEquipItem = (itemId: string): void => {
+  const handleEquipItem = (itemId: string, targetSlotOverride?: EquipmentSlot): void => {
     if (!character) {
       return;
     }
 
-    setCharacter(equipItem(character, itemId));
+    setCharacter(equipItem(character, itemId, targetSlotOverride));
     setOverlayPanel(null);
     setStatusMessage("Equipment updated.");
   };
@@ -918,7 +919,7 @@ export const App = () => {
         <h4>Equipment</h4>
         {equipmentSlots.map((slot) => (
           <div key={slot} className="inventory-row">
-            <span>{slot}</span>
+            <span>{getEquipmentSlotLabel(slot)}</span>
             <button
               className="secondary-button"
               onClick={() => {
@@ -1040,15 +1041,12 @@ export const App = () => {
       <section className="panel stack">
         <div className="inventory-row">
           <h4>Inventory</h4>
-          <button className="secondary-button" onClick={handleSellAllItems}>
-            Sell all
-          </button>
         </div>
         {(character?.inventory ?? []).map((item) => (
           <div key={item.id} className="loot-entry">
             <div className="inventory-row">
               <strong>{item.name}</strong>
-              <span>{item.slot ?? "Stored"}</span>
+              <span>{item.slot ? getItemSlotLabel(item.slot) : "Stored"}</span>
             </div>
             <div className="status-text">Power {getItemPowerScore(item).toFixed(0)}</div>
             {getItemStatLines(item).map((line) => (
@@ -1061,8 +1059,20 @@ export const App = () => {
                 <button
                   className="secondary-button"
                   onClick={() => {
+                    if (!character) {
+                      return;
+                    }
+
+                    if (item.slot === "Ring") {
+                      handleEquipItem(
+                        item.id,
+                        character.equippedItems.Ring1 && !character.equippedItems.Ring2 ? "Ring2" : "Ring1"
+                      );
+                      return;
+                    }
+
                     setSelectedEquipmentSlot(item.slot as EquipmentSlot);
-                    handleEquipItem(item.id);
+                    handleEquipItem(item.id, item.slot as EquipmentSlot);
                   }}
                 >
                   Equip
@@ -1086,7 +1096,12 @@ export const App = () => {
     <div className="content stack mobile-content">
       {renderHubTopBar()}
       <section className="panel stack">
-        <h4>Shop</h4>
+        <div className="inventory-row">
+          <h4>Shop</h4>
+          <button className="secondary-button" onClick={handleSellAllItems}>
+            Sell all
+          </button>
+        </div>
         {shopItems.map((item) => (
           <div key={item.id} className="loot-entry">
             <div className="inventory-row">
@@ -1181,15 +1196,19 @@ export const App = () => {
 
     if (overlayPanel === "equipmentPicker") {
       const selectedSlotItems = character.inventory
-        .filter((item) => item.slot === selectedEquipmentSlot)
+        .filter((item) =>
+          selectedEquipmentSlot === "Ring1" || selectedEquipmentSlot === "Ring2"
+            ? item.slot === "Ring"
+            : item.slot === selectedEquipmentSlot
+        )
         .sort((left, right) => getItemPowerScore(right) - getItemPowerScore(left));
       const equippedItem = character.equippedItems[selectedEquipmentSlot];
 
       return (
-        <div className="mobile-overlay">
-          <div className="mobile-panel">
+        <div className="mobile-overlay" onClick={() => setOverlayPanel(null)}>
+          <div className="mobile-panel" onClick={(event) => event.stopPropagation()}>
             <div className="inventory-row">
-              <h3>{selectedEquipmentSlot}</h3>
+              <h3>{getEquipmentSlotLabel(selectedEquipmentSlot)}</h3>
               <button className="secondary-button" onClick={() => setOverlayPanel(null)}>
                 Close
               </button>
@@ -1202,28 +1221,31 @@ export const App = () => {
                   <span>Power {getItemPowerScore(item).toFixed(0)}</span>
                 </div>
                 <div className="status-text">
-                  Delta vs equipped: {(
-                    getItemPowerScore(item) -
-                    getItemPowerScore(
-                      equippedItem ??
-                        ({
-                          id: "empty",
-                          name: "Empty",
-                          slot: selectedEquipmentSlot,
-                          rarity: "Normal",
-                          tier: 1,
-                          tags: [],
-                          statBonuses: {}
-                        } as InventoryItem)
-                    )
-                  ).toFixed(0)}
+                  {(() => {
+                    const powerChange =
+                      getItemPowerScore(item) -
+                      getItemPowerScore(
+                        equippedItem ??
+                          ({
+                            id: "empty",
+                            name: "Empty",
+                            slot: selectedEquipmentSlot,
+                            rarity: "Normal",
+                            tier: 1,
+                            tags: [],
+                            statBonuses: {}
+                          } as InventoryItem)
+                      );
+
+                    return `Power change: ${powerChange > 0 ? "+" : ""}${powerChange.toFixed(0)}`;
+                  })()}
                 </div>
                 {getItemStatLines(item).map((line) => (
                   <div key={`${item.id}-${line}`} className="status-text">
                     {line}
                   </div>
                 ))}
-                <button className="primary-button" onClick={() => handleEquipItem(item.id)}>
+                <button className="primary-button" onClick={() => handleEquipItem(item.id, selectedEquipmentSlot)}>
                   Equip
                 </button>
               </div>
@@ -1237,8 +1259,8 @@ export const App = () => {
       const activeMainSpellId = character.spellLoadout[0]?.mainSpellId ?? "";
 
       return (
-        <div className="mobile-overlay">
-          <div className="mobile-panel">
+        <div className="mobile-overlay" onClick={() => setOverlayPanel(null)}>
+          <div className="mobile-panel" onClick={(event) => event.stopPropagation()}>
             <div className="inventory-row">
               <h3>Main Spell</h3>
               <button className="secondary-button" onClick={() => setOverlayPanel(null)}>
@@ -1281,8 +1303,8 @@ export const App = () => {
     }
 
     return (
-      <div className="mobile-overlay">
-        <div className="mobile-panel">
+      <div className="mobile-overlay" onClick={() => setOverlayPanel(null)}>
+        <div className="mobile-panel" onClick={(event) => event.stopPropagation()}>
           <div className="inventory-row">
             <h3>Support Slot {selectedSupportSlot + 1}</h3>
             <button className="secondary-button" onClick={() => setOverlayPanel(null)}>

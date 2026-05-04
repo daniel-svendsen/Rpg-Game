@@ -1,9 +1,9 @@
-import type { EquipmentSlot, Tag } from "../../../shared/types/saveTypes";
+import type { ItemSlot, Tag } from "../../../shared/types/saveTypes";
 
 export interface UniqueItemDefinition {
   id: string;
   name: string;
-  slot: EquipmentSlot;
+  slot: ItemSlot;
   minTier: number;
   dropWeight: number;
   tags: Tag[];
@@ -79,6 +79,65 @@ export const itemBalance = {
         maxHealth: 42,
         critChance: 0.11,
         spellPowerMultiplier: 0.24
+      }
+    },
+    {
+      id: "titanCarapace",
+      name: "Titan Carapace",
+      slot: "BodyArmor",
+      minTier: 5,
+      dropWeight: 8,
+      tags: ["Physical", "Unique"],
+      uniqueEffectId: "titanCarapace",
+      uniqueEffectDescription: "You take 14% less contact damage and gain +18% max life.",
+      statBonuses: {
+        vitality: 12,
+        maxHealth: 48
+      }
+    },
+    {
+      id: "wayfarerSash",
+      name: "Wayfarer Sash",
+      slot: "Belt",
+      minTier: 4,
+      dropWeight: 10,
+      tags: ["CastSpeed", "Unique"],
+      uniqueEffectId: "wayfarerSash",
+      uniqueEffectDescription: "Map shards drop more often and life flask kills grant +1 extra charge.",
+      statBonuses: {
+        agility: 6,
+        vitality: 6,
+        maxHealth: 20
+      }
+    },
+    {
+      id: "twinstarLoop",
+      name: "Twinstar Loop",
+      slot: "Ring",
+      minTier: 4,
+      dropWeight: 12,
+      tags: ["Projectile", "Critical", "Unique"],
+      uniqueEffectId: "twinstarLoop",
+      uniqueEffectDescription: "Projectile spells fire +2 projectiles but deal 10% less damage.",
+      statBonuses: {
+        dexterity: 8,
+        critChance: 0.05,
+        spellPowerMultiplier: 0.08
+      }
+    },
+    {
+      id: "cinderSignet",
+      name: "Cinder Signet",
+      slot: "Ring",
+      minTier: 6,
+      dropWeight: 7,
+      tags: ["Fire", "SpellDamage", "Unique"],
+      uniqueEffectId: "cinderSignet",
+      uniqueEffectDescription: "Fire spells penetrate resistances and gain 16% more damage.",
+      statBonuses: {
+        strength: 7,
+        critChance: 0.03,
+        spellPowerMultiplier: 0.12
       }
     }
   ] satisfies UniqueItemDefinition[]

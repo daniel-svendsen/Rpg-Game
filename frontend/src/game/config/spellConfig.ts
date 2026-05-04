@@ -37,6 +37,7 @@ export interface SupportSpellDefinition {
 }
 
 export const starterSpellIds = ["stormChain", "emberBurst"] as const;
+export const starterSupportSpellIds = ["increasedCriticalChance", "fasterCasting", "moreDamage"] as const;
 
 export const spellConfig: Record<string, SpellDefinition> = {
   stormChain: {

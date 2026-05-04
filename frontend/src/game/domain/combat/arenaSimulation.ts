@@ -10,11 +10,13 @@ import { mapConfig, type MapDefinition } from "../../config/mapConfig";
 import { monsterDefinitions } from "../../config/monsterConfig";
 import { generateItemDropForCharacter } from "../items/itemGenerator";
 import { getItemPowerScore, isUpgradeForCharacter } from "../items/itemPower";
+import { getEquippedUniqueModifiers } from "../items/uniqueEffects";
 import { addOwnedMap } from "../maps/mapProgress";
 import { gainLifeFlaskCharges } from "../player/lifeFlask";
 import { applyExperience } from "../progression/progression";
 import { getSpellName, rollSpellDrop } from "../spells/spellDrops";
 import { resolveSpell } from "../spells/spellEngine";
+import { getItemSlotLabel } from "../../config/itemConfig";
 import { createClientId } from "../../../shared/utils/id";
 import type {
   ArenaEnemyState,
@@ -36,6 +38,11 @@ interface InternalEnemyState extends ArenaEnemyState {
   movementSpeed: number;
   experienceReward: number;
   goldReward: number;
+  resistances: {
+    Fire: number;
+    Cold: number;
+    Lightning: number;
+  };
   lastContactDamageAt: number;
 }
 
@@ -110,6 +117,14 @@ const createEnemy = (map: MapDefinition, rarity: MonsterRarity): InternalEnemySt
   const maxHealth = Math.round(
     monsterBalance.baseHealth * map.enemyHealthMultiplier * rarityHealthMultiplier
   );
+  const tierResistance = map.tier * monsterBalance.resistancePerTier;
+  const rareResistanceBonus = rarity === "Rare" ? monsterBalance.rareResistanceBonus : 0;
+  const baseResistances = monsterDefinition.resistances ?? {};
+  const resolveResistance = (type: "Fire" | "Cold" | "Lightning") =>
+    Math.min(
+      monsterBalance.maxResistance,
+      (baseResistances[type] ?? 0) + tierResistance + rareResistanceBonus
+    );
 
   return {
     id: `${monsterDefinition.id}-${createClientId()}`,
@@ -132,6 +147,11 @@ const createEnemy = (map: MapDefinition, rarity: MonsterRarity): InternalEnemySt
         ? progressionBalance.rewards.rareGoldBase
         : progressionBalance.rewards.normalGoldBase) * map.goldMultiplier
     ),
+    resistances: {
+      Fire: resolveResistance("Fire"),
+      Cold: resolveResistance("Cold"),
+      Lightning: resolveResistance("Lightning")
+    },
     lastContactDamageAt: 0
   };
 };
@@ -155,6 +175,7 @@ const rollDrops = (
 ): { character: CharacterRecord; lootEvents: LootEntry[] } => {
   const tierBalance = getMapBalanceByTier(mapTier);
   const isRareMonster = rarity === "Rare";
+  const uniqueModifiers = getEquippedUniqueModifiers(character);
   let nextCharacter = {
     ...character
   };
@@ -183,7 +204,7 @@ const rollDrops = (
         kind: "Item",
         name: item.name,
         details: [
-          `Tier ${item.tier} ${item.slot ?? "Item"}`,
+          `Tier ${item.tier} ${item.slot ? getItemSlotLabel(item.slot) : "Item"}`,
           `Power ${getItemPowerScore(item).toFixed(0)}`,
           ...Object.entries(item.statBonuses).map(([key, value]) => `${key} +${value}`)
         ],
@@ -195,7 +216,8 @@ const rollDrops = (
   if (
     Math.random() <
     tierBalance.mapShardDropRate *
-      (isRareMonster ? itemBalance.rareMonsterMapShardDropMultiplier : 1)
+      (isRareMonster ? itemBalance.rareMonsterMapShardDropMultiplier : 1) *
+      uniqueModifiers.mapShardDropMultiplier
   ) {
     nextCharacter = {
       ...nextCharacter,
@@ -317,7 +339,11 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
 
     nextPlayer = {
       ...nextPlayer,
-      currentHealth: Math.max(0, nextPlayer.currentHealth - enemy.damage)
+      currentHealth: Math.max(
+        0,
+        nextPlayer.currentHealth -
+          Math.max(1, Math.round(enemy.damage * getEquippedUniqueModifiers(nextPlayer).enemyContactDamageTakenMultiplier))
+      )
     };
     lastPlayerDamageAtMs = nextTime;
     floatingTexts.push({
@@ -374,7 +400,13 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
         }
 
         const didCrit = Math.random() < resolvedSpell.critChance;
-        const totalDamage = didCrit ? Math.round(resolvedSpell.damage * 1.6) : resolvedSpell.damage;
+        const baseDamage = didCrit ? Math.round(resolvedSpell.damage * 1.6) : resolvedSpell.damage;
+        const relevantResistances = (["Fire", "Cold", "Lightning"] as const)
+          .filter((type) => resolvedSpell.tags.includes(type))
+          .map((type) => Math.max(0, enemy.resistances[type] - resolvedSpell.resistancePenetration[type]));
+        const appliedResistance =
+          relevantResistances.length > 0 ? Math.max(...relevantResistances) : 0;
+        const totalDamage = Math.max(1, Math.round(baseDamage * (1 - appliedResistance)));
         const remainingHealth = enemy.health - totalDamage;
 
         floatingTexts.push({
@@ -397,9 +429,10 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
         );
         nextPlayer = gainLifeFlaskCharges(
           nextPlayer,
-          enemy.rarity === "Rare"
+          (enemy.rarity === "Rare"
             ? balanceConfig.healing.lifeFlask.rareKillCharges
-            : balanceConfig.healing.lifeFlask.normalKillCharges
+            : balanceConfig.healing.lifeFlask.normalKillCharges) +
+            getEquippedUniqueModifiers(nextPlayer).extraLifeFlaskChargesOnKill
         );
         const dropResult = rollDrops(nextPlayer, mapTier, enemy.rarity);
         nextPlayer = dropResult.character;

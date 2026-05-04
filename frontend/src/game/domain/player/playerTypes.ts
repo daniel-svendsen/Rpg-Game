@@ -1,5 +1,5 @@
 import type { CharacterRecord, CharacterStats, DerivedStats } from "../../../shared/types/saveTypes";
-import { starterSpellIds } from "../../config/spellConfig";
+import { starterSpellIds, starterSupportSpellIds, supportSpellConfig } from "../../config/spellConfig";
 import { balanceConfig } from "../../config/balanceConfig";
 import { createInitialMapProgress, normalizeMapProgress } from "../maps/mapProgress";
 import { getExperienceRequiredForLevel } from "../progression/progression";
@@ -33,7 +33,7 @@ export const createNewCharacter = (name: string, baseStats: CharacterStats): Cha
     inventory: [],
     equippedItems: {},
     unlockedSpellIds: [...starterSpellIds],
-    unlockedSupportSpellIds: ["increasedCriticalChance", "fasterCasting", "moreDamage"],
+    unlockedSupportSpellIds: [...starterSupportSpellIds],
     spellProgress: createInitialSpellProgress(starterSpellIds),
     spellLoadout: [
       {
@@ -46,22 +46,29 @@ export const createNewCharacter = (name: string, baseStats: CharacterStats): Cha
   };
 };
 
-export const normalizeCharacterRecord = (character: CharacterRecord): CharacterRecord => ({
-  ...character,
-  unlockedSpellIds: [...new Set(character.unlockedSpellIds.map(normalizeSpellId))],
-  spellLoadout: character.spellLoadout.map((link) => ({
-    ...link,
-    mainSpellId: normalizeSpellId(link.mainSpellId)
-  })),
-  unlockedSupportSpellIds:
-    character.unlockedSupportSpellIds ?? ["increasedCriticalChance", "fasterCasting", "moreDamage"],
-  lifeFlask: normalizeLifeFlask(character.lifeFlask?.currentCharges),
-  spellProgress: normalizeSpellProgress(
-    character.spellProgress,
-    [...new Set(character.unlockedSpellIds.map(normalizeSpellId))]
-  ),
-  mapProgress: normalizeMapProgress(character.mapProgress)
-});
+export const normalizeCharacterRecord = (character: CharacterRecord): CharacterRecord => {
+  const normalizedUnlockedSpellIds = [...new Set(character.unlockedSpellIds.map(normalizeSpellId))];
+  const normalizedUnlockedSupportSpellIds = [
+    ...new Set(
+      (character.unlockedSupportSpellIds?.length ? character.unlockedSupportSpellIds : [...starterSupportSpellIds]).filter(
+        (supportSpellId) => supportSpellConfig[supportSpellId]
+      )
+    )
+  ];
+
+  return {
+    ...character,
+    unlockedSpellIds: normalizedUnlockedSpellIds,
+    spellLoadout: character.spellLoadout.map((link) => ({
+      ...link,
+      mainSpellId: normalizeSpellId(link.mainSpellId)
+    })),
+    unlockedSupportSpellIds: normalizedUnlockedSupportSpellIds,
+    lifeFlask: normalizeLifeFlask(character.lifeFlask?.currentCharges),
+    spellProgress: normalizeSpellProgress(character.spellProgress, normalizedUnlockedSpellIds),
+    mapProgress: normalizeMapProgress(character.mapProgress)
+  };
+};
 
 export const spendLevelStatPoint = (
   character: CharacterRecord,

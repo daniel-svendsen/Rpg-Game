@@ -20,6 +20,17 @@ export const isUpgradeForCharacter = (character: CharacterRecord, item: Inventor
     return false;
   }
 
+  if (item.slot === "Ring") {
+    const ringItems = [character.equippedItems.Ring1, character.equippedItems.Ring2].filter(Boolean) as InventoryItem[];
+
+    if (ringItems.length < 2) {
+      return true;
+    }
+
+    const weakestRing = ringItems.sort((left, right) => getItemPowerScore(left) - getItemPowerScore(right))[0];
+    return getItemPowerScore(item) > getItemPowerScore(weakestRing);
+  }
+
   const equippedItem = character.equippedItems[item.slot];
 
   if (!equippedItem) {

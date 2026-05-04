@@ -1,4 +1,6 @@
 import type { CharacterRecord, CharacterStats, InventoryItem } from "../../../shared/types/saveTypes";
+import { getItemPowerScore } from "../items/itemPower";
+import { getEquippedUniqueModifiers } from "../items/uniqueEffects";
 import { deriveStats } from "./playerTypes";
 
 const applyEquipmentBonuses = (
@@ -21,13 +23,14 @@ const applyEquipmentBonuses = (
 export const applyEquipmentState = (character: CharacterRecord): CharacterRecord => {
   const statAdjustedBase = applyEquipmentBonuses(character.baseStats, character.equippedItems);
   const derivedStats = deriveStats(statAdjustedBase);
+  const uniqueModifiers = getEquippedUniqueModifiers(character);
   const healthRatio =
     character.derivedStats.maxHealth > 0 ? character.currentHealth / character.derivedStats.maxHealth : 1;
   const bonusHealth = Object.values(character.equippedItems).reduce(
     (total, item) => total + (item?.statBonuses.maxHealth ?? 0),
     0
   );
-  const nextMaxHealth = derivedStats.maxHealth + bonusHealth;
+  const nextMaxHealth = Math.round((derivedStats.maxHealth + bonusHealth) * uniqueModifiers.maxHealthMultiplier);
 
   return {
     ...character,
@@ -48,14 +51,39 @@ export const applyEquipmentState = (character: CharacterRecord): CharacterRecord
   };
 };
 
-export const equipItem = (character: CharacterRecord, itemId: string): CharacterRecord => {
+const getPreferredRingSlot = (character: CharacterRecord): "Ring1" | "Ring2" => {
+  if (!character.equippedItems.Ring1) {
+    return "Ring1";
+  }
+
+  if (!character.equippedItems.Ring2) {
+    return "Ring2";
+  }
+
+  const leftRingPower = character.equippedItems.Ring1 ? getItemPowerScore(character.equippedItems.Ring1) : 0;
+  const rightRingPower = character.equippedItems.Ring2 ? getItemPowerScore(character.equippedItems.Ring2) : 0;
+
+  return leftRingPower <= rightRingPower ? "Ring1" : "Ring2";
+};
+
+export const equipItem = (
+  character: CharacterRecord,
+  itemId: string,
+  targetSlotOverride?: keyof CharacterRecord["equippedItems"]
+): CharacterRecord => {
   const item = character.inventory.find((entry) => entry.id === itemId);
 
   if (!item || !item.slot) {
     return character;
   }
 
-  const previousEquipped = character.equippedItems[item.slot];
+  const resolvedSlot =
+    item.slot === "Ring"
+      ? (targetSlotOverride === "Ring1" || targetSlotOverride === "Ring2"
+          ? targetSlotOverride
+          : getPreferredRingSlot(character))
+      : item.slot;
+  const previousEquipped = character.equippedItems[resolvedSlot];
   const nextInventory = character.inventory.filter((entry) => entry.id !== itemId);
 
   if (previousEquipped) {
@@ -67,7 +95,7 @@ export const equipItem = (character: CharacterRecord, itemId: string): Character
     inventory: nextInventory,
     equippedItems: {
       ...character.equippedItems,
-      [item.slot]: item
+      [resolvedSlot]: item
     }
   });
 };

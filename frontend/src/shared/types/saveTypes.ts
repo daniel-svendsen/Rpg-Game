@@ -29,6 +29,8 @@ export type EquipmentSlot =
   | "Ring1"
   | "Ring2";
 
+export type ItemSlot = EquipmentSlot | "Ring";
+
 export interface CharacterStats {
   strength: number;
   agility: number;
@@ -46,7 +48,7 @@ export interface DerivedStats {
 export interface InventoryItem {
   id: string;
   name: string;
-  slot: EquipmentSlot | null;
+  slot: ItemSlot | null;
   rarity: ItemRarity;
   tier: number;
   tags: Tag[];
