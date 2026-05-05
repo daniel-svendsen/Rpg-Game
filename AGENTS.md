@@ -21,10 +21,15 @@
 ## Core Rules
 
 - Always write code, comments, documentation, UI text, config names, and commit messages in English.
+- Change only what the task requires unless a closely related fix is necessary for correctness.
+- Prefer small, focused edits over broad refactors.
+- Keep systems modular and easy to extend.
+- Prefer extracting focused helpers, hooks, components, and config objects before files become too large.
 - Prefer reusable systems over one-off logic.
 - Prefer centralized configuration over duplicated constants.
+- Follow established best practices for the language and framework in use when they improve clarity and maintainability.
 - Do not silently introduce new architecture patterns without explaining why.
-- Keep solutions simple now, but able to grow later.
+- Keep solutions as simple as possible now, but able to grow later.
 - Reuse established naming, architecture, and file patterns before introducing new ones.
 
 ## Architecture
@@ -33,11 +38,20 @@
 - `frontend/src/game/phaser` is a rendering adapter and scene integration layer only.
 - `frontend/src/game/config` owns balance, spells, maps, monsters, and item configuration.
 - `frontend/src/app` should stay focused on screen composition, persistence orchestration, and mobile UI flow.
+- Prefer splitting large UI flows into focused React components and hooks instead of growing one oversized screen file.
 - Keep gameplay rules, progression rules, and balance decisions out of rendering code when practical.
 - Keep backend persistence contracts explicit and versionable.
 - Prefer early hybrid PostgreSQL persistence:
   - relational ownership data
   - JSONB for flexible game-state sections
+
+## Frontend Maintainability
+
+- When a React file starts carrying too many responsibilities, prefer extracting hooks, presentational components, and small utility modules.
+- Prefer custom hooks for reusable stateful UI logic and side-effect orchestration.
+- Prefer keeping components focused on one screen concern or interaction flow.
+- If a file or solution is becoming too large, too coupled, or hard to reason about, say so explicitly and propose a more modular direction.
+- Avoid letting `App.tsx` or similar top-level files become dumping grounds for unrelated logic.
 
 ## Gameplay Guardrails
 
@@ -109,6 +123,7 @@
 - Prefer repo context and existing project instructions over broad exploratory research.
 - Keep answers concise when the user wants direction rather than a full implementation plan.
 - Batch related analysis and edits into one pass when practical instead of many small iterations.
+- When helpful, give a quick file or folder map so the user can navigate the code faster.
 - Use web research only when the information is time-sensitive, the user asks for it, or source verification materially helps.
 - When research is needed, prefer a small number of high-signal official sources.
 - If a workflow becomes repetitive, prefer a shared repo instruction or reusable command/skill over re-explaining it each time.
@@ -120,11 +135,13 @@
   - `.\clean-start-dev.ps1`
   - `.\stop-dev.ps1`
 - Do not reintroduce legacy split startup scripts.
-- If local workflow changes, keep `README.md`, `.gitignore`, and this file aligned.
+- If local workflow, architecture expectations, or important repo conventions change, keep `README.md`, `.gitignore`, and this file aligned.
 
 ## Git And Secrets
 
 - Before staging, committing, or pushing, check that sensitive and local-only files are excluded.
+- Commit focused work at sensible checkpoints when the change is coherent and verified.
+- Push only after checking that the branch, staged files, and secrets situation look correct.
 - Never push secrets, passwords, local tokens, local database credentials, or private environment values.
 - Treat these as non-pushable unless the user explicitly says otherwise:
   - `dev.local.properties`

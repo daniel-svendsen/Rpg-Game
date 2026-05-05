@@ -8,6 +8,20 @@ This repository contains a small top-down action RPG prototype inspired by Path 
 - `backend/`: Spring Boot + Java + PostgreSQL + JWT
 - long-term mobile path: web-first with future Android packaging through Capacitor
 
+## Project Structure
+
+- `frontend/src/app`: React screen composition, hub flow, persistence orchestration, and mobile-first UI state
+- `frontend/src/game/domain`: gameplay source of truth for combat, progression, maps, items, spells, and player rules
+- `frontend/src/game/config`: centralized balance and content config for maps, monsters, spells, items, and economy
+- `frontend/src/game/phaser`: rendering adapter that turns arena snapshots into visuals
+- `frontend/src/api`: frontend API client helpers and auth/game requests
+- `frontend/src/shared`: shared frontend utility and save-related types
+- `backend/src/main/java/com/example/arpg/auth`: auth endpoints and auth service flow
+- `backend/src/main/java/com/example/arpg/character`: character APIs, save DTOs, persistence mapping, and stat calculation
+- `backend/src/main/java/com/example/arpg/security`: JWT and request security setup
+- `backend/src/main/resources/db/migration`: Flyway migrations for persistent save and account data
+- repo root scripts: `start-dev.ps1`, `clean-start-dev.ps1`, and `stop-dev.ps1` are the standard local workflow entrypoints
+
 ## Current Prototype
 
 The current build already includes:
@@ -54,6 +68,120 @@ Manual step for me:
 
 - create the PostgreSQL database if it does not already exist
 - provide real local secrets and environment values
+
+## Docker Backend Demo
+
+If you want a free demo setup without paying for backend hosting, you can run the backend and PostgreSQL locally with Docker and keep the frontend static elsewhere.
+
+1. Copy `compose.env.example` to `.env`
+2. Set at least:
+   - `POSTGRES_PASSWORD`
+   - `APP_JWT_SECRET`
+3. Start backend and database:
+
+```powershell
+docker compose up --build -d
+```
+
+4. The backend will be available on:
+
+```text
+http://localhost:8080
+```
+
+5. Stop the containers when you are done:
+
+```powershell
+docker compose down
+```
+
+6. If you also want to remove the local PostgreSQL volume:
+
+```powershell
+docker compose down -v
+```
+
+Notes:
+
+- this is meant for local development and free demo sharing
+- the backend only stays available while your computer is on and the containers are running
+- Flyway migrations still run automatically on backend startup
+- if you deploy the frontend separately, build it with `VITE_API_BASE_URL` pointing to the public backend URL you want to use
+
+## Share A Free Demo
+
+One cheap path is:
+
+1. Host the frontend on `GitHub Pages` or `Cloudflare Pages`
+2. Run `backend + postgres` locally through Docker
+3. Expose the backend temporarily with Cloudflare Tunnel
+4. Build the frontend with that public backend URL
+
+Quick temporary backend sharing example:
+
+```powershell
+cloudflared tunnel --url http://localhost:8080
+```
+
+That gives you a temporary public backend URL on `trycloudflare.com`. Use that URL as `VITE_API_BASE_URL` when building the frontend for your colleague.
+
+Notes:
+
+- Quick Tunnels are great for temporary testing but the URL changes when restarted
+- for a stable public URL later, use a named Cloudflare Tunnel and your own domain
+- make sure `APP_CLIENT_ALLOWED_ORIGIN_PATTERNS` includes the real frontend origin you share
+
+## Static Frontend Deploy
+
+The frontend can now be built for static hosting with:
+
+```powershell
+cd frontend
+npm run build
+```
+
+Optional environment variables:
+
+- `VITE_API_BASE_URL`: the public backend URL to call from the deployed frontend
+- `VITE_BASE_PATH`: the base path for static hosts that serve the app under a subpath such as `/repo-name/`
+
+Example for a GitHub Pages-style build:
+
+```powershell
+cd frontend
+$env:VITE_API_BASE_URL="https://your-backend-url.trycloudflare.com"
+$env:VITE_BASE_PATH="/your-repo-name/"
+npm run build:pages
+```
+
+### GitHub Pages
+
+A workflow is included at:
+
+- [deploy-frontend-pages.yml](/C:/Users/danie/Documents/New%20project/.github/workflows/deploy-frontend-pages.yml)
+
+To use it:
+
+1. Push the repository to GitHub
+2. In the GitHub repository settings, enable Pages with `GitHub Actions` as the source
+3. Add a repository variable named `VITE_API_BASE_URL` with your public backend URL
+4. Push to `main` or run the workflow manually
+
+Notes:
+
+- the workflow builds the frontend from `frontend/`
+- it automatically uses `/${repo-name}/` as the Pages base path
+- if you later use a custom domain or a different hosting style, you may want to override the base path manually
+
+### Cloudflare Pages
+
+Suggested settings:
+
+- Project root: `frontend`
+- Build command: `npm run build`
+- Output directory: `dist`
+- Environment variable: `VITE_API_BASE_URL=https://your-backend-url`
+- Optional environment variable: `VITE_BASE_PATH=/` 
 
 ## How To Test
 
