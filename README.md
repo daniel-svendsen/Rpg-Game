@@ -8,6 +8,20 @@ This repository contains a small top-down action RPG prototype inspired by Path 
 - `backend/`: Spring Boot + Java + PostgreSQL + JWT
 - long-term mobile path: web-first with future Android packaging through Capacitor
 
+## Deployment Guide
+
+For exact demo and deployment steps, use:
+
+- [DEPLOYMENT.md](/C:/Users/danie/Documents/New%20project/DEPLOYMENT.md)
+
+That file covers:
+
+- Cloudflare Pages setup
+- Quick Tunnel demo flow
+- named Cloudflare Tunnel flow with a stable hostname
+- what needs restarting after frontend or backend changes
+- which local files should stay out of Git
+
 ## Project Structure
 
 - `frontend/src/app`: React screen composition, hub flow, persistence orchestration, and mobile-first UI state

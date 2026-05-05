@@ -1,0 +1,7 @@
+tunnel: YOUR-TUNNEL-ID
+credentials-file: C:\Users\danie\.cloudflared\YOUR-TUNNEL-ID.json
+
+ingress:
+  - hostname: rpg-api.svendsenphotography.com
+    service: http://localhost:8080
+  - service: http_status:404
