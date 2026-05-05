@@ -25,6 +25,7 @@ The current build already includes:
 - FF7-inspired spell/support slot UI
 - spell progression with saved spell levels and upgrade costs
 - compact mobile-first menus and pickers
+- session and autosave guardrails around arena runtime updates and character persistence
 
 ## Combat And Progression
 
@@ -218,6 +219,8 @@ cd frontend
 npm test
 ```
 
+Frontend app guardrail tests now also cover arena session timing and autosave decision logic through the shared `vitest` run above.
+
 Backend automated tests:
 
 ```powershell
@@ -280,6 +283,9 @@ The main project instructions for future AI agents live in:
 - [clean-start-dev.ps1](/C:/Users/danie/Documents/New%20project/clean-start-dev.ps1)
 - [stop-dev.ps1](/C:/Users/danie/Documents/New%20project/stop-dev.ps1)
 - [frontend/src/app/App.tsx](/C:/Users/danie/Documents/New%20project/frontend/src/app/App.tsx)
+- [frontend/src/app/appUiHelpers.ts](/C:/Users/danie/Documents/New%20project/frontend/src/app/appUiHelpers.ts)
+- [frontend/src/app/arenaSessionTiming.ts](/C:/Users/danie/Documents/New%20project/frontend/src/app/arenaSessionTiming.ts)
+- [frontend/src/app/characterPersistence.ts](/C:/Users/danie/Documents/New%20project/frontend/src/app/characterPersistence.ts)
 - [frontend/src/app/useCharacterPersistence.ts](/C:/Users/danie/Documents/New%20project/frontend/src/app/useCharacterPersistence.ts)
 - [frontend/src/app/useMapActions.ts](/C:/Users/danie/Documents/New%20project/frontend/src/app/useMapActions.ts)
 - [frontend/src/app/useHubActions.ts](/C:/Users/danie/Documents/New%20project/frontend/src/app/useHubActions.ts)

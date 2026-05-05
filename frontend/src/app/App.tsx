@@ -12,6 +12,17 @@ import { HubTopBar } from "./HubTopBar";
 import { InventoryTab } from "./InventoryTab";
 import { InlineFeedbackPanel } from "./InlineFeedbackPanel";
 import {
+  accountEmailStorageKey,
+  createShopStock,
+  equipmentSlots,
+  formatPowerChange,
+  getItemSellPrice,
+  getSpellAccentClassName,
+  getSupportAccentClassName,
+  toShopItemState,
+  type ShopItemState
+} from "./appUiHelpers";
+import {
   getCurrencyAmount,
   getMapDisplayName,
   getMapEnhancementDetailLines,
@@ -28,10 +39,8 @@ import { useHubActions } from "./useHubActions";
 import { useMapActions } from "./useMapActions";
 import { useCharacterPersistence } from "./useCharacterPersistence";
 import { balanceConfig } from "../game/config/balanceConfig";
-import { spellConfig, supportSpellConfig } from "../game/config/spellConfig";
+import { supportSpellConfig } from "../game/config/spellConfig";
 import type { ArenaRuntimeState } from "../game/domain/combat/arenaSimulation";
-import { getItemPowerScore } from "../game/domain/items/itemPower";
-import { generateItemDrop } from "../game/domain/items/itemGenerator";
 import { getOwnedMapStack } from "../game/domain/maps/mapProgress";
 import { canUseLifeFlask } from "../game/domain/player/lifeFlask";
 import { createNewCharacter, normalizeCharacterRecord } from "../game/domain/player/playerTypes";
@@ -47,7 +56,6 @@ import type {
   ArenaSnapshot,
   CharacterStats,
   EquipmentSlot,
-  InventoryItem,
   LootEntry,
   MapEnhancementInstance
 } from "../shared/types/saveTypes";
@@ -65,90 +73,6 @@ const initialStats: CharacterStats = {
   vitality: 0,
   dexterity: 0
 };
-
-const equipmentSlots: EquipmentSlot[] = [
-  "Weapon",
-  "Helmet",
-  "Amulet",
-  "BodyArmor",
-  "Belt",
-  "Gloves",
-  "Boots",
-  "Ring1",
-  "Ring2"
-];
-
-const accountEmailStorageKey = "arpg-account-email";
-
-const createShopStock = (tier: number): InventoryItem[] =>
-  Array.from({ length: 3 }, (_, index) =>
-    generateItemDrop(
-      Math.max(1, tier),
-      tier >= balanceConfig.economy.guaranteedRareStartTier && index === 2
-    )
-  );
-
-const toShopItemState = (item: InventoryItem): ShopItemState => ({
-  ...item,
-  price: Math.round(
-    (balanceConfig.economy.shopBasePrice +
-      getItemPowerScore(item) * balanceConfig.economy.shopPowerPriceMultiplier) *
-      balanceConfig.economy.shopRarityPriceMultiplier[item.rarity]
-  )
-});
-
-const getSpellAccentClassName = (spellId: string): string => {
-  const tags = spellConfig[spellId]?.tags ?? [];
-
-  if (tags.includes("Lightning")) {
-    return "spell-accent-lightning";
-  }
-
-  if (tags.includes("Fire")) {
-    return "spell-accent-fire";
-  }
-
-  if (tags.includes("Cold")) {
-    return "spell-accent-cold";
-  }
-
-  return "spell-accent-neutral";
-};
-
-const getSupportAccentClassName = (supportSpellId: string): string => {
-  const tags = supportSpellConfig[supportSpellId]?.tags ?? [];
-
-  if (tags.includes("Critical")) {
-    return "support-accent-critical";
-  }
-
-  if (tags.includes("CastSpeed")) {
-    return "support-accent-speed";
-  }
-
-  if (tags.includes("Chain") || tags.includes("Projectile")) {
-    return "support-accent-projectile";
-  }
-
-  if (tags.includes("Area")) {
-    return "support-accent-area";
-  }
-
-  return "support-accent-damage";
-};
-
-const getItemSellPrice = (item: InventoryItem): number =>
-  Math.max(
-    balanceConfig.economy.itemSellPriceFloor,
-    Math.round(getItemPowerScore(item) * balanceConfig.economy.itemSellPriceMultiplier)
-  );
-
-const formatPowerChange = (powerChange: number | null): string =>
-  powerChange === null
-    ? "Power change: New slot item"
-    : `Power change: ${powerChange > 0 ? "+" : ""}${powerChange.toFixed(0)}`;
-
-type ShopItemState = InventoryItem & { price: number };
 
 export const App = () => {
   const [screenMode, setScreenMode] = useState<ScreenMode>("auth");
@@ -174,7 +98,7 @@ export const App = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const arenaRuntimeRef = useRef<ArenaRuntimeState | null>(null);
   const queuedMapIdsRef = useRef<string[]>([]);
-  const { character, latestCharacterRef, commitCharacter, persistCharacterNow, saveCharacterManually } =
+  const { character, latestCharacterRef, commitCharacter, hydrateCharacter, persistCharacterNow, saveCharacterManually } =
     useCharacterPersistence({
       token,
       isAutosaveEnabled: screenMode === "arena" || screenMode === "hub",
@@ -249,7 +173,7 @@ export const App = () => {
 
       if (loadedCharacter) {
         const normalizedCharacter = normalizeCharacterRecord(loadedCharacter);
-        commitCharacter(normalizedCharacter);
+        hydrateCharacter(normalizedCharacter);
         setScreenMode("hub");
         setStatusMessage("");
         setShopItems(
@@ -369,7 +293,7 @@ export const App = () => {
       );
 
       const normalizedCharacter = normalizeCharacterRecord(createdCharacter);
-      commitCharacter(normalizedCharacter);
+      hydrateCharacter(normalizedCharacter);
       setScreenMode("hub");
       setShopItems(
         createShopStock(1).map(toShopItemState)

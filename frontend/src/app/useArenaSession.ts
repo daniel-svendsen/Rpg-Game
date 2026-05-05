@@ -6,6 +6,10 @@ import { consumeOwnedMap, getOwnedMapStack } from "../game/domain/maps/mapProgre
 import { normalizeCharacterRecord } from "../game/domain/player/playerTypes";
 import type { ArenaSnapshot, CharacterRecord, LootEntry, MapEnhancementInstance } from "../shared/types/saveTypes";
 import type { ScreenMode } from "./appTypes";
+import {
+  shouldSyncArenaCharacter,
+  shouldSyncArenaSnapshot
+} from "./arenaSessionTiming";
 
 interface UseArenaSessionParams {
   screenMode: ScreenMode;
@@ -46,9 +50,6 @@ export const useArenaSession = ({
   setStatusMessage,
   setErrorMessage
 }: UseArenaSessionParams): void => {
-  const snapshotUpdateIntervalMs = 33;
-  const characterSyncIntervalMs = 120;
-
   useEffect(() => {
     if (screenMode !== "arena" || !character || !activeMapId) {
       return;
@@ -73,12 +74,12 @@ export const useArenaSession = ({
         setRecentLoot((current) => [...runtime.snapshot.lootEvents, ...current].slice(0, 20));
       }
 
-      if (timestamp - lastSnapshotUpdateAt >= snapshotUpdateIntervalMs || runtime.snapshot.isComplete) {
+      if (shouldSyncArenaSnapshot(timestamp, lastSnapshotUpdateAt) || runtime.snapshot.isComplete) {
         setArenaSnapshot(runtime.snapshot);
         lastSnapshotUpdateAt = timestamp;
       }
 
-      if (timestamp - lastCharacterSyncAt >= characterSyncIntervalMs || runtime.snapshot.isComplete) {
+      if (shouldSyncArenaCharacter(timestamp, lastCharacterSyncAt) || runtime.snapshot.isComplete) {
         commitCharacter(runtime.snapshot.player);
         lastCharacterSyncAt = timestamp;
       }

@@ -138,10 +138,10 @@
 - After making changes, run relevant checks when practical and make a best effort to verify they pass.
 - Common checks for this repo:
   - frontend build
-  - frontend domain tests
+  - frontend domain and app guardrail tests
   - backend tests
   - backend startup or migration awareness
-  - save/load awareness when persistence changes
+  - save/load and autosave awareness when persistence changes
 
 ## Manual Vs Codex
 
