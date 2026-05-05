@@ -112,7 +112,7 @@ Notes:
 
 One cheap path is:
 
-1. Host the frontend on `GitHub Pages` or `Cloudflare Pages`
+1. Host the frontend on `Cloudflare Pages`
 2. Run `backend + postgres` locally through Docker
 3. Expose the backend temporarily with Cloudflare Tunnel
 4. Build the frontend with that public backend URL
@@ -130,6 +130,85 @@ Notes:
 - Quick Tunnels are great for temporary testing but the URL changes when restarted
 - for a stable public URL later, use a named Cloudflare Tunnel and your own domain
 - make sure `APP_CLIENT_ALLOWED_ORIGIN_PATTERNS` includes the real frontend origin you share
+
+## Exact Cloudflare Demo Flow
+
+Use this when you want to share the current prototype for free while keeping the backend on your own computer.
+
+### One-time setup
+
+1. Copy `compose.env.example` to `.env`
+2. Set at least:
+   - `POSTGRES_PASSWORD`
+   - `APP_JWT_SECRET`
+3. Install `cloudflared` on Windows
+4. Create a Cloudflare Pages project from this repository with:
+   - Project root: `frontend`
+   - Build command: `npm run build`
+   - Output directory: `dist`
+   - `VITE_BASE_PATH=/`
+
+### Every time you want the demo online
+
+1. Start the backend and database:
+
+```powershell
+docker compose up --build -d
+```
+
+2. Start a quick tunnel:
+
+```powershell
+$cloudflared = "C:\Program Files (x86)\cloudflared\cloudflared.exe"
+& $cloudflared tunnel --url http://localhost:8080
+```
+
+3. Copy the public `https://...trycloudflare.com` URL from `cloudflared`
+4. In Cloudflare Pages, update the production environment variable:
+   - `VITE_API_BASE_URL=https://your-current-quick-tunnel.trycloudflare.com`
+5. Trigger a new Cloudflare Pages deploy
+6. Open the Cloudflare Pages site and test register/login
+
+You can also use the helper script from the repo root:
+
+```powershell
+.\start-demo.ps1
+```
+
+If you changed backend code and want Docker to rebuild first:
+
+```powershell
+.\start-demo.ps1 -BuildBackend
+```
+
+To stop the quick tunnel later:
+
+```powershell
+.\stop-demo.ps1
+```
+
+To stop the quick tunnel and Docker services:
+
+```powershell
+.\stop-demo.ps1 -StopBackend
+```
+
+### What changes and what stays the same
+
+- `POSTGRES_PASSWORD` and `APP_JWT_SECRET` stay the same unless you want to rotate them
+- the `trycloudflare.com` URL changes almost every time you restart the tunnel
+- when the tunnel URL changes, you must update `VITE_API_BASE_URL` in Cloudflare Pages and redeploy the frontend
+- the Docker containers can usually stay the same between runs unless you want to rebuild
+
+### Smoother long-term option
+
+If you want to stop changing `VITE_API_BASE_URL` every time, switch from a `Quick Tunnel` to a named Cloudflare Tunnel with a stable hostname on a domain you control. Quick Tunnels are intentionally random and short-lived for testing, while a published tunnel route can keep the same hostname between restarts.
+
+### Registration notes
+
+- registration requires a valid email address
+- passwords must be between `8` and `100` characters
+- if the database is brand new, register a new account before trying to log in
 
 ## Static Frontend Deploy
 
@@ -182,6 +261,12 @@ Suggested settings:
 - Output directory: `dist`
 - Environment variable: `VITE_API_BASE_URL=https://your-backend-url`
 - Optional environment variable: `VITE_BASE_PATH=/` 
+
+If you use a Cloudflare Quick Tunnel as the backend:
+
+- update `VITE_API_BASE_URL` each time the tunnel URL changes
+- trigger a new deploy after changing the variable
+- keep the `cloudflared` process and Docker containers running while the demo is in use
 
 ## How To Test
 

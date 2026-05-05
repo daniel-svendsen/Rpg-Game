@@ -26,6 +26,7 @@ export const AuthScreen = ({
     </section>
     <section className="panel stack">
       <h3>{authMode === "register" ? "Create account" : "Login"}</h3>
+      <p>Use a valid email and a password with at least 8 characters.</p>
       <div className="form-grid">
         <input
           className="text-input"
@@ -36,7 +37,7 @@ export const AuthScreen = ({
         />
         <input
           className="text-input"
-          placeholder="Password"
+          placeholder="Password (min 8 characters)"
           type="password"
           value={authForm.password}
           onChange={(event) => onChangeAuthForm({ ...authForm, password: event.target.value })}
