@@ -2,6 +2,19 @@
 
 This repository contains a small top-down action RPG prototype inspired by Path of Exile, with a much smaller scope and simpler visuals.
 
+## Roadmap And Progress
+
+Project planning and phased progress are tracked in:
+
+- [ROADMAP.md](/C:/Users/danie/Documents/New%20project/ROADMAP.md)
+
+That file defines:
+
+- the current project phase
+- backend acceptance goals
+- what is intentionally deferred
+- the next recommended step
+
 ## Stack
 
 - `frontend/`: React + TypeScript + Vite + Phaser 4
@@ -502,6 +515,9 @@ The goal is not just to show game features, but also to show that I can:
 The main project instructions for future AI agents live in:
 
 - [AGENTS.md](/C:/Users/danie/Documents/New%20project/AGENTS.md)
+- [frontend/AGENTS.md](/C:/Users/danie/Documents/New%20project/frontend/AGENTS.md)
+- [backend/AGENTS.md](/C:/Users/danie/Documents/New%20project/backend/AGENTS.md)
+- [ROADMAP.md](/C:/Users/danie/Documents/New%20project/ROADMAP.md)
 
 ## Important Files
 

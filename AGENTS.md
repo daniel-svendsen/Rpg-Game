@@ -4,6 +4,7 @@
 
 - Repo-level guidance for AI coding agents in this project.
 - Keep this file short and practical. Put deeper setup and workflow details in `README.md`.
+- Use `ROADMAP.md` as the source of truth for phased progress, current focus, and phase completion criteria.
 - Scope: the full repository unless a deeper `AGENTS.md` overrides it.
 - Priority:
   - direct system, developer, and user instructions
@@ -21,6 +22,7 @@
 ## Core Rules
 
 - Always write code, comments, documentation, UI text, config names, and commit messages in English.
+- Read `ROADMAP.md` before proposing major new work or phase changes.
 - Change only what the task requires unless a closely related fix is necessary for correctness.
 - Prefer small, focused edits over broad refactors.
 - Keep systems modular and easy to extend.
@@ -28,6 +30,8 @@
 - Prefer reusable systems over one-off logic.
 - Prefer centralized configuration over duplicated constants.
 - Follow established best practices for the language and framework in use when they improve clarity and maintainability.
+- If a dependency, library, or established pattern would clearly simplify the codebase or reduce maintenance cost, say so explicitly.
+- Do not silently add new dependencies or architectural patterns without explaining why they are better than the current approach.
 - Do not silently introduce new architecture patterns without explaining why.
 - Keep solutions as simple as possible now, but able to grow later.
 - Reuse established naming, architecture, and file patterns before introducing new ones.
@@ -121,6 +125,9 @@
 ## Agent Efficiency
 
 - Prefer repo context and existing project instructions over broad exploratory research.
+- Treat `ROADMAP.md` as the progress tracker instead of inferring progress loosely from the repo.
+- If the current phase appears close to complete, say so explicitly and reference the roadmap acceptance criteria.
+- Do not silently jump to later-phase work when current-phase acceptance is still unresolved, unless the work is a small enabling step.
 - Keep answers concise when the user wants direction rather than a full implementation plan.
 - Batch related analysis and edits into one pass when practical instead of many small iterations.
 - When helpful, give a quick file or folder map so the user can navigate the code faster.
@@ -153,6 +160,9 @@
 ## Verification
 
 - After making changes, run relevant checks when practical and make a best effort to verify they pass.
+- After adding a feature, add or update relevant automated tests when practical.
+- After fixing a bug, prefer adding a regression test when practical.
+- If tests are not added or updated when they would normally be expected, explain why.
 - Common checks for this repo:
   - frontend build
   - frontend domain and app guardrail tests
@@ -175,3 +185,20 @@
   - creating PostgreSQL databases
   - changing local secrets and environment values
   - packaging and publishing to Google Play
+
+## Important Project Files
+
+- `ROADMAP.md` tracks the current phase, acceptance criteria, and next recommended step.
+- `frontend/AGENTS.md` contains frontend-specific implementation guardrails.
+- `backend/AGENTS.md` contains backend-specific persistence and API guardrails.
+
+## Dependency And Pattern Guidance
+
+- Prefer improving the current stack and repo patterns before adding new dependencies.
+- Suggest a dependency, library, or pattern when it would clearly improve maintainability, readability, testing, or implementation effort.
+- Avoid adding dependencies for tiny or one-off problems.
+- When suggesting a new dependency or pattern, explain:
+  - what problem it solves
+  - why the current approach is weaker
+  - what tradeoff it introduces
+  - whether the benefit is immediate or future-facing
