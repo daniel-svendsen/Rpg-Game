@@ -470,6 +470,14 @@ mvn test
 
 Backend runs through Spring Boot from the shared startup script. If backend persistence changes were added, restart the backend so Flyway can apply new migrations.
 
+Fresh database startup verification:
+
+```powershell
+.\verify-fresh-backend-db.ps1
+```
+
+That script creates a temporary PostgreSQL database from your local `dev.local.properties`, starts the backend against that empty database, verifies that Flyway migrations were applied, and then drops the temporary database again.
+
 ## Persistence Notes
 
 Character saves currently include:
