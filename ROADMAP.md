@@ -15,9 +15,9 @@ Use it to track:
 
 ## Current Phase
 
-- Current phase: `Phase 1 - Backend Acceptance`
-- Status: `In progress`
-- Exit rule: do not treat the backend as an endless improvement target. Move forward once the acceptance checklist for this phase is satisfied and no known save-safety or persistence-stability issues remain.
+- Current phase: `Phase 2 - Balance Infrastructure`
+- Status: `Ready to start`
+- Exit rule: do not drift into broad UI or Phaser rollout work before there is a reusable headless balance loop with useful output for repeated tuning.
 
 ## Guiding Principles
 
@@ -47,7 +47,7 @@ Done when:
 
 ## Phase 1 - Backend Acceptance
 
-Status: `Current`
+Status: `Accepted`
 
 Goal:
 
@@ -75,9 +75,17 @@ Recommended next steps inside this phase:
 2. Identify any weak persistence spots or missing tests.
 3. Declare the phase accepted once the checklist is green.
 
+Accepted because:
+
+- auth, login, and JWT-protected character access are covered by backend verification
+- character create, save, and load flows are covered by backend verification
+- saved progression coverage includes inventory, equipment, spells, supports, spell progression, map progression, currencies, and life flask state
+- fresh local database migration startup is verified through the dedicated backend verification script
+- backend persistence contracts are more explicit in the highest-risk JSONB sections and no known progression-corruption issue is currently open
+
 ## Phase 2 - Balance Infrastructure
 
-Status: `Planned`
+Status: `Current`
 
 Goal:
 
@@ -99,6 +107,12 @@ Recommended tooling:
   - loot rate
   - shard drops
   - rare monster chance
+
+Recommended next steps inside this phase:
+
+1. Add a headless backend-agnostic simulation entrypoint that can run map attempts without Phaser rendering.
+2. Add a simple override input for selected balance values without editing core config directly.
+3. Produce a first report for at least `100` runs that summarizes completion rate, deaths, map time, gold, shards, map sustain, and loot distribution.
 
 ## Phase 3 - UI Readability And Gameplay Clarity
 
@@ -174,4 +188,4 @@ Success criteria:
 
 ## Next Recommended Step
 
-- Audit the backend against the Phase 1 acceptance checklist and turn the remaining gaps into a short actionable list.
+- Build the first headless simulation script for repeated map runs and wire it to a minimal balance override input.
