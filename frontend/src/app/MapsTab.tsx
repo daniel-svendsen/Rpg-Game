@@ -63,36 +63,6 @@ export const MapsTab = ({
       {healthHud}
       <section className="panel stack">
         <h4>Maps</h4>
-        <div className="selected-map-summary">
-          <strong>Selected Map</strong>
-          <div className="status-text">
-            {getMapDisplayName(selectedMapId, selectedMapEnhancements.length)}{" "}
-            {selectedMap.tier > 0 ? `(Tier ${selectedMap.tier})` : "(Infinite)"}
-          </div>
-          {selectedMapTarget !== "trainingGrounds" ? (
-            <>
-              <div className="status-text">
-                {getMapVariantLabel(selectedMapEnhancements.length)} | Enhancements {selectedMapEnhancements.length}/
-                {balanceConfig.mapCrafting.maxEnhancementsPerMap}
-              </div>
-              <div className="status-text">
-                Monsters {selectedResolvedMap.monsterCount} | Enemy health x
-                {selectedResolvedMap.enemyHealthMultiplier.toFixed(2)} | Enemy damage x
-                {selectedResolvedMap.enemyDamageMultiplier.toFixed(2)}
-              </div>
-              {getMapEnhancementSummary(selectedMapEnhancements).map((line) => (
-                <div key={`selected-map-enhancement-${line}`} className="status-text">
-                  Mod: {line}
-                </div>
-              ))}
-              {getMapEnhancementDetailLines(selectedMapEnhancements).map((line) => (
-                <div key={`selected-map-detail-${line}`} className="status-text">
-                  {line}
-                </div>
-              ))}
-            </>
-          ) : null}
-        </div>
         <div className="actions">
           <button className="primary-button" onClick={onStartMap}>
             Start
@@ -108,6 +78,13 @@ export const MapsTab = ({
             </button>
           ) : null}
         </div>
+        {selectedMapTarget !== "trainingGrounds" ? (
+          <div className="status-text">
+            {getMapDisplayName(selectedMapId, selectedMapEnhancements.length)} | {getMapVariantLabel(selectedMapEnhancements.length)}{" "}
+            | Enhancements {selectedMapEnhancements.length}/{balanceConfig.mapCrafting.maxEnhancementsPerMap} | Monsters{" "}
+            {selectedResolvedMap.monsterCount}
+          </div>
+        ) : null}
         {queuedMapCount > 0 ? (
           <p className="status-text">
             Auto-run queue active: {queuedMapCount} map{queuedMapCount === 1 ? "" : "s"} remaining.

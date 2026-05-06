@@ -65,7 +65,7 @@ export const App = () => {
   const [queuedMapIds, setQueuedMapIds] = useState<string[]>([]);
   const [selectedEquipmentSlot, setSelectedEquipmentSlot] = useState<EquipmentSlot>("Weapon");
   const [selectedSupportSlot, setSelectedSupportSlot] = useState<0 | 1>(0);
-  const [statusMessage, setStatusMessage] = useState("Create an account or log in to begin.");
+  const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const arenaRuntimeRef = useRef<ArenaRuntimeState | null>(null);
   const queuedMapIdsRef = useRef<string[]>([]);
@@ -301,16 +301,22 @@ export const App = () => {
     setShopItems([]);
     setOverlayPanel(null);
     setHubTab("maps");
-    setStatusMessage("Logged out.");
+    setStatusMessage("");
     setErrorMessage(null);
   };
 
-  const renderInlineFeedback = () => {
-    return <InlineFeedbackPanel statusMessage={statusMessage} errorMessage={errorMessage} />;
+  const renderInlineFeedback = (showStatusMessage = true) => {
+    return (
+      <InlineFeedbackPanel
+        statusMessage={statusMessage}
+        errorMessage={errorMessage}
+        showStatusMessage={showStatusMessage}
+      />
+    );
   };
   const renderAuthPanel = () => (
     <AuthScreen
-      feedback={renderInlineFeedback()}
+      feedback={renderInlineFeedback(false)}
       authMode={authMode}
       authForm={authForm}
       onChangeAuthForm={setAuthForm}
@@ -321,7 +327,7 @@ export const App = () => {
 
   const renderCharacterCreation = () => (
     <CharacterCreationScreen
-      feedback={renderInlineFeedback()}
+      feedback={renderInlineFeedback(true)}
       characterName={characterName}
       characterStats={characterStats}
       remainingStatPoints={remainingStatPoints}
@@ -333,7 +339,7 @@ export const App = () => {
 
   const renderHub = () => (
     <>
-      <div className="content mobile-only-feedback">{renderInlineFeedback()}</div>
+      <div className="content mobile-only-feedback">{renderInlineFeedback(false)}</div>
       <HubScreen
         accountEmail={accountEmail}
         arenaSnapshot={arenaSnapshot ? { player: arenaSnapshot.player } : null}
@@ -395,7 +401,7 @@ export const App = () => {
           arenaSnapshot={arenaSnapshot}
           character={character}
           recentLoot={recentLoot}
-          feedback={renderInlineFeedback()}
+          feedback={renderInlineFeedback(false)}
           onManualSave={handleManualSave}
           onUseLifeFlask={handleUseLifeFlask}
           onBackToHub={() => {
@@ -414,7 +420,7 @@ export const App = () => {
       <aside className="sidebar">
         <section>
           <h1>Shardborne</h1>
-          <p className="status-text">{statusMessage}</p>
+          {statusMessage ? <p className="status-text">{statusMessage}</p> : null}
           {errorMessage ? <p className="error-text">{errorMessage}</p> : null}
         </section>
       </aside>

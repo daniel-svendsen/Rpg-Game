@@ -82,6 +82,15 @@ button {
   gap: 12px;
 }
 
+.field-stack {
+  display: grid;
+  gap: 6px;
+}
+
+.field-stack span:first-child {
+  font-weight: 600;
+}
+
 .stat-row,
 .inventory-row,
 .summary-row {
@@ -302,6 +311,13 @@ button {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
+.materia-node {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
 .materia-link {
   flex: 1;
   min-width: 28px;
@@ -323,6 +339,9 @@ button {
   box-shadow:
     inset 0 2px 8px rgba(255, 255, 255, 0.2),
     0 6px 18px rgba(15, 23, 42, 0.35);
+  display: grid;
+  place-items: center;
+  text-align: center;
 }
 
 .main-materia {
@@ -340,6 +359,27 @@ button {
   background:
     radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.04) 30%, transparent 31%),
     linear-gradient(180deg, rgba(71, 85, 105, 0.45), rgba(30, 41, 59, 0.3));
+}
+
+.materia-orb-label {
+  width: 100%;
+  padding: 0 4px;
+  color: #f8fafc;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-shadow: 0 1px 2px rgba(2, 6, 23, 0.8);
+}
+
+.materia-node-caption {
+  max-width: 92px;
+  color: #cbd5e1;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  text-align: center;
+  text-wrap: balance;
 }
 
 .spell-accent-lightning {
@@ -429,6 +469,50 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.hub-summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(10, 15, 26, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hub-summary-meta {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.hub-summary-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.summary-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  font-size: 0.8rem;
+}
+
+.auth-panel {
+  gap: 16px;
+}
+
+.auth-mode-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .bottom-tabs {
@@ -523,6 +607,14 @@ button {
     padding: 12px 8px;
   }
 
+  .hub-summary-bar {
+    align-items: flex-start;
+  }
+
+  .hub-summary-bar .secondary-button {
+    align-self: center;
+  }
+
   .main-materia {
     width: 54px;
     height: 54px;
@@ -531,5 +623,14 @@ button {
   .support-materia {
     width: 40px;
     height: 40px;
+  }
+
+  .materia-node-caption {
+    max-width: 76px;
+    font-size: 0.7rem;
+  }
+
+  .materia-orb-label {
+    font-size: 0.55rem;
   }
 }

@@ -36,7 +36,10 @@ export const InventoryTab = ({
             <strong>{item.name}</strong>
             <span>{item.slot ? getItemSlotLabel(item.slot) : "Stored"}</span>
           </div>
-          <div className="status-text">Power {getItemPowerScore(item).toFixed(0)}</div>
+          <div className="inventory-row">
+            <div className="status-text">Power {getItemPowerScore(item).toFixed(0)}</div>
+            <div className="status-text">Sell price {getItemSellPrice(item)} gold</div>
+          </div>
           {getItemStatLines(item).map((line) => (
             <div key={`${item.id}-${line}`} className="status-text">
               {line}

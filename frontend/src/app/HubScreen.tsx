@@ -11,6 +11,7 @@ import { CharacterTab } from "./CharacterTab";
 import {
   equipmentSlots,
   formatPowerChange,
+  getEquippedPowerTotal,
   getItemSellPrice,
   getSpellAccentClassName,
   getSupportAccentClassName,
@@ -154,7 +155,13 @@ export const HubScreen = ({
   };
 
   const topBar = (
-    <HubTopBar characterName={character?.name} level={character?.level} gold={character?.gold} onSave={onSave} />
+    <HubTopBar
+      characterName={character?.name}
+      level={character?.level}
+      gold={character?.gold}
+      totalPower={character ? getEquippedPowerTotal(character) : undefined}
+      onSave={onSave}
+    />
   );
   const displayedCharacter = arenaSnapshot?.player ?? character;
   const healthHud = (
@@ -205,7 +212,6 @@ export const HubScreen = ({
           getSupportAccentClassName={getSupportAccentClassName}
           getSpellDetailLines={(spellId, supportSpellIds) => getSpellDetailLines(character, spellId, supportSpellIds)}
           renderSpellUpgradeActions={renderSpellUpgradeActions}
-          onSelectMainSpell={onSelectMainSpell}
           onOpenMainSpellPicker={onOpenMainSpellPicker}
           onOpenSupportPicker={onOpenSupportPicker}
         />

@@ -2,7 +2,7 @@ import { balanceConfig } from "../game/config/balanceConfig";
 import { spellConfig, supportSpellConfig } from "../game/config/spellConfig";
 import { generateItemDrop } from "../game/domain/items/itemGenerator";
 import { getItemPowerScore, isExceptionalRare } from "../game/domain/items/itemPower";
-import type { EquipmentSlot, InventoryItem } from "../shared/types/saveTypes";
+import type { CharacterRecord, EquipmentSlot, InventoryItem } from "../shared/types/saveTypes";
 
 export type ShopItemState = InventoryItem & { price: number };
 
@@ -91,6 +91,11 @@ export const getItemSellPrice = (item: InventoryItem): number =>
   Math.max(
     balanceConfig.economy.itemSellPriceFloor,
     Math.round(getItemPowerScore(item) * balanceConfig.economy.itemSellPriceMultiplier)
+  );
+
+export const getEquippedPowerTotal = (character: CharacterRecord): number =>
+  Math.round(
+    Object.values(character.equippedItems).reduce((total, item) => total + (item ? getItemPowerScore(item) : 0), 0)
   );
 
 export const formatPowerChange = (powerChange: number | null): string =>
