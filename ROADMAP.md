@@ -35,7 +35,7 @@ Status: `Started`
 Goals:
 
 - define a clear phased roadmap
-- define backend acceptance for the current prototype scope
+- define backend acceptance for the current Shardborne scope
 - split agent instructions into root, frontend, and backend scopes
 - establish one place to track current phase and next step
 
@@ -67,7 +67,7 @@ Not required for phase completion:
 
 - enterprise-scale architecture changes
 - premature optimization unrelated to current bottlenecks
-- speculative systems that are not yet needed by the prototype
+- speculative systems that are not yet needed by the current build
 
 Recommended next steps inside this phase:
 
@@ -97,6 +97,7 @@ Acceptance targets:
 - a script can simulate at least `100` map runs and summarize outcomes
 - output includes clear rate, deaths, average map time, gold, shards, map sustain, and loot distribution
 - balance overrides can be applied without editing core config values directly
+- the simulation output is easy to read and compare, but broad player-facing UI polish stays out of this phase
 
 Recommended tooling:
 
@@ -113,6 +114,7 @@ Recommended next steps inside this phase:
 1. Add a headless backend-agnostic simulation entrypoint that can run map attempts without Phaser rendering.
 2. Add a simple override input for selected balance values without editing core config directly.
 3. Produce a first report for at least `100` runs that summarizes completion rate, deaths, map time, gold, shards, map sustain, and loot distribution.
+4. Keep broader readability and presentation work for `Phase 3` unless it directly improves balance iteration.
 
 ## Phase 3 - UI Readability And Gameplay Clarity
 

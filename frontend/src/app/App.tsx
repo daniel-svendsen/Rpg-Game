@@ -413,7 +413,7 @@ export const App = () => {
     <div className="app-shell">
       <aside className="sidebar">
         <section>
-          <h1>Simple ARPG</h1>
+          <h1>Shardborne</h1>
           <p className="status-text">{statusMessage}</p>
           {errorMessage ? <p className="error-text">{errorMessage}</p> : null}
         </section>

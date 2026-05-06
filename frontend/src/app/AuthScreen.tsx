@@ -21,7 +21,7 @@ export const AuthScreen = ({
   <div className="content">
     {feedback}
     <section className="panel stack">
-      <h2>Simple ARPG</h2>
+      <h2>Shardborne</h2>
       <p>Build a character, run maps, collect loot, and shape your main spell with support links.</p>
     </section>
     <section className="panel stack">

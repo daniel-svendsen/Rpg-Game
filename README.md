@@ -1,6 +1,6 @@
-# Simple ARPG Prototype
+# Shardborne
 
-This repository contains a small top-down action RPG prototype inspired by Path of Exile, with a much smaller scope and simpler visuals.
+This repository contains Shardborne, a small top-down action RPG inspired by Path of Exile, with a much smaller scope and simpler visuals.
 
 ## Roadmap And Progress
 
@@ -160,7 +160,7 @@ Notes:
 
 ## Exact Cloudflare Demo Flow
 
-Use this when you want to share the current prototype for free while keeping the backend on your own computer.
+Use this when you want to share the current Shardborne build for free while keeping the backend on your own computer.
 
 ### One-time setup
 
