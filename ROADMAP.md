@@ -16,8 +16,8 @@ Use it to track:
 ## Current Phase
 
 - Current phase: `Phase 2 - Balance Infrastructure`
-- Status: `Ready to start`
-- Exit rule: do not drift into broad UI or Phaser rollout work before there is a reusable headless balance loop with useful output for repeated tuning.
+- Status: `In progress`
+- Exit rule: do not drift into broad UI or Phaser rollout work before the headless balance loop is actively informing repeatable tuning decisions with useful output and override-driven comparisons.
 
 ## Guiding Principles
 
@@ -99,6 +99,28 @@ Acceptance targets:
 - balance overrides can be applied without editing core config values directly
 - the simulation output is easy to read and compare, but broad player-facing UI polish stays out of this phase
 
+Current progress:
+
+- a reusable headless simulator now runs map attempts without Phaser rendering
+- the simulation CLI can load either a local profile or the current backend character
+- reports now include:
+  - completion, death, and timeout rates
+  - average run time, gold, map shards, and map sustain
+  - rare monsters encountered and killed
+  - rare item drops
+  - exceptional rare drops
+  - total unique drops plus `T1`, `T2`, and `T3` unique breakdown
+  - spell drops
+  - total loot breakdown by item, currency, spell, and map
+- balance overrides can be applied from JSON without editing core config values directly
+- the simulator is already being used to tune:
+  - early and mid-tier map difficulty
+  - map sustain
+  - spell drop rarity
+  - exceptional rare frequency
+  - unique tier distribution
+  - shop pricing pressure
+
 Recommended tooling:
 
 - a simulator script for repeated map runs
@@ -111,10 +133,16 @@ Recommended tooling:
 
 Recommended next steps inside this phase:
 
-1. Add a headless backend-agnostic simulation entrypoint that can run map attempts without Phaser rendering.
-2. Add a simple override input for selected balance values without editing core config directly.
-3. Produce a first report for at least `100` runs that summarizes completion rate, deaths, map time, gold, shards, map sustain, and loot distribution.
+1. Continue tuning `tier3` through `tier9` using the simulator as the default balance loop.
+2. Push spell drops closer to the intended rare-drop identity while keeping chase spells possible.
+3. Tighten map sustain and reward pressure where farm loops still look too generous.
 4. Keep broader readability and presentation work for `Phase 3` unless it directly improves balance iteration.
+
+Phase completion will likely require:
+
+- a stable baseline profile or small preset set for repeated comparisons
+- at least one meaningful override-driven comparison workflow
+- a balance pass where the simulator is clearly driving concrete map, loot, and economy decisions rather than just existing as tooling
 
 ## Phase 3 - UI Readability And Gameplay Clarity
 
@@ -190,4 +218,4 @@ Success criteria:
 
 ## Next Recommended Step
 
-- Build the first headless simulation script for repeated map runs and wire it to a minimal balance override input.
+- Use the current simulator to finish the first full balance pass on map difficulty, spell rarity, unique tier pacing, map sustain, and shop pressure before expanding into broader UI readability work.

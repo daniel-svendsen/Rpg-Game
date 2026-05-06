@@ -487,14 +487,25 @@ Useful options:
 The report includes:
 
 - completion and death rates
+- timeout rate
 - average run time
 - average gold and map shards
 - map sustain
 - rare monsters encountered and killed
 - rare item drops
+- exceptional rare drops
 - unique item drops
+- `T1`, `T2`, and `T3` unique breakdown
 - spell drops
 - total loot breakdown by item, currency, spell, and map
+
+Current `Phase 2` usage:
+
+- compare early and mid-tier map difficulty without Phaser rendering
+- measure whether map sustain is too generous for a given build
+- tune spell rarity toward a true chase-drop identity
+- separate normal uniques from higher-tier unique jackpots
+- evaluate whether shop pricing is still too cheap relative to current gold income
 
 Frontend production build:
 
