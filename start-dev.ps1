@@ -13,6 +13,7 @@ $backendLogPath = Join-Path $runDirectory "backend.log"
 $backendErrorLogPath = Join-Path $runDirectory "backend.error.log"
 $frontendPidPath = Join-Path $runDirectory "frontend.pid"
 $backendPidPath = Join-Path $runDirectory "backend.pid"
+$defaultDevBackendPort = 8081
 
 if (-not (Test-Path $configPath)) {
     Write-Host "Missing dev.local.properties. Copy dev.local.properties.example and fill in your local values."
@@ -42,6 +43,23 @@ Get-Content $configPath | ForEach-Object {
 $frontendApiBaseUrl = $properties["VITE_API_BASE_URL"]
 $frontendWorkingDirectory = Join-Path $projectRoot "frontend"
 $backendWorkingDirectory = Join-Path $projectRoot "backend"
+$configuredBackendPort = $properties["APP_PORT"]
+$backendPort = $defaultDevBackendPort
+
+if (-not [string]::IsNullOrWhiteSpace($configuredBackendPort)) {
+    $parsedBackendPort = 0
+
+    if ([int]::TryParse($configuredBackendPort, [ref]$parsedBackendPort) -and $parsedBackendPort -gt 0) {
+        $backendPort = $parsedBackendPort
+    }
+}
+
+if ($backendPort -eq 8080) {
+    Write-Host "Local dev backend port 8080 conflicts with the demo tunnel target. Using port $defaultDevBackendPort instead."
+    $backendPort = $defaultDevBackendPort
+}
+
+$frontendDevProxyTarget = "http://127.0.0.1:$backendPort"
 
 if (-not [string]::IsNullOrWhiteSpace($frontendApiBaseUrl) -and $frontendApiBaseUrl -match "^https?://(localhost|127\.0\.0\.1)(:\d+)?/?$") {
     $frontendApiBaseUrl = ""
@@ -50,15 +68,15 @@ if (-not [string]::IsNullOrWhiteSpace($frontendApiBaseUrl) -and $frontendApiBase
 Remove-Item $frontendLogPath, $frontendErrorLogPath, $backendLogPath, $backendErrorLogPath -Force -ErrorAction SilentlyContinue
 
 $frontendCommand = if ([string]::IsNullOrWhiteSpace($frontendApiBaseUrl)) {
-    "Set-Location '$frontendWorkingDirectory'; npm run dev -- --host 0.0.0.0"
+    "`$env:VITE_DEV_PROXY_TARGET='$frontendDevProxyTarget'; Set-Location '$frontendWorkingDirectory'; npm run dev -- --host 0.0.0.0"
 } else {
-    "`$env:VITE_API_BASE_URL='$frontendApiBaseUrl'; Set-Location '$frontendWorkingDirectory'; npm run dev -- --host 0.0.0.0"
+    "`$env:VITE_API_BASE_URL='$frontendApiBaseUrl'; `$env:VITE_DEV_PROXY_TARGET='$frontendDevProxyTarget'; Set-Location '$frontendWorkingDirectory'; npm run dev -- --host 0.0.0.0"
 }
 
 $backendCommand = if ($CleanBackend) {
-    "Set-Location '$backendWorkingDirectory'; mvn clean spring-boot:run"
+    "`$env:APP_PORT='$backendPort'; Set-Location '$backendWorkingDirectory'; mvn clean spring-boot:run"
 } else {
-    "Set-Location '$backendWorkingDirectory'; mvn spring-boot:run"
+    "`$env:APP_PORT='$backendPort'; Set-Location '$backendWorkingDirectory'; mvn spring-boot:run"
 }
 
 $frontendProcess = Start-Process `
@@ -85,9 +103,9 @@ Set-Content -Path $backendPidPath -Value $backendProcess.Id
 Write-Host "Frontend started in background on port 5173."
 
 if ($CleanBackend) {
-    Write-Host "Backend started with Maven clean on port 8080."
+    Write-Host "Backend started with Maven clean on port $backendPort."
 } else {
-    Write-Host "Backend started on port 8080."
+    Write-Host "Backend started on port $backendPort."
 }
 
 Write-Host "Frontend log: $frontendLogPath"

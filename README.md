@@ -110,7 +110,7 @@ If you want a free demo setup without paying for backend hosting, you can run th
 docker compose up --build -d
 ```
 
-4. The backend will be available on:
+4. The demo backend will be available on:
 
 ```text
 http://localhost:8080
@@ -375,7 +375,7 @@ Look for the IPv4 address, for example `192.168.1.25`
 http://192.168.1.25:5173
 ```
 
-The frontend will automatically call the backend on the same host at port `8080`, so you do not need to manually change `VITE_API_BASE_URL` just for phone testing unless you want to override it.
+The frontend dev server proxies API requests to your configured local backend port, so you do not need to manually change `VITE_API_BASE_URL` just for phone testing unless you want to override it.
 
 ## Start And Stop
 
@@ -399,12 +399,21 @@ Stop everything:
 .\stop-dev.ps1
 ```
 
+If you want to test the local frontend quickly against the live demo backend instead of your local backend:
+
+```powershell
+.\start-dev-against-demo.ps1
+```
+
+This starts only the frontend on `5173` and points it at the named tunnel backend `https://rpg-api.svendsenphotography.com`.
+
 What `start-dev.ps1` does:
 
-- stops listeners on ports `5173` and `8080`
+- stops listeners on port `5173` and the configured local dev backend port
 - clears tracked process ids
 - starts frontend and backend in the background
 - optionally runs `mvn clean spring-boot:run` for the backend
+- uses local backend port `8081` by default so local dev does not steal the demo tunnel backend on `8080`
 - writes logs to:
   - `.run/frontend.log`
   - `.run/frontend.error.log`

@@ -2,6 +2,9 @@ $ErrorActionPreference = "Stop"
 
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $runDirectory = Join-Path $projectRoot ".run"
+$configPath = Join-Path $projectRoot "dev.local.properties"
+$defaultDevBackendPort = 8081
+$trackedDevPidFiles = @("frontend.pid", "backend.pid")
 
 function Stop-ProcessByPort {
     param(
@@ -32,16 +35,56 @@ function Stop-ProcessByPort {
     }
 }
 
+function Get-DevBackendPort {
+    if (-not (Test-Path $configPath)) {
+        return $defaultDevBackendPort
+    }
+
+    $configuredPort = $null
+
+    Get-Content $configPath | ForEach-Object {
+        $line = $_.Trim()
+
+        if ($line.Length -eq 0 -or $line.StartsWith("#")) {
+            return
+        }
+
+        $parts = $line -split "=", 2
+
+        if ($parts.Count -eq 2 -and $parts[0].Trim() -eq "APP_PORT") {
+            $configuredPort = $parts[1].Trim()
+        }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($configuredPort)) {
+        return $defaultDevBackendPort
+    }
+
+    $parsedPort = 0
+
+    if (-not [int]::TryParse($configuredPort, [ref]$parsedPort) -or $parsedPort -le 0 -or $parsedPort -eq 8080) {
+        return $defaultDevBackendPort
+    }
+
+    return $parsedPort
+}
+
 Stop-ProcessByPort -Port 5173
-Stop-ProcessByPort -Port 8080
+Stop-ProcessByPort -Port (Get-DevBackendPort)
 
 if (Test-Path $runDirectory) {
-    Get-ChildItem -Path $runDirectory -Filter "*.pid" -ErrorAction SilentlyContinue | ForEach-Object {
-        $pidValue = Get-Content $_.FullName -ErrorAction SilentlyContinue
+    foreach ($pidFileName in $trackedDevPidFiles) {
+        $pidFilePath = Join-Path $runDirectory $pidFileName
+
+        if (-not (Test-Path $pidFilePath)) {
+            continue
+        }
+
+        $pidValue = Get-Content $pidFilePath -ErrorAction SilentlyContinue
 
         if (-not [int]::TryParse($pidValue, [ref]$null)) {
-            Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue
-            return
+            Remove-Item $pidFilePath -Force -ErrorAction SilentlyContinue
+            continue
         }
 
         $parsedPid = 0
@@ -53,7 +96,7 @@ if (Test-Path $runDirectory) {
             Stop-Process -Id $parsedPid -Force -ErrorAction SilentlyContinue
         }
 
-        Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue
+        Remove-Item $pidFilePath -Force -ErrorAction SilentlyContinue
     }
 }
 

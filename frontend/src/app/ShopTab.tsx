@@ -45,7 +45,7 @@ export const ShopTab = ({
         const powerChange = character ? getPowerChangeForCharacterItem(character, item) : null;
 
         return (
-          <div key={item.id} className="loot-entry">
+          <div key={item.id} className={`loot-entry rarity-card rarity-${item.rarity.toLowerCase()}`}>
             <div className="inventory-row">
               <strong>{item.name}</strong>
               <span>{item.price} gold</span>

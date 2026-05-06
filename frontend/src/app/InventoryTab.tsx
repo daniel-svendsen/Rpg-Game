@@ -31,7 +31,7 @@ export const InventoryTab = ({
         <h4>Inventory</h4>
       </div>
       {(character?.inventory ?? []).map((item) => (
-        <div key={item.id} className="loot-entry">
+        <div key={item.id} className={`loot-entry rarity-card rarity-${item.rarity.toLowerCase()}`}>
           <div className="inventory-row">
             <strong>{item.name}</strong>
             <span>{item.slot ? getItemSlotLabel(item.slot) : "Stored"}</span>

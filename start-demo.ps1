@@ -60,14 +60,18 @@ Stop-TrackedTunnel
 
 Remove-Item $tunnelLogPath, $tunnelErrorLogPath -Force -ErrorAction SilentlyContinue
 
-$composeCommand = if ($BuildBackend) {
-    "docker compose up --build -d"
+Write-Host "Starting backend and database with Docker Compose..."
+
+if ($BuildBackend) {
+    docker compose up --build -d
 } else {
-    "docker compose up -d"
+    docker compose up -d
 }
 
-Write-Host "Starting backend and database with Docker Compose..."
-Invoke-Expression $composeCommand
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Docker Compose failed to start the demo backend. Cloudflare tunnel startup aborted."
+    exit $LASTEXITCODE
+}
 
 if ($TunnelMode -eq "named") {
     Write-Host "Starting Cloudflare named tunnel '$NamedTunnelName'..."
