@@ -208,6 +208,18 @@ If you changed backend code and want Docker to rebuild first:
 .\start-demo.ps1 -BuildBackend
 ```
 
+If you want the stable named tunnel instead of a temporary quick tunnel:
+
+```powershell
+.\start-demo.ps1 -TunnelMode named
+```
+
+If backend code changed and you want to rebuild first:
+
+```powershell
+.\start-demo.ps1 -TunnelMode named -BuildBackend
+```
+
 To stop the quick tunnel later:
 
 ```powershell

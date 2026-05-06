@@ -42,7 +42,7 @@ Create a Pages project with:
 
 The frontend URL for this project is currently:
 
-- [https://rpg-game-1a8.pages.dev/](https://rpg-game-1a8.pages.dev/)
+- [https://shardborne.pages.dev/](https://shardborne.pages.dev/)
 
 ## Quick Tunnel Flow
 
@@ -159,27 +159,23 @@ After that, the frontend can keep the same backend URL between restarts.
 
 ### Every time you want the demo online
 
-1. Start Docker:
+Run from the repo root:
 
 ```powershell
-docker compose up -d
+.\start-demo.ps1 -TunnelMode named
 ```
 
-If backend code changed:
+If backend code changed and Docker should rebuild first:
 
 ```powershell
-docker compose up --build -d
+.\start-demo.ps1 -TunnelMode named -BuildBackend
 ```
 
-2. Start the named tunnel:
+This starts Docker Compose and then runs the named tunnel `rpg-game-backend`.
 
-```powershell
-& "C:\Program Files (x86)\cloudflared\cloudflared.exe" tunnel run rpg-game-backend
-```
+Then open the frontend:
 
-3. Open the frontend:
-
-- [https://rpg-game-1a8.pages.dev/](https://rpg-game-1a8.pages.dev/)
+- [https://shardborne.pages.dev/](https://shardborne.pages.dev/)
 
 ### Important note
 

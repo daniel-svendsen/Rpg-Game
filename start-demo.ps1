@@ -1,5 +1,8 @@
 param(
-    [switch]$BuildBackend
+    [switch]$BuildBackend,
+    [ValidateSet("quick", "named")]
+    [string]$TunnelMode = "quick",
+    [string]$NamedTunnelName = "rpg-game-backend"
 )
 
 $ErrorActionPreference = "Stop"
@@ -9,6 +12,7 @@ $runDirectory = Join-Path $projectRoot ".run"
 $tunnelLogPath = Join-Path $runDirectory "cloudflared.log"
 $tunnelErrorLogPath = Join-Path $runDirectory "cloudflared.error.log"
 $tunnelPidPath = Join-Path $runDirectory "cloudflared.pid"
+$tunnelModePath = Join-Path $runDirectory "cloudflared.mode"
 $defaultCloudflaredPath = "C:\Program Files (x86)\cloudflared\cloudflared.exe"
 
 function Resolve-CloudflaredPath {
@@ -65,10 +69,17 @@ $composeCommand = if ($BuildBackend) {
 Write-Host "Starting backend and database with Docker Compose..."
 Invoke-Expression $composeCommand
 
-Write-Host "Starting Cloudflare Quick Tunnel..."
+if ($TunnelMode -eq "named") {
+    Write-Host "Starting Cloudflare named tunnel '$NamedTunnelName'..."
+    $cloudflaredArguments = @("tunnel", "run", $NamedTunnelName)
+} else {
+    Write-Host "Starting Cloudflare Quick Tunnel..."
+    $cloudflaredArguments = @("tunnel", "--url", "http://localhost:8080")
+}
+
 $cloudflaredProcess = Start-Process `
     -FilePath $cloudflaredPath `
-    -ArgumentList @("tunnel", "--url", "http://localhost:8080") `
+    -ArgumentList $cloudflaredArguments `
     -WorkingDirectory $projectRoot `
     -WindowStyle Hidden `
     -RedirectStandardOutput $tunnelLogPath `
@@ -76,19 +87,31 @@ $cloudflaredProcess = Start-Process `
     -PassThru
 
 Set-Content -Path $tunnelPidPath -Value $cloudflaredProcess.Id
+Set-Content -Path $tunnelModePath -Value $TunnelMode
+
+if ($TunnelMode -eq "named") {
+    Write-Host ""
+    Write-Host "Demo backend is running through the named tunnel."
+    Write-Host "Backend URL: https://rpg-api.svendsenphotography.com"
+    Write-Host "Cloudflared log: $tunnelLogPath"
+    Write-Host "Cloudflared error log: $tunnelErrorLogPath"
+    Write-Host "Run .\stop-demo.ps1 to stop the tunnel. Add -StopBackend if you also want to stop Docker."
+    exit 0
+}
 
 $deadline = (Get-Date).AddSeconds(30)
 $publicUrl = $null
+$logCandidates = @($tunnelLogPath, $tunnelErrorLogPath)
 
 while ((Get-Date) -lt $deadline) {
     Start-Sleep -Milliseconds 500
 
-    if (-not (Test-Path $tunnelLogPath)) {
-        continue
-    }
-
-    $publicUrl = Select-String -Path $tunnelLogPath -Pattern "https://[A-Za-z0-9-]+\.trycloudflare\.com" -AllMatches |
-        ForEach-Object { $_.Matches.Value } |
+    $publicUrl = $logCandidates |
+        Where-Object { Test-Path $_ } |
+        ForEach-Object {
+            Select-String -Path $_ -Pattern "https://[A-Za-z0-9-]+\.trycloudflare\.com" -AllMatches |
+                ForEach-Object { $_.Matches.Value }
+        } |
         Select-Object -First 1
 
     if (-not [string]::IsNullOrWhiteSpace($publicUrl)) {
@@ -99,6 +122,7 @@ while ((Get-Date) -lt $deadline) {
 if ([string]::IsNullOrWhiteSpace($publicUrl)) {
     Write-Host "Cloudflare tunnel started, but no public URL was detected yet."
     Write-Host "Check: $tunnelLogPath"
+    Write-Host "Check: $tunnelErrorLogPath"
     exit 1
 }
 

@@ -7,6 +7,7 @@ $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $runDirectory = Join-Path $projectRoot ".run"
 $tunnelPidPath = Join-Path $runDirectory "cloudflared.pid"
+$tunnelModePath = Join-Path $runDirectory "cloudflared.mode"
 
 if (Test-Path $tunnelPidPath) {
     $pidValue = Get-Content $tunnelPidPath -ErrorAction SilentlyContinue
@@ -25,6 +26,8 @@ if (Test-Path $tunnelPidPath) {
 } else {
     Write-Host "No tracked cloudflared process found."
 }
+
+Remove-Item $tunnelModePath -Force -ErrorAction SilentlyContinue
 
 if ($StopBackend) {
     Write-Host "Stopping Docker Compose services..."
