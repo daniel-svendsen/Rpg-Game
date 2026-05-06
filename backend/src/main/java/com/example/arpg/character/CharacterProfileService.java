@@ -8,7 +8,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -56,7 +55,7 @@ public class CharacterProfileService {
         character.setExperienceToNextLevel(120);
         character.setUnspentStatPoints(0);
         character.setGold(0);
-        character.setLifeFlask(Map.of("currentCharges", 18));
+        character.setLifeFlask(new LifeFlaskState(18));
         Map<String, Object> derivedStats = characterStatCalculator.deriveStats(request.baseStats());
         character.setBaseStats(characterStatCalculator.toBaseStatsMap(request.baseStats()));
         character.setDerivedStats(derivedStats);
@@ -66,12 +65,12 @@ public class CharacterProfileService {
         character.setUnlockedSpellIds(List.of("stormChain", "emberBurst"));
         character.setUnlockedSupportSpellIds(List.of("increasedCriticalChance", "fasterCasting", "moreDamage"));
         character.setSpellProgress(List.of(
-                Map.of("spellId", "stormChain", "level", 1),
-                Map.of("spellId", "emberBurst", "level", 1)
+                new SpellProgressState("stormChain", 1),
+                new SpellProgressState("emberBurst", 1)
         ));
-        character.setSpellLoadout(List.of(Map.of("mainSpellId", "stormChain", "supportSpellIds", List.of())));
+        character.setSpellLoadout(List.of(new SpellLoadoutEntry("stormChain", List.of())));
         character.setCurrencies(List.of());
-        character.setMapProgress(Map.of("highestUnlockedTier", 0, "lastCompletedTier", 0, "consumableMaps", List.of()));
+        character.setMapProgress(new MapProgressData(0, 0, List.of()));
 
         return toResponse(characterProfileRepository.save(character));
     }
@@ -93,80 +92,65 @@ public class CharacterProfileService {
         Map<String, Object> derivedStats = characterStatCalculator.deriveStats(request.baseStats());
         character.setCurrentHealth(characterStatCalculator.clampCurrentHealth(request.currentHealth(), derivedStats));
         character.setGold(request.gold());
-        character.setLifeFlask(Map.of("currentCharges", request.lifeFlask().currentCharges()));
+        character.setLifeFlask(new LifeFlaskState(request.lifeFlask().currentCharges()));
         character.setBaseStats(characterStatCalculator.toBaseStatsMap(request.baseStats()));
         character.setDerivedStats(derivedStats);
-        character.setInventory(request.inventory().stream().map(this::toItemMap).toList());
-        Map<String, Object> equippedItems = new HashMap<>();
-        request.equippedItems().forEach((slot, item) -> equippedItems.put(slot, toItemMap(item)));
+        character.setInventory(request.inventory().stream().map(this::toInventoryItemData).toList());
+        Map<String, InventoryItemData> equippedItems = request.equippedItems().entrySet().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> toInventoryItemData(entry.getValue())
+                ));
         character.setEquippedItems(equippedItems);
         character.setUnlockedSpellIds(new ArrayList<>(request.unlockedSpellIds()));
         character.setUnlockedSupportSpellIds(new ArrayList<>(request.unlockedSupportSpellIds()));
-        List<Map<String, Object>> spellProgress = request.spellProgress().stream()
-                .map(progress -> {
-                    Map<String, Object> progressMap = new HashMap<>();
-                    progressMap.put("spellId", progress.spellId());
-                    progressMap.put("level", progress.level());
-                    return progressMap;
-                })
+        List<SpellProgressState> spellProgress = request.spellProgress().stream()
+                .map(progress -> new SpellProgressState(progress.spellId(), progress.level()))
                 .toList();
         character.setSpellProgress(spellProgress);
-        List<Map<String, Object>> spellLoadout = request.spellLoadout().stream()
-                .map(link -> {
-                    Map<String, Object> linkMap = new HashMap<>();
-                    linkMap.put("mainSpellId", link.mainSpellId());
-                    linkMap.put("supportSpellIds", link.supportSpellIds());
-                    return linkMap;
-                })
+        List<SpellLoadoutEntry> spellLoadout = request.spellLoadout().stream()
+                .map(link -> new SpellLoadoutEntry(link.mainSpellId(), List.copyOf(link.supportSpellIds())))
                 .toList();
         character.setSpellLoadout(spellLoadout);
 
-        List<Map<String, Object>> currencies = request.currencies().stream()
-                .map(currency -> {
-                    Map<String, Object> currencyMap = new HashMap<>();
-                    currencyMap.put("code", currency.code());
-                    currencyMap.put("amount", currency.amount());
-                    return currencyMap;
-                })
+        List<CurrencyStackData> currencies = request.currencies().stream()
+                .map(currency -> new CurrencyStackData(currency.code(), currency.amount()))
                 .toList();
         character.setCurrencies(currencies);
 
-        List<Map<String, Object>> consumableMaps = request.mapProgress().consumableMaps().stream()
-                .map(map -> {
-                    Map<String, Object> mapStack = new HashMap<>();
-                    mapStack.put("stackId", map.stackId());
-                    mapStack.put("mapId", map.mapId());
-                    mapStack.put("tier", map.tier());
-                    mapStack.put("quantity", map.quantity());
-                    mapStack.put("enhancements", map.enhancements().stream()
-                            .map(enhancement -> Map.of("id", enhancement.id()))
-                            .toList());
-                    return mapStack;
-                })
+        List<OwnedMapStackData> consumableMaps = request.mapProgress().consumableMaps().stream()
+                .map(map -> new OwnedMapStackData(
+                        map.stackId(),
+                        map.mapId(),
+                        map.tier(),
+                        map.quantity(),
+                        map.enhancements().stream()
+                                .map(enhancement -> new MapEnhancementData(enhancement.id()))
+                                .toList()
+                ))
                 .toList();
-
-        Map<String, Object> mapProgress = new HashMap<>();
-        mapProgress.put("highestUnlockedTier", request.mapProgress().highestUnlockedTier());
-        mapProgress.put("lastCompletedTier", request.mapProgress().lastCompletedTier());
-        mapProgress.put("consumableMaps", consumableMaps);
-        character.setMapProgress(mapProgress);
+        character.setMapProgress(new MapProgressData(
+                request.mapProgress().highestUnlockedTier(),
+                request.mapProgress().lastCompletedTier(),
+                consumableMaps
+        ));
         character.setUpdatedAt(Instant.now());
 
         return toResponse(characterProfileRepository.save(character));
     }
 
-    private Map<String, Object> toItemMap(InventoryItemRequest item) {
-        Map<String, Object> itemMap = new HashMap<>();
-        itemMap.put("id", item.id());
-        itemMap.put("name", item.name());
-        itemMap.put("slot", item.slot());
-        itemMap.put("rarity", item.rarity());
-        itemMap.put("tier", item.tier());
-        itemMap.put("tags", item.tags());
-        itemMap.put("uniqueEffectId", item.uniqueEffectId());
-        itemMap.put("uniqueEffectDescription", item.uniqueEffectDescription());
-        itemMap.put("statBonuses", item.statBonuses());
-        return itemMap;
+    private InventoryItemData toInventoryItemData(InventoryItemRequest item) {
+        return new InventoryItemData(
+                item.id(),
+                item.name(),
+                item.slot(),
+                item.rarity(),
+                item.tier(),
+                List.copyOf(item.tags()),
+                item.uniqueEffectId(),
+                item.uniqueEffectDescription(),
+                item.statBonuses()
+        );
     }
 
     private CharacterResponse toResponse(CharacterProfileEntity entity) {

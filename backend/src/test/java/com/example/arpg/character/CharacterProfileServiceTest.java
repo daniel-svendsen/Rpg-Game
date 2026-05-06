@@ -158,30 +158,30 @@ class CharacterProfileServiceTest {
         ArgumentCaptor<CharacterProfileEntity> savedEntity = ArgumentCaptor.forClass(CharacterProfileEntity.class);
         verify(characterProfileRepository).save(savedEntity.capture());
         assertThat(savedEntity.getValue().getInventory()).containsExactly(
-                Map.of(
-                        "id", "unique-ring-1",
-                        "name", "Twinstar Loop",
-                        "slot", "Ring",
-                        "rarity", "Unique",
-                        "tier", 3,
-                        "tags", List.of("Lightning", "Projectile", "Unique"),
-                        "uniqueEffectId", "twinstarLoop",
-                        "uniqueEffectDescription", "Projectile spells fire +2 projectiles but deal 10% less damage.",
-                        "statBonuses", Map.of("dexterity", 4, "critChance", 0.03)
+                new InventoryItemData(
+                        "unique-ring-1",
+                        "Twinstar Loop",
+                        "Ring",
+                        "Unique",
+                        3,
+                        List.of("Lightning", "Projectile", "Unique"),
+                        "twinstarLoop",
+                        "Projectile spells fire +2 projectiles but deal 10% less damage.",
+                        Map.of("dexterity", 4, "critChance", 0.03)
                 )
         );
         assertThat(savedEntity.getValue().getEquippedItems()).containsEntry(
                 "Ring1",
-                Map.of(
-                        "id", "unique-ring-1",
-                        "name", "Twinstar Loop",
-                        "slot", "Ring",
-                        "rarity", "Unique",
-                        "tier", 3,
-                        "tags", List.of("Lightning", "Projectile", "Unique"),
-                        "uniqueEffectId", "twinstarLoop",
-                        "uniqueEffectDescription", "Projectile spells fire +2 projectiles but deal 10% less damage.",
-                        "statBonuses", Map.of("dexterity", 4, "critChance", 0.03)
+                new InventoryItemData(
+                        "unique-ring-1",
+                        "Twinstar Loop",
+                        "Ring",
+                        "Unique",
+                        3,
+                        List.of("Lightning", "Projectile", "Unique"),
+                        "twinstarLoop",
+                        "Projectile spells fire +2 projectiles but deal 10% less damage.",
+                        Map.of("dexterity", 4, "critChance", 0.03)
                 )
         );
     }
@@ -233,7 +233,7 @@ class CharacterProfileServiceTest {
         );
 
         assertThat(created.id()).isEqualTo(1L);
-        assertThat(created.lifeFlask()).isEqualTo(Map.of("currentCharges", 18));
+        assertThat(created.lifeFlask()).isEqualTo(new LifeFlaskState(18));
         assertThat(created.unlockedSpellIds()).containsExactly("stormChain", "emberBurst");
 
         CharacterStatsRequest updatedStats = new CharacterStatsRequest(4, 3, 5, 2);
@@ -305,54 +305,54 @@ class CharacterProfileServiceTest {
 
         assertThat(loaded.level()).isEqualTo(8);
         assertThat(loaded.currentHealth()).isEqualTo(220);
-        assertThat(loaded.lifeFlask()).isEqualTo(Map.of("currentCharges", 7));
+        assertThat(loaded.lifeFlask()).isEqualTo(new LifeFlaskState(7));
         assertThat(loaded.inventory()).containsExactly(
-                Map.of(
-                        "id", "armor-1",
-                        "name", "Titan Carapace",
-                        "slot", "BodyArmor",
-                        "rarity", "Unique",
-                        "tier", 5,
-                        "tags", List.of("Physical", "Unique"),
-                        "uniqueEffectId", "titanCarapace",
-                        "uniqueEffectDescription", "14% less contact damage taken.",
-                        "statBonuses", Map.of("vitality", 8, "maxHealth", 25)
+                new InventoryItemData(
+                        "armor-1",
+                        "Titan Carapace",
+                        "BodyArmor",
+                        "Unique",
+                        5,
+                        List.of("Physical", "Unique"),
+                        "titanCarapace",
+                        "14% less contact damage taken.",
+                        Map.of("vitality", 8, "maxHealth", 25)
                 )
         );
         assertThat(loaded.equippedItems()).containsEntry(
                 "BodyArmor",
-                Map.of(
-                        "id", "armor-1",
-                        "name", "Titan Carapace",
-                        "slot", "BodyArmor",
-                        "rarity", "Unique",
-                        "tier", 5,
-                        "tags", List.of("Physical", "Unique"),
-                        "uniqueEffectId", "titanCarapace",
-                        "uniqueEffectDescription", "14% less contact damage taken.",
-                        "statBonuses", Map.of("vitality", 8, "maxHealth", 25)
+                new InventoryItemData(
+                        "armor-1",
+                        "Titan Carapace",
+                        "BodyArmor",
+                        "Unique",
+                        5,
+                        List.of("Physical", "Unique"),
+                        "titanCarapace",
+                        "14% less contact damage taken.",
+                        Map.of("vitality", 8, "maxHealth", 25)
                 )
         );
         assertThat(loaded.spellProgress()).containsExactly(
-                Map.of("spellId", "stormChain", "level", 5),
-                Map.of("spellId", "emberBurst", "level", 3)
+                new SpellProgressState("stormChain", 5),
+                new SpellProgressState("emberBurst", 3)
         );
         assertThat(loaded.spellLoadout()).containsExactly(
-                Map.of("mainSpellId", "stormChain", "supportSpellIds", List.of("fasterCasting", "moreDamage"))
+                new SpellLoadoutEntry("stormChain", List.of("fasterCasting", "moreDamage"))
         );
         assertThat(loaded.currencies()).containsExactly(
-                Map.of("code", "mapShard", "amount", 9),
-                Map.of("code", "chaosShard", "amount", 2)
+                new CurrencyStackData("mapShard", 9),
+                new CurrencyStackData("chaosShard", 2)
         );
-        assertThat(loaded.mapProgress()).isEqualTo(Map.of(
-                "highestUnlockedTier", 3,
-                "lastCompletedTier", 2,
-                "consumableMaps", List.of(Map.of(
-                        "stackId", "tier-3-map",
-                        "mapId", "cryptDepths",
-                        "tier", 3,
-                        "quantity", 2,
-                        "enhancements", List.of(Map.of("id", "overflowingSpoils"))
+        assertThat(loaded.mapProgress()).isEqualTo(new MapProgressData(
+                3,
+                2,
+                List.of(new OwnedMapStackData(
+                        "tier-3-map",
+                        "cryptDepths",
+                        3,
+                        2,
+                        List.of(new MapEnhancementData("overflowingSpoils"))
                 ))
         ));
     }

@@ -12,16 +12,16 @@ public record CharacterResponse(
         int unspentStatPoints,
         int currentHealth,
         int gold,
-        Map<String, Object> lifeFlask,
+        LifeFlaskState lifeFlask,
         Map<String, Object> baseStats,
         Map<String, Object> derivedStats,
-        List<Map<String, Object>> inventory,
-        Map<String, Object> equippedItems,
+        List<InventoryItemData> inventory,
+        Map<String, InventoryItemData> equippedItems,
         List<String> unlockedSpellIds,
         List<String> unlockedSupportSpellIds,
-        List<Map<String, Object>> spellProgress,
-        List<Map<String, Object>> spellLoadout,
-        List<Map<String, Object>> currencies,
-        Map<String, Object> mapProgress
+        List<SpellProgressState> spellProgress,
+        List<SpellLoadoutEntry> spellLoadout,
+        List<CurrencyStackData> currencies,
+        MapProgressData mapProgress
 ) {
 }

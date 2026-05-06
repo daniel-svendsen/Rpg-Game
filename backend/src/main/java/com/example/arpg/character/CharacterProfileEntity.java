@@ -52,7 +52,7 @@ public class CharacterProfileEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "life_flask", nullable = false, columnDefinition = "jsonb")
-    private Map<String, Object> lifeFlask;
+    private LifeFlaskState lifeFlask;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "base_stats", nullable = false, columnDefinition = "jsonb")
@@ -64,11 +64,11 @@ public class CharacterProfileEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(nullable = false, columnDefinition = "jsonb")
-    private List<Map<String, Object>> inventory;
+    private List<InventoryItemData> inventory;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "equipped_items", nullable = false, columnDefinition = "jsonb")
-    private Map<String, Object> equippedItems;
+    private Map<String, InventoryItemData> equippedItems;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "unlocked_spell_ids", nullable = false, columnDefinition = "jsonb")
@@ -80,19 +80,19 @@ public class CharacterProfileEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "spell_progress", nullable = false, columnDefinition = "jsonb")
-    private List<Map<String, Object>> spellProgress;
+    private List<SpellProgressState> spellProgress;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "spell_loadout", nullable = false, columnDefinition = "jsonb")
-    private List<Map<String, Object>> spellLoadout;
+    private List<SpellLoadoutEntry> spellLoadout;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(nullable = false, columnDefinition = "jsonb")
-    private List<Map<String, Object>> currencies;
+    private List<CurrencyStackData> currencies;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "map_progress", nullable = false, columnDefinition = "jsonb")
-    private Map<String, Object> mapProgress;
+    private MapProgressData mapProgress;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
@@ -168,11 +168,11 @@ public class CharacterProfileEntity {
         this.gold = gold;
     }
 
-    public Map<String, Object> getLifeFlask() {
+    public LifeFlaskState getLifeFlask() {
         return lifeFlask;
     }
 
-    public void setLifeFlask(Map<String, Object> lifeFlask) {
+    public void setLifeFlask(LifeFlaskState lifeFlask) {
         this.lifeFlask = lifeFlask;
     }
 
@@ -192,19 +192,19 @@ public class CharacterProfileEntity {
         this.derivedStats = derivedStats;
     }
 
-    public List<Map<String, Object>> getInventory() {
+    public List<InventoryItemData> getInventory() {
         return inventory;
     }
 
-    public void setInventory(List<Map<String, Object>> inventory) {
+    public void setInventory(List<InventoryItemData> inventory) {
         this.inventory = inventory;
     }
 
-    public Map<String, Object> getEquippedItems() {
+    public Map<String, InventoryItemData> getEquippedItems() {
         return equippedItems;
     }
 
-    public void setEquippedItems(Map<String, Object> equippedItems) {
+    public void setEquippedItems(Map<String, InventoryItemData> equippedItems) {
         this.equippedItems = equippedItems;
     }
 
@@ -224,35 +224,35 @@ public class CharacterProfileEntity {
         this.unlockedSupportSpellIds = unlockedSupportSpellIds;
     }
 
-    public List<Map<String, Object>> getSpellProgress() {
+    public List<SpellProgressState> getSpellProgress() {
         return spellProgress;
     }
 
-    public void setSpellProgress(List<Map<String, Object>> spellProgress) {
+    public void setSpellProgress(List<SpellProgressState> spellProgress) {
         this.spellProgress = spellProgress;
     }
 
-    public List<Map<String, Object>> getSpellLoadout() {
+    public List<SpellLoadoutEntry> getSpellLoadout() {
         return spellLoadout;
     }
 
-    public void setSpellLoadout(List<Map<String, Object>> spellLoadout) {
+    public void setSpellLoadout(List<SpellLoadoutEntry> spellLoadout) {
         this.spellLoadout = spellLoadout;
     }
 
-    public List<Map<String, Object>> getCurrencies() {
+    public List<CurrencyStackData> getCurrencies() {
         return currencies;
     }
 
-    public void setCurrencies(List<Map<String, Object>> currencies) {
+    public void setCurrencies(List<CurrencyStackData> currencies) {
         this.currencies = currencies;
     }
 
-    public Map<String, Object> getMapProgress() {
+    public MapProgressData getMapProgress() {
         return mapProgress;
     }
 
-    public void setMapProgress(Map<String, Object> mapProgress) {
+    public void setMapProgress(MapProgressData mapProgress) {
         this.mapProgress = mapProgress;
     }
 

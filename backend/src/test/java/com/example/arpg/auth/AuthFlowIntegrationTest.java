@@ -2,6 +2,10 @@ package com.example.arpg.auth;
 
 import com.example.arpg.character.CharacterProfileService;
 import com.example.arpg.character.CharacterResponse;
+import com.example.arpg.character.LifeFlaskState;
+import com.example.arpg.character.MapProgressData;
+import com.example.arpg.character.SpellLoadoutEntry;
+import com.example.arpg.character.SpellProgressState;
 import com.example.arpg.user.UserAccountEntity;
 import com.example.arpg.user.UserAccountRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -90,17 +94,17 @@ class AuthFlowIntegrationTest {
                 1,
                 100,
                 75,
-                Map.of("currentCharges", 18),
+                new LifeFlaskState(18),
                 Map.of("strength", 2, "agility", 2, "vitality", 2, "dexterity", 2),
                 Map.of("maxHealth", 100, "castSpeedMultiplier", 1.0, "critChance", 0.01, "spellPowerMultiplier", 1.0),
                 List.of(),
                 Map.of(),
                 List.of("stormChain", "emberBurst"),
                 List.of("fasterCasting"),
-                List.of(Map.of("spellId", "stormChain", "level", 1)),
-                List.of(Map.of("mainSpellId", "stormChain", "supportSpellIds", List.of())),
+                List.of(new SpellProgressState("stormChain", 1)),
+                List.of(new SpellLoadoutEntry("stormChain", List.of())),
                 List.of(),
-                Map.of("highestUnlockedTier", 0, "lastCompletedTier", 0, "consumableMaps", List.of())
+                new MapProgressData(0, 0, List.of())
         ));
     }
 
