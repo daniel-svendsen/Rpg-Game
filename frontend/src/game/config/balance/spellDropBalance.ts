@@ -6,28 +6,29 @@ export interface DroppableSpellEntry {
   spellId: string;
   minTier: number;
   weight: number;
+  dropCategory: "common" | "chase";
 }
 
 export const spellDropBalance = {
   baseDropChanceByTier: {
-    0: percent(2.2),
-    1: percent(2.4),
-    2: percent(2.6),
-    3: percent(2.8),
-    4: percent(3),
-    5: percent(3.2),
-    6: percent(3.5),
-    7: percent(3.8),
-    8: percent(4.1),
-    9: percent(4.4),
-    10: percent(4.7)
+    0: percent(0.6),
+    1: percent(0.7),
+    2: percent(0.8),
+    3: percent(0.9),
+    4: percent(1),
+    5: percent(0.45),
+    6: percent(0.5),
+    7: percent(0.55),
+    8: percent(0.6),
+    9: percent(0.65),
+    10: percent(0.7)
   } as const,
-  rareMonsterDropChanceMultiplier: 1.2,
+  rareMonsterDropChanceMultiplier: 1.05,
   pool: [
-    { spellId: "glacierNova", minTier: 1, weight: 45 },
-    { spellId: "arcLance", minTier: 3, weight: 20 },
-    { spellId: "ashenOrbit", minTier: 5, weight: 8 },
-    { spellId: "tempestBloom", minTier: 7, weight: 3 }
+    { spellId: "glacierNova", minTier: 1, weight: 55, dropCategory: "common" },
+    { spellId: "arcLance", minTier: 3, weight: 18, dropCategory: "common" },
+    { spellId: "ashenOrbit", minTier: 5, weight: 4, dropCategory: "chase" },
+    { spellId: "tempestBloom", minTier: 7, weight: 1, dropCategory: "chase" }
   ] satisfies DroppableSpellEntry[]
 } as const;
 

@@ -1,17 +1,19 @@
 export const economyBalance = {
   economy: {
-    shopRefreshGoldCost: 28,
-    shopBasePrice: 24,
-    shopPowerPriceMultiplier: 1.1,
+    shopRefreshGoldCost: 90,
+    shopBasePrice: 120,
+    shopPowerPriceMultiplier: 3.2,
+    shopTierPriceMultiplier: 0.16,
+    exceptionalRareShopPriceMultiplier: 2.9,
     shopRarityPriceMultiplier: {
-      Normal: 1,
-      Magic: 1.35,
-      Rare: 1.9,
-      Unique: 3.2
+      Normal: 1.15,
+      Magic: 1.75,
+      Rare: 3.1,
+      Unique: 6.5
     },
     itemSellPriceMultiplier: 0.22,
     itemSellPriceFloor: 3,
-    guaranteedRareStartTier: 4
+    guaranteedRareStartTier: 6
   },
   mapCrafting: {
     combineShardsCost: 5,

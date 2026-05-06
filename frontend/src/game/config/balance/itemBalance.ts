@@ -6,6 +6,7 @@ export interface UniqueItemDefinition {
   slot: ItemSlot;
   minTier: number;
   dropWeight: number;
+  uniqueTier: 1 | 2 | 3;
   tags: Tag[];
   uniqueEffectId: string;
   uniqueEffectDescription: string;
@@ -28,6 +29,22 @@ export const itemBalance = {
     unique: 2.2
   },
   rareMonsterMapShardDropMultiplier: 1.5,
+  exceptionalRare: {
+    minTier: 3,
+    chanceByTier: {
+      3: 0.015,
+      4: 0.02,
+      5: 0.026,
+      6: 0.032,
+      7: 0.038,
+      8: 0.044,
+      9: 0.05,
+      10: 0.056
+    } as const,
+    rareMonsterChanceMultiplier: 1.75,
+    statMultiplier: 1.65,
+    shopPriceMultiplier: 2.9
+  },
   uniqueItems: [
     {
       id: "stormcallerFocus",
@@ -35,6 +52,7 @@ export const itemBalance = {
       slot: "Weapon",
       minTier: 3,
       dropWeight: 18,
+      uniqueTier: 1,
       tags: ["Lightning", "SpellDamage", "Critical", "Unique"],
       uniqueEffectId: "stormcallerFocus",
       uniqueEffectDescription: "Chain spells gain +2 chains and +60 chain range.",
@@ -52,6 +70,7 @@ export const itemBalance = {
       slot: "Boots",
       minTier: 5,
       dropWeight: 10,
+      uniqueTier: 2,
       tags: ["Fire", "CastSpeed", "Unique"],
       uniqueEffectId: "embersoulBoots",
       uniqueEffectDescription: "Area and Fire spells gain +22 radius and 18% more damage.",
@@ -69,6 +88,7 @@ export const itemBalance = {
       slot: "Amulet",
       minTier: 7,
       dropWeight: 4,
+      uniqueTier: 2,
       tags: ["Cold", "Critical", "SpellDamage", "Unique"],
       uniqueEffectId: "glacialHeart",
       uniqueEffectDescription: "Spells gain +8% crit chance and better spell and unique drop luck.",
@@ -87,6 +107,7 @@ export const itemBalance = {
       slot: "BodyArmor",
       minTier: 5,
       dropWeight: 8,
+      uniqueTier: 2,
       tags: ["Physical", "Unique"],
       uniqueEffectId: "titanCarapace",
       uniqueEffectDescription: "You take 14% less contact damage and gain +18% max life.",
@@ -101,6 +122,7 @@ export const itemBalance = {
       slot: "Belt",
       minTier: 4,
       dropWeight: 10,
+      uniqueTier: 1,
       tags: ["CastSpeed", "Unique"],
       uniqueEffectId: "wayfarerSash",
       uniqueEffectDescription: "Map shards drop more often and life flask kills grant +1 extra charge.",
@@ -116,6 +138,7 @@ export const itemBalance = {
       slot: "Ring",
       minTier: 4,
       dropWeight: 12,
+      uniqueTier: 1,
       tags: ["Projectile", "Critical", "Unique"],
       uniqueEffectId: "twinstarLoop",
       uniqueEffectDescription: "Projectile spells fire +2 projectiles but deal 10% less damage.",
@@ -131,6 +154,7 @@ export const itemBalance = {
       slot: "Ring",
       minTier: 6,
       dropWeight: 7,
+      uniqueTier: 2,
       tags: ["Fire", "SpellDamage", "Unique"],
       uniqueEffectId: "cinderSignet",
       uniqueEffectDescription: "Fire spells penetrate resistances and gain 16% more damage.",
@@ -138,6 +162,26 @@ export const itemBalance = {
         strength: 7,
         critChance: 0.03,
         spellPowerMultiplier: 0.12
+      }
+    },
+    {
+      id: "astralDominion",
+      name: "Astral Dominion",
+      slot: "Ring",
+      minTier: 8,
+      dropWeight: 2,
+      uniqueTier: 3,
+      tags: ["Critical", "SpellDamage", "Lightning", "Cold", "Fire", "Unique"],
+      uniqueEffectId: "astralDominion",
+      uniqueEffectDescription: "Spells gain 18% more damage and +6% crit chance.",
+      statBonuses: {
+        strength: 6,
+        agility: 6,
+        vitality: 6,
+        dexterity: 6,
+        maxHealth: 30,
+        critChance: 0.04,
+        spellPowerMultiplier: 0.1
       }
     }
   ] satisfies UniqueItemDefinition[]

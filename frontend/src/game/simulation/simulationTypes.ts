@@ -24,7 +24,11 @@ export interface SingleRunSimulationMetrics {
   mapShardsGained: number;
   mapsGained: number;
   rareItemsDropped: number;
+  exceptionalRareItemsDropped: number;
   uniqueItemsDropped: number;
+  uniqueTier1ItemsDropped: number;
+  uniqueTier2ItemsDropped: number;
+  uniqueTier3ItemsDropped: number;
   spellDrops: number;
   lootByKind: Record<LootEntry["kind"], number>;
   rareMonstersSpawned: number;
@@ -59,7 +63,11 @@ export interface SimulationSummary {
     mapShardsGained: number;
     mapsGained: number;
     rareItemsDropped: number;
+    exceptionalRareItemsDropped: number;
     uniqueItemsDropped: number;
+    uniqueTier1ItemsDropped: number;
+    uniqueTier2ItemsDropped: number;
+    uniqueTier3ItemsDropped: number;
     spellDrops: number;
     rareMonstersSpawned: number;
     rareMonstersKilled: number;
@@ -74,7 +82,11 @@ export interface SimulationSummary {
     mapShardsGained: number;
     mapsGained: number;
     rareItemsDropped: number;
+    exceptionalRareItemsDropped: number;
     uniqueItemsDropped: number;
+    uniqueTier1ItemsDropped: number;
+    uniqueTier2ItemsDropped: number;
+    uniqueTier3ItemsDropped: number;
     spellDrops: number;
     rareMonstersSpawned: number;
     rareMonstersKilled: number;

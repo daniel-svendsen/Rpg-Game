@@ -3,6 +3,7 @@ import { itemBases, uniqueItemDefinitions } from "../../config/itemConfig";
 import type { CharacterRecord, InventoryItem, ItemRarity } from "../../../shared/types/saveTypes";
 import { createClientId } from "../../../shared/utils/id";
 import { getEquippedUniqueModifiers } from "../items/uniqueEffects";
+import { exceptionalRareNamePrefix } from "./itemPower";
 import { pickWeighted } from "../loot/weightedTables";
 import type { Tag } from "../../../shared/types/saveTypes";
 
@@ -10,6 +11,55 @@ const randomInRange = ([min, max]: readonly [number, number]): number =>
   Number((Math.random() * (max - min) + min).toFixed(2));
 
 const pickRandom = <T,>(values: readonly T[]): T => values[Math.floor(Math.random() * values.length)];
+
+const scaleStatBonus = (value: number | undefined, multiplier: number): number | undefined => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  return value < 1 ? Number((value * multiplier).toFixed(3)) : Math.round(value * multiplier);
+};
+
+const getExceptionalRareChanceForTier = (tier: number, isRareMonster: boolean): number => {
+  if (tier < itemBalance.exceptionalRare.minTier) {
+    return 0;
+  }
+
+  const normalizedTier = Math.max(
+    itemBalance.exceptionalRare.minTier,
+    Math.min(10, tier)
+  ) as keyof typeof itemBalance.exceptionalRare.chanceByTier;
+  const baseChance = itemBalance.exceptionalRare.chanceByTier[normalizedTier] ?? 0;
+
+  return isRareMonster ? baseChance * itemBalance.exceptionalRare.rareMonsterChanceMultiplier : baseChance;
+};
+
+const maybeCreateExceptionalRare = (
+  item: InventoryItem,
+  tier: number,
+  isRareMonster: boolean
+): InventoryItem => {
+  if (item.rarity !== "Rare" || Math.random() >= getExceptionalRareChanceForTier(tier, isRareMonster)) {
+    return item;
+  }
+
+  return {
+    ...item,
+    name: `${exceptionalRareNamePrefix} ${item.name}`,
+    statBonuses: {
+      strength: scaleStatBonus(item.statBonuses.strength, itemBalance.exceptionalRare.statMultiplier),
+      agility: scaleStatBonus(item.statBonuses.agility, itemBalance.exceptionalRare.statMultiplier),
+      vitality: scaleStatBonus(item.statBonuses.vitality, itemBalance.exceptionalRare.statMultiplier),
+      dexterity: scaleStatBonus(item.statBonuses.dexterity, itemBalance.exceptionalRare.statMultiplier),
+      maxHealth: scaleStatBonus(item.statBonuses.maxHealth, itemBalance.exceptionalRare.statMultiplier),
+      critChance: scaleStatBonus(item.statBonuses.critChance, itemBalance.exceptionalRare.statMultiplier),
+      spellPowerMultiplier: scaleStatBonus(
+        item.statBonuses.spellPowerMultiplier,
+        itemBalance.exceptionalRare.statMultiplier
+      )
+    }
+  };
+};
 
 const statNameParts = {
   strength: ["Titan", "Crushing", "Stonebound"],
@@ -158,7 +208,7 @@ export const generateItemDrop = (tier: number, isRareMonster: boolean): Inventor
     spellPowerMultiplier: randomInRange(ranges.spellPowerMultiplier)
   };
 
-  return {
+  return maybeCreateExceptionalRare({
     id: `${base.id}-${createClientId()}`,
     name: buildGeneratedItemName(base.name, generatedRarity, base.tags, statBonuses),
     slot: base.slot,
@@ -166,7 +216,7 @@ export const generateItemDrop = (tier: number, isRareMonster: boolean): Inventor
     tier,
     tags: base.tags,
     statBonuses
-  };
+  }, tier, isRareMonster);
 };
 
 export const generateItemDropForCharacter = (
@@ -200,7 +250,7 @@ export const generateItemDropForCharacter = (
     spellPowerMultiplier: randomInRange(ranges.spellPowerMultiplier)
   };
 
-  return {
+  return maybeCreateExceptionalRare({
     id: `${base.id}-${createClientId()}`,
     name: buildGeneratedItemName(base.name, generatedRarity, base.tags, statBonuses),
     slot: base.slot,
@@ -208,5 +258,5 @@ export const generateItemDropForCharacter = (
     tier,
     tags: base.tags,
     statBonuses
-  };
+  }, tier, isRareMonster);
 };

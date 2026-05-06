@@ -1,7 +1,7 @@
 import { balanceConfig } from "../game/config/balanceConfig";
 import { spellConfig, supportSpellConfig } from "../game/config/spellConfig";
 import { generateItemDrop } from "../game/domain/items/itemGenerator";
-import { getItemPowerScore } from "../game/domain/items/itemPower";
+import { getItemPowerScore, isExceptionalRare } from "../game/domain/items/itemPower";
 import type { EquipmentSlot, InventoryItem } from "../shared/types/saveTypes";
 
 export type ShopItemState = InventoryItem & { price: number };
@@ -28,13 +28,23 @@ export const createShopStock = (tier: number): InventoryItem[] =>
     )
   );
 
+export const getShopItemPrice = (item: InventoryItem): number => {
+  const powerPrice =
+    balanceConfig.economy.shopBasePrice +
+    getItemPowerScore(item) * balanceConfig.economy.shopPowerPriceMultiplier;
+  const rarityPrice = powerPrice * balanceConfig.economy.shopRarityPriceMultiplier[item.rarity];
+  const tierPrice =
+    rarityPrice * (1 + Math.max(0, item.tier - 1) * balanceConfig.economy.shopTierPriceMultiplier);
+  const exceptionalPrice = isExceptionalRare(item)
+    ? tierPrice * balanceConfig.economy.exceptionalRareShopPriceMultiplier
+    : tierPrice;
+
+  return Math.round(exceptionalPrice);
+};
+
 export const toShopItemState = (item: InventoryItem): ShopItemState => ({
   ...item,
-  price: Math.round(
-    (balanceConfig.economy.shopBasePrice +
-      getItemPowerScore(item) * balanceConfig.economy.shopPowerPriceMultiplier) *
-      balanceConfig.economy.shopRarityPriceMultiplier[item.rarity]
-  )
+  price: getShopItemPrice(item)
 });
 
 export const getSpellAccentClassName = (spellId: string): string => {

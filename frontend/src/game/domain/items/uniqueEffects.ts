@@ -5,6 +5,7 @@ export interface EquippedUniqueModifiers {
   bonusChainRangeForChainSpells: number;
   bonusAreaRadiusForAreaSpells: number;
   moreDamageForAreaAndFireSpells: number;
+  moreDamageForSpells: number;
   bonusCritChanceForSpells: number;
   bonusProjectilesForProjectileSpells: number;
   lessDamageForProjectileSpells: number;
@@ -22,6 +23,7 @@ const defaultUniqueModifiers: EquippedUniqueModifiers = {
   bonusChainRangeForChainSpells: 0,
   bonusAreaRadiusForAreaSpells: 0,
   moreDamageForAreaAndFireSpells: 0,
+  moreDamageForSpells: 0,
   bonusCritChanceForSpells: 0,
   bonusProjectilesForProjectileSpells: 0,
   lessDamageForProjectileSpells: 0,
@@ -82,6 +84,12 @@ const applyUniqueEffect = (
         ...modifiers,
         moreDamageForAreaAndFireSpells: modifiers.moreDamageForAreaAndFireSpells + 0.16,
         resistancePenetrationForFireSpells: modifiers.resistancePenetrationForFireSpells + 0.12
+      };
+    case "astralDominion":
+      return {
+        ...modifiers,
+        moreDamageForSpells: modifiers.moreDamageForSpells + 0.18,
+        bonusCritChanceForSpells: modifiers.bonusCritChanceForSpells + 0.06
       };
     default:
       return modifiers;

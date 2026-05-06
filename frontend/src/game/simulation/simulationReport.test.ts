@@ -17,7 +17,11 @@ describe("simulationReport", () => {
         mapShardsGained: 1,
         mapsGained: 0,
         rareItemsDropped: 1,
+        exceptionalRareItemsDropped: 0,
         uniqueItemsDropped: 0,
+        uniqueTier1ItemsDropped: 0,
+        uniqueTier2ItemsDropped: 0,
+        uniqueTier3ItemsDropped: 0,
         spellDrops: 1,
         lootByKind: { Item: 2, Spell: 1, Currency: 1, Map: 0 },
         rareMonstersSpawned: 4,
@@ -35,7 +39,11 @@ describe("simulationReport", () => {
         mapShardsGained: 0,
         mapsGained: 1,
         rareItemsDropped: 0,
+        exceptionalRareItemsDropped: 1,
         uniqueItemsDropped: 1,
+        uniqueTier1ItemsDropped: 0,
+        uniqueTier2ItemsDropped: 0,
+        uniqueTier3ItemsDropped: 1,
         spellDrops: 0,
         lootByKind: { Item: 1, Spell: 0, Currency: 0, Map: 1 },
         rareMonstersSpawned: 2,
@@ -57,11 +65,15 @@ describe("simulationReport", () => {
     expect(summary.totals.deaths).toBe(1);
     expect(summary.totals.goldGained).toBe(180);
     expect(summary.totals.rareItemsDropped).toBe(1);
+    expect(summary.totals.exceptionalRareItemsDropped).toBe(1);
     expect(summary.totals.uniqueItemsDropped).toBe(1);
+    expect(summary.totals.uniqueTier3ItemsDropped).toBe(1);
     expect(summary.totals.spellDrops).toBe(1);
     expect(summary.totals.lootByKind.Map).toBe(1);
     expect(summary.averages.completionRate).toBe(0.5);
     expect(summary.averages.durationSeconds).toBe(30);
+    expect(summary.averages.exceptionalRareItemsDropped).toBe(0.5);
+    expect(summary.averages.uniqueTier3ItemsDropped).toBe(0.5);
     expect(summary.averages.rareMonstersKilled).toBe(2.5);
   });
 });

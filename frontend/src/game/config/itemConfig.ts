@@ -35,6 +35,7 @@ export interface UniqueItemDefinition {
   slot: ItemSlot;
   minTier: number;
   dropWeight: number;
+  uniqueTier: 1 | 2 | 3;
   tags: Tag[];
   uniqueEffectId: string;
   uniqueEffectDescription: string;

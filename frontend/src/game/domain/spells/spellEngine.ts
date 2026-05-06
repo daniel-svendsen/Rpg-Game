@@ -61,6 +61,8 @@ export const resolveSpell = (
     critChance += support.apply.criticalChanceBonus ?? 0;
   });
 
+  damageMultiplier *= 1 + equippedUniqueModifiers.moreDamageForSpells;
+
   if (baseSpell.tags.includes("Chain")) {
     chainCount += equippedUniqueModifiers.bonusChainsForChainSpells;
     chainRange += equippedUniqueModifiers.bonusChainRangeForChainSpells;

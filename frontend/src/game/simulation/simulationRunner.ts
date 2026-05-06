@@ -1,6 +1,8 @@
 import type { CharacterRecord, CurrencyStack, InventoryItem, LootEntry, OwnedMapStack } from "../../shared/types/saveTypes";
 import { mapConfig } from "../config/mapConfig";
 import { createArenaRuntime, stepArenaRuntime, type ArenaRuntimeState } from "../domain/combat/arenaSimulation";
+import { isExceptionalRare } from "../domain/items/itemPower";
+import { uniqueItemDefinitions } from "../config/itemConfig";
 import { canUseLifeFlask, useLifeFlask } from "../domain/player/lifeFlask";
 import { createSimulationBaselineCharacter } from "./simulationCharacter";
 import { applySimulationBalanceOverrides } from "./simulationOverrides";
@@ -40,6 +42,7 @@ const syncRuntimePlayer = (runtime: ArenaRuntimeState, player: CharacterRecord):
 });
 
 const cloneCharacter = (character: CharacterRecord): CharacterRecord => structuredClone(character);
+const uniqueTierById = new Map(uniqueItemDefinitions.map((item) => [item.id, item.uniqueTier]));
 
 const getNewItems = (baselineItems: InventoryItem[], finalItems: InventoryItem[]): InventoryItem[] => {
   const baselineIds = new Set(baselineItems.map((item) => item.id));
@@ -92,7 +95,17 @@ const runSingleSimulation = (
   const finalPlayer = runtime.snapshot.player;
   const newItems = getNewItems(baselineCharacter.inventory, finalPlayer.inventory);
   const rareItemsDropped = newItems.filter((item) => item.rarity === "Rare").length;
+  const exceptionalRareItemsDropped = newItems.filter((item) => isExceptionalRare(item)).length;
   const uniqueItemsDropped = newItems.filter((item) => item.rarity === "Unique").length;
+  const uniqueTier1ItemsDropped = newItems.filter(
+    (item) => item.rarity === "Unique" && uniqueTierById.get(item.id.split("-")[0]) === 1
+  ).length;
+  const uniqueTier2ItemsDropped = newItems.filter(
+    (item) => item.rarity === "Unique" && uniqueTierById.get(item.id.split("-")[0]) === 2
+  ).length;
+  const uniqueTier3ItemsDropped = newItems.filter(
+    (item) => item.rarity === "Unique" && uniqueTierById.get(item.id.split("-")[0]) === 3
+  ).length;
   const goldGained = finalPlayer.gold - baselineCharacter.gold;
   const mapShardsGained =
     getCurrencyAmount(finalPlayer.currencies, "mapShard") -
@@ -113,7 +126,11 @@ const runSingleSimulation = (
     mapShardsGained,
     mapsGained,
     rareItemsDropped,
+    exceptionalRareItemsDropped,
     uniqueItemsDropped,
+    uniqueTier1ItemsDropped,
+    uniqueTier2ItemsDropped,
+    uniqueTier3ItemsDropped,
     spellDrops: accumulatedLootByKind.Spell,
     lootByKind: accumulatedLootByKind,
     rareMonstersSpawned: runtime.telemetry.rareMonstersSpawned,

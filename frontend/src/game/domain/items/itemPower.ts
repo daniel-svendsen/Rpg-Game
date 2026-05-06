@@ -1,5 +1,10 @@
 import type { CharacterRecord, InventoryItem } from "../../../shared/types/saveTypes";
 
+export const exceptionalRareNamePrefix = "Exceptional";
+
+export const isExceptionalRare = (item: InventoryItem): boolean =>
+  item.rarity === "Rare" && item.name.startsWith(`${exceptionalRareNamePrefix} `);
+
 export const getItemPowerScore = (item: InventoryItem): number => {
   const bonuses = item.statBonuses;
 
@@ -11,7 +16,8 @@ export const getItemPowerScore = (item: InventoryItem): number => {
     (bonuses.maxHealth ?? 0) * 0.2 +
     (bonuses.critChance ?? 0) * 120 +
     (bonuses.spellPowerMultiplier ?? 0) * 100 +
-    item.tier * 6
+    item.tier * 6 +
+    (isExceptionalRare(item) ? item.tier * 18 : 0)
   );
 };
 
