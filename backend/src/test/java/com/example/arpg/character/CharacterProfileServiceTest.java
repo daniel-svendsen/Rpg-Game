@@ -12,9 +12,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -181,5 +184,186 @@ class CharacterProfileServiceTest {
                         "statBonuses", Map.of("dexterity", 4, "critChance", 0.03)
                 )
         );
+    }
+
+    @Test
+    void createSaveAndLoadRoundTripsProgressionState() {
+        UserAccountEntity user = new UserAccountEntity();
+        user.setEmail("player@example.com");
+        AtomicLong nextId = new AtomicLong(1);
+        AtomicReference<CharacterProfileEntity> storedCharacter = new AtomicReference<>();
+
+        when(userAccountRepository.findByEmail("player@example.com")).thenReturn(Optional.of(user));
+        when(characterProfileRepository.findByUserEmail("player@example.com"))
+                .thenAnswer(invocation -> Optional.ofNullable(storedCharacter.get()));
+        when(characterProfileRepository.findById(any())).thenAnswer(invocation -> {
+            CharacterProfileEntity entity = storedCharacter.get();
+            if (entity != null && entity.getId().equals(invocation.getArgument(0))) {
+                return Optional.of(entity);
+            }
+            return Optional.empty();
+        });
+        when(characterProfileRepository.save(any(CharacterProfileEntity.class))).thenAnswer(invocation -> {
+            CharacterProfileEntity entity = invocation.getArgument(0);
+            if (entity.getId() == null) {
+                setEntityId(entity, nextId.getAndIncrement());
+            }
+            storedCharacter.set(entity);
+            return entity;
+        });
+
+        CharacterStatsRequest createStats = new CharacterStatsRequest(2, 1, 3, 0);
+        Map<String, Object> initialDerivedStats = Map.of(
+                "maxHealth", 140,
+                "castSpeedMultiplier", 1.01,
+                "critChance", 0.01,
+                "spellPowerMultiplier", 1.0
+        );
+        when(characterStatCalculator.deriveStats(createStats)).thenReturn(initialDerivedStats);
+        when(characterStatCalculator.toBaseStatsMap(createStats)).thenReturn(Map.of(
+                "strength", 2,
+                "agility", 1,
+                "vitality", 3,
+                "dexterity", 0
+        ));
+
+        CharacterResponse created = characterProfileService.createCharacter(
+                "player@example.com",
+                new CreateCharacterRequest("Warden", createStats)
+        );
+
+        assertThat(created.id()).isEqualTo(1L);
+        assertThat(created.lifeFlask()).isEqualTo(Map.of("currentCharges", 18));
+        assertThat(created.unlockedSpellIds()).containsExactly("stormChain", "emberBurst");
+
+        CharacterStatsRequest updatedStats = new CharacterStatsRequest(4, 3, 5, 2);
+        Map<String, Object> updatedDerivedStats = Map.of(
+                "maxHealth", 220,
+                "castSpeedMultiplier", 1.08,
+                "critChance", 0.05,
+                "spellPowerMultiplier", 1.12
+        );
+        when(characterStatCalculator.deriveStats(updatedStats)).thenReturn(updatedDerivedStats);
+        when(characterStatCalculator.toBaseStatsMap(updatedStats)).thenReturn(Map.of(
+                "strength", 4,
+                "agility", 3,
+                "vitality", 5,
+                "dexterity", 2
+        ));
+        when(characterStatCalculator.clampCurrentHealth(999, updatedDerivedStats)).thenReturn(220);
+
+        InventoryItemRequest bodyArmor = new InventoryItemRequest(
+                "armor-1",
+                "Titan Carapace",
+                "BodyArmor",
+                "Unique",
+                5,
+                List.of("Physical", "Unique"),
+                "titanCarapace",
+                "14% less contact damage taken.",
+                Map.of("vitality", 8, "maxHealth", 25)
+        );
+        SaveCharacterProgressRequest saveRequest = new SaveCharacterProgressRequest(
+                "Warden",
+                8,
+                275,
+                320,
+                2,
+                999,
+                640,
+                new LifeFlaskRequest(7),
+                updatedStats,
+                new DerivedStatsRequest(1, 1.0, 0.0, 1.0),
+                List.of(bodyArmor),
+                Map.of("BodyArmor", bodyArmor),
+                List.of("stormChain", "emberBurst", "glacialNova"),
+                List.of("fasterCasting", "moreDamage"),
+                List.of(
+                        new SpellProgressRequest("stormChain", 5),
+                        new SpellProgressRequest("emberBurst", 3)
+                ),
+                List.of(new SpellLinkRequest("stormChain", List.of("fasterCasting", "moreDamage"))),
+                List.of(
+                        new CurrencyStackRequest("mapShard", 9),
+                        new CurrencyStackRequest("chaosShard", 2)
+                ),
+                new MapProgressRequest(
+                        3,
+                        2,
+                        List.of(new OwnedMapStackRequest(
+                                "tier-3-map",
+                                "cryptDepths",
+                                3,
+                                2,
+                                List.of(new MapEnhancementRequest("overflowingSpoils"))
+                        ))
+                )
+        );
+
+        characterProfileService.saveProgress("player@example.com", created.id(), saveRequest);
+        CharacterResponse loaded = characterProfileService.getCurrentCharacter("player@example.com");
+
+        assertThat(loaded.level()).isEqualTo(8);
+        assertThat(loaded.currentHealth()).isEqualTo(220);
+        assertThat(loaded.lifeFlask()).isEqualTo(Map.of("currentCharges", 7));
+        assertThat(loaded.inventory()).containsExactly(
+                Map.of(
+                        "id", "armor-1",
+                        "name", "Titan Carapace",
+                        "slot", "BodyArmor",
+                        "rarity", "Unique",
+                        "tier", 5,
+                        "tags", List.of("Physical", "Unique"),
+                        "uniqueEffectId", "titanCarapace",
+                        "uniqueEffectDescription", "14% less contact damage taken.",
+                        "statBonuses", Map.of("vitality", 8, "maxHealth", 25)
+                )
+        );
+        assertThat(loaded.equippedItems()).containsEntry(
+                "BodyArmor",
+                Map.of(
+                        "id", "armor-1",
+                        "name", "Titan Carapace",
+                        "slot", "BodyArmor",
+                        "rarity", "Unique",
+                        "tier", 5,
+                        "tags", List.of("Physical", "Unique"),
+                        "uniqueEffectId", "titanCarapace",
+                        "uniqueEffectDescription", "14% less contact damage taken.",
+                        "statBonuses", Map.of("vitality", 8, "maxHealth", 25)
+                )
+        );
+        assertThat(loaded.spellProgress()).containsExactly(
+                Map.of("spellId", "stormChain", "level", 5),
+                Map.of("spellId", "emberBurst", "level", 3)
+        );
+        assertThat(loaded.spellLoadout()).containsExactly(
+                Map.of("mainSpellId", "stormChain", "supportSpellIds", List.of("fasterCasting", "moreDamage"))
+        );
+        assertThat(loaded.currencies()).containsExactly(
+                Map.of("code", "mapShard", "amount", 9),
+                Map.of("code", "chaosShard", "amount", 2)
+        );
+        assertThat(loaded.mapProgress()).isEqualTo(Map.of(
+                "highestUnlockedTier", 3,
+                "lastCompletedTier", 2,
+                "consumableMaps", List.of(Map.of(
+                        "stackId", "tier-3-map",
+                        "mapId", "cryptDepths",
+                        "tier", 3,
+                        "quantity", 2,
+                        "enhancements", List.of(Map.of("id", "overflowingSpoils"))
+                ))
+        ));
+    }
+
+    private void setEntityId(CharacterProfileEntity entity, long id) {
+        try {
+            var field = CharacterProfileEntity.class.getDeclaredField("id");
+            field.setAccessible(true);
+            field.set(entity, id);
+        } catch (ReflectiveOperationException exception) {
+            throw new AssertionError("Failed to assign test entity id", exception);
+        }
     }
 }

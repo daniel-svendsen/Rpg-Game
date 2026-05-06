@@ -6,6 +6,7 @@ import { supportSpellConfig } from "../game/config/spellConfig";
 import type { ArenaSnapshot, CharacterRecord, LootEntry } from "../shared/types/saveTypes";
 import { HealthHud } from "./HealthHud";
 import { LootPanel } from "./LootPanel";
+import { getSpellDetailLines } from "./spellDetails";
 
 interface ArenaScreenProps {
   arenaSnapshot: ArenaSnapshot | null;
@@ -15,7 +16,6 @@ interface ArenaScreenProps {
   onBackToHub: () => void;
   onManualSave: () => Promise<void>;
   onUseLifeFlask: () => void;
-  getSpellDetailLines: (spellId: string, supportSpellIds: string[]) => string[];
 }
 
 const ArenaScreen = ({
@@ -25,8 +25,7 @@ const ArenaScreen = ({
   feedback,
   onBackToHub,
   onManualSave,
-  onUseLifeFlask,
-  getSpellDetailLines
+  onUseLifeFlask
 }: ArenaScreenProps) => {
   const phaserContainerRef = useRef<HTMLDivElement | null>(null);
   const phaserGameRef = useRef<PhaserGame | null>(null);
@@ -81,6 +80,7 @@ const ArenaScreen = ({
           <div className="fact-grid">
             {character
               ? getSpellDetailLines(
+                  character,
                   character.spellLoadout[0]?.mainSpellId ?? "",
                   character.spellLoadout[0]?.supportSpellIds ?? []
                 ).map((line) => (

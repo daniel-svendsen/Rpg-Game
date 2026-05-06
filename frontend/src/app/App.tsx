@@ -4,54 +4,25 @@ import { login, register } from "../api/authApi";
 import type { AuthFormState } from "../auth/authTypes";
 import { AuthScreen } from "./AuthScreen";
 import type { HubTab, OverlayPanel, ScreenMode, SelectedMapTarget } from "./appTypes";
-import { EquipmentTab } from "./EquipmentTab";
-import { HealthHud } from "./HealthHud";
-import { HubBottomTabs } from "./HubBottomTabs";
-import { HubOverlayPanel } from "./HubOverlayPanel";
-import { HubTopBar } from "./HubTopBar";
-import { InventoryTab } from "./InventoryTab";
+import { HubScreen } from "./HubScreen";
 import { InlineFeedbackPanel } from "./InlineFeedbackPanel";
 import {
   accountEmailStorageKey,
   createShopStock,
-  equipmentSlots,
-  formatPowerChange,
   getItemSellPrice,
-  getSpellAccentClassName,
-  getSupportAccentClassName,
   toShopItemState,
   type ShopItemState
 } from "./appUiHelpers";
-import {
-  getCurrencyAmount,
-  getMapDisplayName,
-  getMapEnhancementDetailLines,
-  getMapVariantLabel,
-  getPreferredMapSelection
-} from "./mapFlow";
-import { MapsTab } from "./MapsTab";
-import { ShopTab } from "./ShopTab";
-import { SpellsTab } from "./SpellsTab";
+import { getPreferredMapSelection } from "./mapFlow";
 import { CharacterCreationScreen } from "./CharacterCreationScreen";
-import { CharacterTab } from "./CharacterTab";
 import { useArenaSession } from "./useArenaSession";
 import { useHubActions } from "./useHubActions";
 import { useMapActions } from "./useMapActions";
 import { useCharacterPersistence } from "./useCharacterPersistence";
 import { balanceConfig } from "../game/config/balanceConfig";
-import { supportSpellConfig } from "../game/config/spellConfig";
 import type { ArenaRuntimeState } from "../game/domain/combat/arenaSimulation";
 import { getOwnedMapStack } from "../game/domain/maps/mapProgress";
-import { canUseLifeFlask } from "../game/domain/player/lifeFlask";
 import { createNewCharacter, normalizeCharacterRecord } from "../game/domain/player/playerTypes";
-import { resolveSpell } from "../game/domain/spells/spellEngine";
-import {
-  canUpgradeSpell,
-  getSpellLevel,
-  getSpellUpgradeGoldCost,
-  getSpellUpgradeShardCost,
-  getSpellUpgradeTierRequirement
-} from "../game/domain/spells/spellProgression";
 import type {
   ArenaSnapshot,
   CharacterStats,
@@ -337,198 +308,6 @@ export const App = () => {
   const renderInlineFeedback = () => {
     return <InlineFeedbackPanel statusMessage={statusMessage} errorMessage={errorMessage} />;
   };
-
-  const getSpellDetailLines = (spellId: string, supportSpellIds: string[]): string[] => {
-    if (!character) {
-      return [];
-    }
-
-    const resolvedSpell = resolveSpell(character, spellId, supportSpellIds);
-    const targetCount = Math.max(1, resolvedSpell.projectileCount + resolvedSpell.chainCount);
-    const lines = [
-      `Level ${resolvedSpell.level}`,
-      `Damage ${resolvedSpell.damage}`,
-      `Cooldown ${(resolvedSpell.cooldownMs / 1000).toFixed(2)}s`,
-      `Critical chance ${(resolvedSpell.critChance * 100).toFixed(1)}%`
-    ];
-
-    if (resolvedSpell.chainCount > 0) {
-      lines.push(`Chains up to ${targetCount} enemies within ${resolvedSpell.chainRange} range`);
-    }
-
-    if (resolvedSpell.areaRadius > 0) {
-      lines.push(`Explosion radius ${resolvedSpell.areaRadius}`);
-    }
-
-    if (supportSpellIds.length > 0) {
-      lines.push(
-        `Linked supports: ${supportSpellIds
-          .map((supportSpellId) => supportSpellConfig[supportSpellId]?.name ?? supportSpellId)
-          .join(", ")}`
-      );
-    }
-
-    return lines;
-  };
-
-  const renderSpellUpgradeActions = (spellId: string) => {
-    if (!character) {
-      return null;
-    }
-
-    const spellLevel = getSpellLevel(character, spellId);
-    const goldCost = getSpellUpgradeGoldCost(spellLevel);
-    const shardCost = getSpellUpgradeShardCost(spellLevel);
-    const nextTierRequirement = getSpellUpgradeTierRequirement(spellLevel + 1);
-    const isUpgradeable = canUpgradeSpell(character, spellId);
-    const isMaxLevel = spellLevel >= balanceConfig.spellProgression.maxLevel;
-
-    return (
-      <div className="stack compact-stack">
-        <div className="status-text">
-          {isMaxLevel
-            ? "Max level reached"
-            : `Upgrade cost: ${goldCost} gold${shardCost > 0 ? ` | ${shardCost} Map Shard${shardCost > 1 ? "s" : ""}` : ""} | Requires Tier ${nextTierRequirement}`}
-        </div>
-        <div className="actions">
-          <button
-            className="secondary-button"
-            disabled={!isUpgradeable}
-            onClick={() => handleUpgradeSpell(spellId)}
-            type="button"
-          >
-            {isMaxLevel ? "Maxed" : "Upgrade"}
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  const renderHubTopBar = () => (
-    <HubTopBar
-      characterName={character?.name}
-      level={character?.level}
-      gold={character?.gold}
-      onSave={() => void handleManualSave()}
-    />
-  );
-
-  const renderMapsTab = () => (
-    <MapsTab
-      topBar={renderHubTopBar()}
-      healthHud={
-        <HealthHud
-          character={arenaSnapshot?.player ?? character}
-          canUseLifeFlask={character ? canUseLifeFlask(arenaSnapshot?.player ?? character) : false}
-          onUseLifeFlask={handleUseLifeFlask}
-        />
-      }
-      character={character}
-      selectedMapTarget={selectedMapTarget}
-      selectedMapId={selectedMapId}
-      selectedMapEntry={selectedMapEntry}
-      selectedMapEnhancements={selectedMapEnhancements}
-      queuedMapCount={queuedMapIds.length}
-      mapShardAmount={character ? getCurrencyAmount(character, "mapShard") : 0}
-      getMapDisplayName={getMapDisplayName}
-      getMapVariantLabel={getMapVariantLabel}
-      getMapEnhancementDetailLines={getMapEnhancementDetailLines}
-      onStartMap={handleStartMap}
-      onRunAllMaps={handleRunAllMaps}
-      onEnhanceSelectedMap={handleEnhanceSelectedMap}
-      onSelectMap={setSelectedMapTarget}
-      onConvertShardsToMaps={handleConvertShardsToMaps}
-    />
-  );
-
-  const renderEquipmentTab = () => (
-    <EquipmentTab
-      topBar={renderHubTopBar()}
-      character={character}
-      equipmentSlots={equipmentSlots}
-      onSelectEquipmentSlot={setSelectedEquipmentSlot}
-      onOpenEquipmentPicker={() => setOverlayPanel("equipmentPicker")}
-    />
-  );
-
-  const renderSpellsTab = () => (
-    <SpellsTab
-      topBar={renderHubTopBar()}
-      character={character}
-      getSpellAccentClassName={getSpellAccentClassName}
-      getSupportAccentClassName={getSupportAccentClassName}
-      getSpellDetailLines={getSpellDetailLines}
-      renderSpellUpgradeActions={renderSpellUpgradeActions}
-      onSelectMainSpell={handleSelectMainSpell}
-      onOpenMainSpellPicker={() => setOverlayPanel("mainSpellPicker")}
-      onOpenSupportPicker={(slotIndex) => {
-        setSelectedSupportSlot(slotIndex);
-        setOverlayPanel("supportPicker");
-      }}
-    />
-  );
-  
-  const renderInventoryTab = () => (
-    <InventoryTab
-      topBar={renderHubTopBar()}
-      character={character}
-      recentLoot={recentLoot}
-      getItemSellPrice={getItemSellPrice}
-      onSellItem={handleSellItem}
-      onEquipItem={handleEquipItem}
-      onSelectEquipmentSlot={setSelectedEquipmentSlot}
-    />
-  );
-
-  const renderShopTab = () => (
-    <ShopTab
-      topBar={renderHubTopBar()}
-      character={character}
-      shopItems={shopItems}
-      formatPowerChange={formatPowerChange}
-      onBuyShopItem={handleBuyShopItem}
-      onSellAllItems={handleSellAllItems}
-      onRefreshShop={handleRefreshShop}
-    />
-  );
-
-  const renderCharacterTab = () => (
-    <CharacterTab
-      topBar={renderHubTopBar()}
-      healthHud={
-        <HealthHud
-          character={arenaSnapshot?.player ?? character}
-          canUseLifeFlask={character ? canUseLifeFlask(arenaSnapshot?.player ?? character) : false}
-          onUseLifeFlask={handleUseLifeFlask}
-        />
-      }
-      accountEmail={accountEmail}
-      character={character}
-      onLogout={handleLogout}
-      onSpendStatPoint={handleSpendStatPoint}
-    />
-  );
-
-  const renderHubBottomTabs = () => <HubBottomTabs activeTab={hubTab} onSelectTab={setHubTab} />;
-
-  const renderOverlayPanel = () => (
-    <HubOverlayPanel
-      character={character}
-      overlayPanel={overlayPanel}
-      selectedEquipmentSlot={selectedEquipmentSlot}
-      selectedSupportSlot={selectedSupportSlot}
-      getSpellAccentClassName={getSpellAccentClassName}
-      getSupportAccentClassName={getSupportAccentClassName}
-      formatPowerChange={formatPowerChange}
-      getSpellDetailLines={getSpellDetailLines}
-      renderSpellUpgradeActions={renderSpellUpgradeActions}
-      onClose={() => setOverlayPanel(null)}
-      onEquipItem={handleEquipItem}
-      onSelectMainSpell={handleSelectMainSpell}
-      onSelectSupportSpell={handleSelectSupportSpell}
-    />
-  );
-
   const renderAuthPanel = () => (
     <AuthScreen
       feedback={renderInlineFeedback()}
@@ -553,17 +332,51 @@ export const App = () => {
   );
 
   const renderHub = () => (
-    <div className="hub-shell">
+    <>
       <div className="content mobile-only-feedback">{renderInlineFeedback()}</div>
-      {hubTab === "maps" ? renderMapsTab() : null}
-      {hubTab === "equipment" ? renderEquipmentTab() : null}
-      {hubTab === "spells" ? renderSpellsTab() : null}
-      {hubTab === "inventory" ? renderInventoryTab() : null}
-      {hubTab === "shop" ? renderShopTab() : null}
-      {hubTab === "character" ? renderCharacterTab() : null}
-      {renderHubBottomTabs()}
-      {renderOverlayPanel()}
-    </div>
+      <HubScreen
+        accountEmail={accountEmail}
+        arenaSnapshot={arenaSnapshot ? { player: arenaSnapshot.player } : null}
+        character={character}
+        hubTab={hubTab}
+        overlayPanel={overlayPanel}
+        queuedMapCount={queuedMapIds.length}
+        recentLoot={recentLoot}
+        selectedEquipmentSlot={selectedEquipmentSlot}
+        selectedMapEntry={selectedMapEntry}
+        selectedMapEnhancements={selectedMapEnhancements}
+        selectedMapId={selectedMapId}
+        selectedMapTarget={selectedMapTarget}
+        selectedSupportSlot={selectedSupportSlot}
+        shopItems={shopItems}
+        onBuyShopItem={handleBuyShopItem}
+        onCloseOverlay={() => setOverlayPanel(null)}
+        onConvertShardsToMaps={handleConvertShardsToMaps}
+        onEnhanceSelectedMap={handleEnhanceSelectedMap}
+        onEquipItem={handleEquipItem}
+        onLogout={handleLogout}
+        onOpenEquipmentPicker={() => setOverlayPanel("equipmentPicker")}
+        onOpenMainSpellPicker={() => setOverlayPanel("mainSpellPicker")}
+        onOpenSupportPicker={(slotIndex) => {
+          setSelectedSupportSlot(slotIndex);
+          setOverlayPanel("supportPicker");
+        }}
+        onRefreshShop={handleRefreshShop}
+        onRunAllMaps={handleRunAllMaps}
+        onSave={() => void handleManualSave()}
+        onSelectEquipmentSlot={setSelectedEquipmentSlot}
+        onSelectHubTab={setHubTab}
+        onSelectMainSpell={handleSelectMainSpell}
+        onSelectMap={setSelectedMapTarget}
+        onSelectSupportSpell={handleSelectSupportSpell}
+        onSellAllItems={handleSellAllItems}
+        onSellItem={handleSellItem}
+        onSpendStatPoint={handleSpendStatPoint}
+        onStartMap={handleStartMap}
+        onUpgradeSpell={handleUpgradeSpell}
+        onUseLifeFlask={handleUseLifeFlask}
+      />
+    </>
   );
 
   const renderArena = () => {
@@ -585,7 +398,6 @@ export const App = () => {
           feedback={renderInlineFeedback()}
           onManualSave={handleManualSave}
           onUseLifeFlask={handleUseLifeFlask}
-          getSpellDetailLines={getSpellDetailLines}
           onBackToHub={() => {
             setQueuedMapIds([]);
             setScreenMode("hub");
