@@ -57,6 +57,11 @@ export interface ArenaRuntimeState {
   enemies: InternalEnemyState[];
   timeElapsedMs: number;
   snapshot: ArenaSnapshot;
+  telemetry: {
+    rareMonstersSpawned: number;
+    rareMonstersKilled: number;
+    totalMonstersKilled: number;
+  };
   enemyPoolRemaining: number;
   nextSpawnAtMs: number;
   lastCastAtMs: number;
@@ -306,6 +311,11 @@ export const createArenaRuntime = (
       lootEvents: [],
       isComplete: false
     },
+    telemetry: {
+      rareMonstersSpawned: 0,
+      rareMonstersKilled: 0,
+      totalMonstersKilled: 0
+    },
     enemyPoolRemaining: map.monsterCount,
     nextSpawnAtMs: 0,
     lastCastAtMs: -999_999,
@@ -325,6 +335,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   let lastPlayerDamageAtMs = state.lastPlayerDamageAtMs;
   const mapTier = state.mapTier;
   const map = state.resolvedMap;
+  let telemetry = state.telemetry;
 
   if (enemyPoolRemaining > 0 && nextTime >= nextSpawnAtMs) {
     const tierBalance = getMapBalanceByTier(map.tier);
@@ -332,6 +343,12 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
       Math.random() < Math.min(0.95, tierBalance.rareMonsterChance + map.enhancementEffects.rareMonsterChanceBonus);
     const internalEnemy = createEnemy(map, isRareMonster ? "Rare" : "Normal");
     nextEnemies = [...nextEnemies, internalEnemy];
+    if (isRareMonster) {
+      telemetry = {
+        ...telemetry,
+        rareMonstersSpawned: telemetry.rareMonstersSpawned + 1
+      };
+    }
     enemyPoolRemaining -= 1;
     nextSpawnAtMs = nextTime + monsterBalance.spawnIntervalMs;
   }
@@ -459,6 +476,12 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
         const dropResult = rollDrops(nextPlayer, mapTier, enemy.rarity, map);
         nextPlayer = dropResult.character;
         lootEvents.push(...dropResult.lootEvents);
+        telemetry = {
+          ...telemetry,
+          totalMonstersKilled: telemetry.totalMonstersKilled + 1,
+          rareMonstersKilled:
+            telemetry.rareMonstersKilled + (enemy.rarity === "Rare" ? 1 : 0)
+        };
 
         return [];
       });
@@ -494,6 +517,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
     mapTier,
     enemies: nextEnemies,
     timeElapsedMs: nextTime,
+    telemetry,
     enemyPoolRemaining,
     nextSpawnAtMs,
     lastCastAtMs,

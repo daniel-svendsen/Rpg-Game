@@ -445,6 +445,45 @@ git config --global --add safe.directory "C:/Users/danie/Documents/New project"
 
 ## Build And Verification
 
+## Balance Simulation
+
+`Phase 2 - Balance Infrastructure` now includes a headless simulation tool under `frontend/`.
+
+Run a quick local sample profile:
+
+```powershell
+cd frontend
+npm run sim -- --profile starter-caster --map trainingGrounds --runs 100
+```
+
+Use your current saved character from the backend instead:
+
+```powershell
+cd frontend
+npm run sim -- --email you@example.com --password your-password --map tier3Map --runs 100
+```
+
+Useful options:
+
+- `--map trainingGrounds|tier1Map|tier2Map|...`
+- `--runs 100|500|1000`
+- `--output reports/tier3.json` to save the full JSON report
+- `--save-profile sim-profiles/daniel-current-build.json` to snapshot your current backend character into a reusable local sim profile
+- `--overrides sim-overrides/example-balancedrops.json` to apply balance multipliers without editing core config directly
+- `--flask-threshold 0.45` or `--flask-threshold none`
+
+The report includes:
+
+- completion and death rates
+- average run time
+- average gold and map shards
+- map sustain
+- rare monsters encountered and killed
+- rare item drops
+- unique item drops
+- spell drops
+- total loot breakdown by item, currency, spell, and map
+
 Frontend production build:
 
 ```powershell

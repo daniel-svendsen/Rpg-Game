@@ -1,0 +1,59 @@
+{
+  "name": "Starter Caster",
+  "level": 1,
+  "experience": 0,
+  "experienceToNextLevel": 100,
+  "unspentStatPoints": 0,
+  "baseStats": {
+    "strength": 2,
+    "agility": 3,
+    "vitality": 4,
+    "dexterity": 1
+  },
+  "derivedStats": {
+    "maxHealth": 148,
+    "castSpeedMultiplier": 1.06,
+    "critChance": 0.06,
+    "spellPowerMultiplier": 1.04
+  },
+  "currentHealth": 148,
+  "gold": 0,
+  "lifeFlask": {
+    "currentCharges": 3
+  },
+  "inventory": [],
+  "equippedItems": {},
+  "unlockedSpellIds": [
+    "stormChain",
+    "emberBurst"
+  ],
+  "unlockedSupportSpellIds": [
+    "increasedCriticalChance",
+    "fasterCasting",
+    "moreDamage"
+  ],
+  "spellProgress": [
+    {
+      "spellId": "stormChain",
+      "level": 1
+    },
+    {
+      "spellId": "emberBurst",
+      "level": 1
+    }
+  ],
+  "spellLoadout": [
+    {
+      "mainSpellId": "stormChain",
+      "supportSpellIds": [
+        "fasterCasting"
+      ]
+    }
+  ],
+  "currencies": [],
+  "mapProgress": {
+    "highestUnlockedTier": 0,
+    "lastCompletedTier": 0,
+    "consumableMaps": []
+  }
+}

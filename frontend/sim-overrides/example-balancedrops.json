@@ -1,0 +1,9 @@
+{
+  "enemyBaseHealthMultiplier": 1.1,
+  "enemyBaseDamageMultiplier": 1.05,
+  "itemDropRateMultiplier": 1.15,
+  "mapShardDropRateMultiplier": 1.2,
+  "mapDropRateMultiplier": 1.1,
+  "spellDropChanceMultiplier": 1.1,
+  "rareMonsterChanceMultiplier": 1.2
+}
