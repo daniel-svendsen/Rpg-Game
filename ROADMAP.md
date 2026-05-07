@@ -279,6 +279,13 @@ Focus areas:
 - clearer unique-item identity and impact
 - mobile-first readability improvements
 
+Candidate tasks:
+
+- Show item rarity color in the equipment/gear view (not only inventory/loot/shop).
+- Simplify item comparison UI: remove "Compared to X" and rely on power delta (+/-).
+- Map pacing: maps currently feel short; brainstorm and tune levers (monster count, arena size, spawn cadence, movement speed, pack density).
+- Fix mobile horizontal scrolling/overflow where content extends beyond the viewport.
+
 Note:
 
 This phase is about better communication of existing systems, not feature sprawl.
