@@ -501,12 +501,15 @@ The report includes:
 - average gold and map shards
 - map sustain
 - rare monsters encountered and killed
+- packs spawned and rare pack rate (first pass)
 - rare item drops
 - exceptional rare drops
 - unique item drops
 - `T1`, `T2`, and `T3` unique breakdown
 - spell drops
 - total loot breakdown by item, currency, spell, and map
+- item roll distribution summaries by slot/rarity/stat key (tiers)
+- movement speed affix summary (boots suffixes)
 
 Current `Phase 2` usage:
 

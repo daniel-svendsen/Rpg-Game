@@ -339,3 +339,28 @@ Success criteria:
 ## Next Recommended Step
 
 - Use the current simulator to finish the first full balance pass on map difficulty, spell rarity, unique tier pacing, map sustain, and shop pressure before expanding into broader UI readability work.
+
+## Phase 2 Scope Extensions Status Snapshot
+
+These scope extensions are still part of `Phase 2`, but many have moved from “planned” to “implemented (first pass)”. The goal remains simulator-first correctness, not polish.
+
+Implemented (first pass):
+
+- Movement speed is a derived stat and affects runtime + simulation movement.
+- Auto-move targets the nearest living pack, walks straight-line toward pack center, stops in combat range, and continues to the next pack.
+- Packs spawn with a stable pack id + pack center, basic spacing from player and other packs, and an initial rare chance per pack.
+- Ground loot drops to the world with real payloads (item/currency/spell/map) and is picked up by proximity, validated/applied by domain logic.
+- Item generation is PoE-inspired:
+  - slot-scoped prefix/suffix pools
+  - rarity controls affix count with `max 3 prefixes` + `max 3 suffixes`
+  - base items provide inherent armor/evasion (defense bases) and inherent weapon speed multipliers (weapon bases), gated by map tier
+- Simulator reporting includes item roll distributions (tier buckets) and movement-speed affix visibility.
+
+Partially implemented (needs follow-through):
+
+- Phaser map readability: a simple moving grid background exists to make movement obvious, but world/loot visuals are still intentionally minimal.
+
+Still planned (next major domain work):
+
+- Full resistance + penetration + armor/evasion damage math unification (decimals, caps, player penetration, enemy damage types, crit multiplier derived stat).
+- Richer simulator telemetry for damage prevention by type, time moving vs fighting, pack/aggro stats, and loot pickup time.
