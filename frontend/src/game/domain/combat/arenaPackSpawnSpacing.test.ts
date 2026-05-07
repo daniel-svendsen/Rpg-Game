@@ -12,6 +12,7 @@ const baseCharacter: CharacterRecord = {
   derivedStats: {
     maxHealth: 100,
     castSpeedMultiplier: 1,
+    attackSpeedMultiplier: 1,
     movementSpeedMultiplier: 1,
     armor: 0,
     evasion: 0,

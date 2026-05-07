@@ -113,6 +113,14 @@ export const itemAffixPoolsBySlot: Record<ItemSlot, ItemAffixPool> = {
   Ring: {
     prefixes: [defenseAffixes.maxHealth, statAffixes.dexterity, statAffixes.agility],
     suffixes: [spellAffixes.critChance, statAffixes.strength, statAffixes.vitality]
+  },
+  Ring1: {
+    prefixes: [defenseAffixes.maxHealth, statAffixes.dexterity, statAffixes.agility],
+    suffixes: [spellAffixes.critChance, statAffixes.strength, statAffixes.vitality]
+  },
+  Ring2: {
+    prefixes: [defenseAffixes.maxHealth, statAffixes.dexterity, statAffixes.agility],
+    suffixes: [spellAffixes.critChance, statAffixes.strength, statAffixes.vitality]
   }
 } as const;
 
