@@ -49,12 +49,16 @@ export const applyEquipmentState = (character: CharacterRecord): CharacterRecord
     (total, item) => total + (item?.statBonuses.evasion ?? 0),
     0
   );
+  const weaponCastSpeedMultiplier = character.equippedItems.Weapon?.statBonuses.castSpeedMultiplier ?? 1;
+  const weaponAttackSpeedMultiplier = character.equippedItems.Weapon?.statBonuses.attackSpeedMultiplier ?? 1;
 
   return {
     ...character,
     derivedStats: {
       ...derivedStats,
       maxHealth: nextMaxHealth,
+      castSpeedMultiplier: derivedStats.castSpeedMultiplier * weaponCastSpeedMultiplier,
+      attackSpeedMultiplier: derivedStats.attackSpeedMultiplier * weaponAttackSpeedMultiplier,
       movementSpeedMultiplier: derivedStats.movementSpeedMultiplier + movementSpeedBonus,
       armor: derivedStats.armor + armorBonus,
       evasion: derivedStats.evasion + evasionBonus,

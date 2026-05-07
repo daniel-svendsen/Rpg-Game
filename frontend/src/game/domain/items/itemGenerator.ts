@@ -1,5 +1,5 @@
 import { getMapBalanceByTier, itemBalance } from "../../config/balance";
-import { itemBases, uniqueItemDefinitions } from "../../config/itemConfig";
+import { itemBases, uniqueItemDefinitions, type ItemBaseDefinition } from "../../config/itemConfig";
 import type { CharacterRecord, InventoryItem, ItemRarity } from "../../../shared/types/saveTypes";
 import { createClientId } from "../../../shared/utils/id";
 import { getEquippedUniqueModifiers } from "../items/uniqueEffects";
@@ -60,6 +60,10 @@ const maybeCreateExceptionalRare = (
       vitality: scaleStatBonus(item.statBonuses.vitality, itemBalance.exceptionalRare.statMultiplier),
       dexterity: scaleStatBonus(item.statBonuses.dexterity, itemBalance.exceptionalRare.statMultiplier),
       maxHealth: scaleStatBonus(item.statBonuses.maxHealth, itemBalance.exceptionalRare.statMultiplier),
+      movementSpeedBonus: scaleStatBonus(
+        item.statBonuses.movementSpeedBonus,
+        itemBalance.exceptionalRare.statMultiplier
+      ),
       critChance: scaleStatBonus(item.statBonuses.critChance, itemBalance.exceptionalRare.statMultiplier),
       spellPowerMultiplier: scaleStatBonus(
         item.statBonuses.spellPowerMultiplier,
@@ -188,27 +192,66 @@ const rollStatBonusValue = (itemTier: number, statKey: ItemStatKey): number => {
 };
 
 const rollAffixBonuses = (
-  slot: InventoryItem["slot"],
+  base: ItemBaseDefinition,
   itemTier: number,
   rarity: Exclude<ItemRarity, "Unique">
 ): InventoryItem["statBonuses"] => {
+  const slot = base.slot;
+
   if (!slot) {
     return {};
   }
 
   const pool = itemAffixPoolsBySlot[slot];
+  const filteredPool = (() => {
+    if (!base.defenseProfile) {
+      return pool;
+    }
+
+    if (base.defenseProfile === "Armor") {
+      return {
+        prefixes: pool.prefixes.filter((entry) => entry.statKey !== "evasion"),
+        suffixes: pool.suffixes
+      };
+    }
+
+    if (base.defenseProfile === "Evasion") {
+      return {
+        prefixes: pool.prefixes.filter((entry) => entry.statKey !== "armor"),
+        suffixes: pool.suffixes
+      };
+    }
+
+    return pool;
+  })();
   const affixCount = getAffixCountByRarity(rarity);
   const totalAffixes =
     affixCount.min === affixCount.max
       ? affixCount.min
       : Math.floor(Math.random() * (affixCount.max - affixCount.min + 1)) + affixCount.min;
 
-  const remainingPrefixes = [...pool.prefixes];
-  const remainingSuffixes = [...pool.suffixes];
+  const remainingPrefixes = [...filteredPool.prefixes];
+  const remainingSuffixes = [...filteredPool.suffixes];
   let prefixesUsed = 0;
   let suffixesUsed = 0;
 
   const bonuses: InventoryItem["statBonuses"] = {};
+
+  if (base.baseCastSpeedMultiplier !== undefined) {
+    bonuses.castSpeedMultiplier = base.baseCastSpeedMultiplier;
+  }
+
+  if (base.baseAttackSpeedMultiplier !== undefined) {
+    bonuses.attackSpeedMultiplier = base.baseAttackSpeedMultiplier;
+  }
+
+  if (base.baseArmor !== undefined) {
+    bonuses.armor = base.baseArmor;
+  }
+
+  if (base.baseEvasion !== undefined) {
+    bonuses.evasion = base.baseEvasion;
+  }
 
   for (let index = 0; index < totalAffixes; index += 1) {
     const canUsePrefix = prefixesUsed < affixCount.maxPrefixes && remainingPrefixes.length > 0;
@@ -283,7 +326,19 @@ const generateUniqueItemDrop = (tier: number, uniqueDropWeightMultiplier = 1): I
 };
 
 export const generateItemDrop = (tier: number, isRareMonster: boolean): InventoryItem => {
-  const base = itemBases[Math.floor(Math.random() * itemBases.length)];
+  const eligibleBases = itemBases.filter((entry) => {
+    if (entry.minTier !== undefined && tier < entry.minTier) {
+      return false;
+    }
+
+    if (entry.maxTier !== undefined && tier > entry.maxTier) {
+      return false;
+    }
+
+    return true;
+  });
+  const availableBases = eligibleBases.length > 0 ? eligibleBases : itemBases;
+  const base = availableBases[Math.floor(Math.random() * availableBases.length)];
   const rarity = generateRarity(tier, isRareMonster);
 
   if (rarity === "Unique") {
@@ -295,7 +350,7 @@ export const generateItemDrop = (tier: number, isRareMonster: boolean): Inventor
   }
 
   const generatedRarity: Exclude<ItemRarity, "Unique"> = rarity === "Unique" ? "Rare" : rarity;
-  const statBonuses = rollAffixBonuses(base.slot, tier, generatedRarity);
+  const statBonuses = rollAffixBonuses(base, tier, generatedRarity);
 
   return maybeCreateExceptionalRare({
     id: `${base.id}-${createClientId()}`,
@@ -324,9 +379,21 @@ export const generateItemDropForCharacter = (
     }
   }
 
-  const base = itemBases[Math.floor(Math.random() * itemBases.length)];
+  const eligibleBases = itemBases.filter((entry) => {
+    if (entry.minTier !== undefined && tier < entry.minTier) {
+      return false;
+    }
+
+    if (entry.maxTier !== undefined && tier > entry.maxTier) {
+      return false;
+    }
+
+    return true;
+  });
+  const availableBases = eligibleBases.length > 0 ? eligibleBases : itemBases;
+  const base = availableBases[Math.floor(Math.random() * availableBases.length)];
   const generatedRarity: Exclude<ItemRarity, "Unique"> = rarity === "Unique" ? "Rare" : rarity;
-  const statBonuses = rollAffixBonuses(base.slot, tier, generatedRarity);
+  const statBonuses = rollAffixBonuses(base, tier, generatedRarity);
 
   return maybeCreateExceptionalRare({
     id: `${base.id}-${createClientId()}`,

@@ -41,6 +41,7 @@ export interface CharacterStats {
 export interface DerivedStats {
   maxHealth: number;
   castSpeedMultiplier: number;
+  attackSpeedMultiplier: number;
   movementSpeedMultiplier: number;
   armor: number;
   evasion: number;
@@ -62,6 +63,8 @@ export interface InventoryItem {
     movementSpeedBonus?: number;
     armor?: number;
     evasion?: number;
+    castSpeedMultiplier?: number;
+    attackSpeedMultiplier?: number;
     critChance?: number;
     spellPowerMultiplier?: number;
   };

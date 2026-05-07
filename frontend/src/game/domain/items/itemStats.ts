@@ -9,8 +9,6 @@ const orderedStatKeys = [
   "dexterity",
   "maxHealth",
   "movementSpeedBonus",
-  "armor",
-  "evasion",
   "critChance",
   "spellPowerMultiplier"
 ] as const;
@@ -20,7 +18,7 @@ type ItemStatKey = (typeof orderedStatKeys)[number];
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
 export const getStatTier = (statKey: ItemStatKey, value: number, itemTier: number): number => {
-  if (statKey === "movementSpeedBonus" || statKey === "armor" || statKey === "evasion") {
+  if (statKey === "movementSpeedBonus") {
     const ranges = getAffixTierRangesForStat(itemTier, statKey);
     const resolved = Object.entries(ranges).find(([, [min, max]]) => value >= min && value <= max);
     return resolved ? (Number(resolved[0]) as AffixTier) : 5;
@@ -43,6 +41,14 @@ export const getStatTier = (statKey: ItemStatKey, value: number, itemTier: numbe
 
 export const getItemStatLines = (item: InventoryItem): string[] =>
   [
+    ...(item.statBonuses.armor !== undefined ? [`Armor ${item.statBonuses.armor}`] : []),
+    ...(item.statBonuses.evasion !== undefined ? [`Evasion ${item.statBonuses.evasion}`] : []),
+    ...(item.statBonuses.attackSpeedMultiplier !== undefined
+      ? [`Attack Speed x${Number(item.statBonuses.attackSpeedMultiplier).toFixed(2)}`]
+      : []),
+    ...(item.statBonuses.castSpeedMultiplier !== undefined
+      ? [`Cast Speed x${Number(item.statBonuses.castSpeedMultiplier).toFixed(2)}`]
+      : []),
     ...orderedStatKeys.flatMap((statKey) => {
       const value = item.statBonuses[statKey];
 

@@ -64,11 +64,6 @@ const defenseAffixes = {
   maxHealth: prefix("hearty", "maxHealth", 9)
 } as const;
 
-const mitigationAffixes = {
-  armor: prefix("plated", "armor", 10),
-  evasion: prefix("woven", "evasion", 10)
-} as const;
-
 const spellAffixes = {
   spellPowerMultiplier: prefix("arcanist", "spellPowerMultiplier", 8),
   critChance: suffix("precision", "critChance", 8)
@@ -85,8 +80,6 @@ export const itemAffixPoolsBySlot: Record<ItemSlot, ItemAffixPool> = {
   },
   Helmet: {
     prefixes: [
-      mitigationAffixes.armor,
-      mitigationAffixes.evasion,
       defenseAffixes.maxHealth,
       statAffixes.vitality,
       statAffixes.strength
@@ -95,8 +88,6 @@ export const itemAffixPoolsBySlot: Record<ItemSlot, ItemAffixPool> = {
   },
   BodyArmor: {
     prefixes: [
-      mitigationAffixes.armor,
-      mitigationAffixes.evasion,
       defenseAffixes.maxHealth,
       statAffixes.vitality,
       statAffixes.strength
@@ -104,11 +95,11 @@ export const itemAffixPoolsBySlot: Record<ItemSlot, ItemAffixPool> = {
     suffixes: [statAffixes.agility, statAffixes.dexterity]
   },
   Gloves: {
-    prefixes: [mitigationAffixes.evasion, statAffixes.agility, statAffixes.dexterity],
+    prefixes: [statAffixes.agility, statAffixes.dexterity],
     suffixes: [spellAffixes.critChance, spellAffixes.spellPowerMultiplier]
   },
   Boots: {
-    prefixes: [mitigationAffixes.evasion, statAffixes.agility, statAffixes.vitality, defenseAffixes.maxHealth],
+    prefixes: [statAffixes.agility, statAffixes.vitality, defenseAffixes.maxHealth],
     suffixes: [movementAffixes.movementSpeedBonus, spellAffixes.critChance, statAffixes.dexterity]
   },
   Belt: {
@@ -157,20 +148,6 @@ export const getAffixTierRangesForStat = (
     const tier = Math.max(1, Math.min(10, Math.round(itemTier)));
     const minValue = 0.03 + tier * 0.001;
     const maxValue = 0.075 + tier * 0.0025;
-    return getTierRangeSplits(minValue, maxValue, [0, 0.55, 0.78, 0.9, 0.97, 1]);
-  }
-
-  if (statKey === "armor") {
-    const tier = Math.max(1, Math.min(10, Math.round(itemTier)));
-    const minValue = 4 + tier * 4;
-    const maxValue = 16 + tier * 14;
-    return getTierRangeSplits(minValue, maxValue, [0, 0.55, 0.78, 0.9, 0.97, 1]);
-  }
-
-  if (statKey === "evasion") {
-    const tier = Math.max(1, Math.min(10, Math.round(itemTier)));
-    const minValue = 4 + tier * 4;
-    const maxValue = 16 + tier * 14;
     return getTierRangeSplits(minValue, maxValue, [0, 0.55, 0.78, 0.9, 0.97, 1]);
   }
 
