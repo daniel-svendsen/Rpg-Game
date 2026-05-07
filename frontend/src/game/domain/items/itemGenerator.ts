@@ -6,9 +6,17 @@ import { getEquippedUniqueModifiers } from "../items/uniqueEffects";
 import { exceptionalRareNamePrefix } from "./itemPower";
 import { pickWeighted } from "../loot/weightedTables";
 import type { Tag } from "../../../shared/types/saveTypes";
+import {
+  getAffixCountByRarity,
+  getAffixTierRangesForStat,
+  itemAffixPoolsBySlot,
+  itemAffixTierWeights,
+  type AffixTier,
+  type ItemStatKey
+} from "../../config/itemAffixConfig";
 
 const randomInRange = ([min, max]: readonly [number, number]): number =>
-  Number((Math.random() * (max - min) + min).toFixed(2));
+  Number((Math.random() * (max - min) + min).toFixed(4));
 
 const pickRandom = <T,>(values: readonly T[]): T => values[Math.floor(Math.random() * values.length)];
 
@@ -157,6 +165,98 @@ const generateRarity = (tier: number, isRareMonster: boolean): ItemRarity => {
   );
 };
 
+const isIntegerStatKey = (statKey: ItemStatKey): boolean =>
+  statKey === "strength" ||
+  statKey === "agility" ||
+  statKey === "vitality" ||
+  statKey === "dexterity" ||
+  statKey === "maxHealth";
+
+const rollAffixTier = (): AffixTier =>
+  (pickWeighted(
+    (Object.entries(itemAffixTierWeights) as Array<[`${AffixTier}`, number]>).map(([key, weight]) => ({
+      key: Number(key) as AffixTier,
+      weight
+    }))
+  ) ?? 1);
+
+const rollStatBonusValue = (itemTier: number, statKey: ItemStatKey): number => {
+  const tier = rollAffixTier();
+  const tierRanges = getAffixTierRangesForStat(itemTier, statKey);
+  const value = randomInRange(tierRanges[tier]);
+  return isIntegerStatKey(statKey) ? Math.round(value) : Number(value.toFixed(4));
+};
+
+const rollAffixBonuses = (
+  slot: InventoryItem["slot"],
+  itemTier: number,
+  rarity: Exclude<ItemRarity, "Unique">
+): InventoryItem["statBonuses"] => {
+  if (!slot) {
+    return {};
+  }
+
+  const pool = itemAffixPoolsBySlot[slot];
+  const affixCount = getAffixCountByRarity(rarity);
+  const totalAffixes =
+    affixCount.min === affixCount.max
+      ? affixCount.min
+      : Math.floor(Math.random() * (affixCount.max - affixCount.min + 1)) + affixCount.min;
+
+  const remainingPrefixes = [...pool.prefixes];
+  const remainingSuffixes = [...pool.suffixes];
+  let prefixesUsed = 0;
+  let suffixesUsed = 0;
+
+  const bonuses: InventoryItem["statBonuses"] = {};
+
+  for (let index = 0; index < totalAffixes; index += 1) {
+    const canUsePrefix = prefixesUsed < affixCount.maxPrefixes && remainingPrefixes.length > 0;
+    const canUseSuffix = suffixesUsed < affixCount.maxSuffixes && remainingSuffixes.length > 0;
+
+    if (!canUsePrefix && !canUseSuffix) {
+      break;
+    }
+
+    const pickKind =
+      canUsePrefix && canUseSuffix
+        ? Math.random() < 0.5
+          ? "Prefix"
+          : "Suffix"
+        : canUsePrefix
+          ? "Prefix"
+          : "Suffix";
+
+    const selected =
+      pickKind === "Prefix"
+        ? (pickWeighted(remainingPrefixes.map((entry) => ({ key: entry, weight: entry.weight }))) ?? null)
+        : (pickWeighted(remainingSuffixes.map((entry) => ({ key: entry, weight: entry.weight }))) ?? null);
+
+    if (!selected) {
+      continue;
+    }
+
+    const selectedStatKey = selected.statKey as ItemStatKey;
+    (bonuses as Record<string, number>)[selectedStatKey] =
+      ((bonuses as Record<string, number>)[selectedStatKey] ?? 0) + rollStatBonusValue(itemTier, selectedStatKey);
+
+    const removeFrom = pickKind === "Prefix" ? remainingPrefixes : remainingSuffixes;
+    const indexToRemove = removeFrom.findIndex((entry) => entry.id === selected.id);
+
+    if (indexToRemove >= 0) {
+      removeFrom.splice(indexToRemove, 1);
+    }
+
+    if (pickKind === "Prefix") {
+      prefixesUsed += 1;
+    } else {
+      suffixesUsed += 1;
+    }
+  }
+
+  return bonuses;
+};
+
 const generateUniqueItemDrop = (tier: number, uniqueDropWeightMultiplier = 1): InventoryItem | null => {
   const uniqueDefinition =
     pickWeighted(
@@ -184,8 +284,6 @@ const generateUniqueItemDrop = (tier: number, uniqueDropWeightMultiplier = 1): I
 
 export const generateItemDrop = (tier: number, isRareMonster: boolean): InventoryItem => {
   const base = itemBases[Math.floor(Math.random() * itemBases.length)];
-  const tierBalance = getMapBalanceByTier(tier);
-  const ranges = tierBalance.itemStatRanges;
   const rarity = generateRarity(tier, isRareMonster);
 
   if (rarity === "Unique") {
@@ -197,16 +295,7 @@ export const generateItemDrop = (tier: number, isRareMonster: boolean): Inventor
   }
 
   const generatedRarity: Exclude<ItemRarity, "Unique"> = rarity === "Unique" ? "Rare" : rarity;
-
-  const statBonuses = {
-    strength: Math.round(randomInRange(ranges.strength)),
-    agility: Math.round(randomInRange(ranges.agility)),
-    vitality: Math.round(randomInRange(ranges.vitality)),
-    dexterity: Math.round(randomInRange(ranges.dexterity)),
-    maxHealth: Math.round(randomInRange(ranges.maxHealth)),
-    critChance: randomInRange(ranges.critChance),
-    spellPowerMultiplier: randomInRange(ranges.spellPowerMultiplier)
-  };
+  const statBonuses = rollAffixBonuses(base.slot, tier, generatedRarity);
 
   return maybeCreateExceptionalRare({
     id: `${base.id}-${createClientId()}`,
@@ -225,7 +314,6 @@ export const generateItemDropForCharacter = (
   isRareMonster: boolean
 ): InventoryItem => {
   const uniqueModifiers = getEquippedUniqueModifiers(character);
-  const tierBalance = getMapBalanceByTier(tier);
   const rarity = generateRarity(tier, isRareMonster);
 
   if (rarity === "Unique") {
@@ -237,18 +325,8 @@ export const generateItemDropForCharacter = (
   }
 
   const base = itemBases[Math.floor(Math.random() * itemBases.length)];
-  const ranges = tierBalance.itemStatRanges;
   const generatedRarity: Exclude<ItemRarity, "Unique"> = rarity === "Unique" ? "Rare" : rarity;
-
-  const statBonuses = {
-    strength: Math.round(randomInRange(ranges.strength)),
-    agility: Math.round(randomInRange(ranges.agility)),
-    vitality: Math.round(randomInRange(ranges.vitality)),
-    dexterity: Math.round(randomInRange(ranges.dexterity)),
-    maxHealth: Math.round(randomInRange(ranges.maxHealth)),
-    critChance: randomInRange(ranges.critChance),
-    spellPowerMultiplier: randomInRange(ranges.spellPowerMultiplier)
-  };
+  const statBonuses = rollAffixBonuses(base.slot, tier, generatedRarity);
 
   return maybeCreateExceptionalRare({
     id: `${base.id}-${createClientId()}`,

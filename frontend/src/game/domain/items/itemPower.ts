@@ -14,6 +14,9 @@ export const getItemPowerScore = (item: InventoryItem): number => {
     (bonuses.vitality ?? 0) * 1.4 +
     (bonuses.dexterity ?? 0) * 1.2 +
     (bonuses.maxHealth ?? 0) * 0.2 +
+    (bonuses.movementSpeedBonus ?? 0) * 160 +
+    (bonuses.armor ?? 0) * 0.22 +
+    (bonuses.evasion ?? 0) * 0.22 +
     (bonuses.critChance ?? 0) * 120 +
     (bonuses.spellPowerMultiplier ?? 0) * 100 +
     item.tier * 6 +

@@ -25,7 +25,14 @@ describe("simulationReport", () => {
         spellDrops: 1,
         lootByKind: { Item: 2, Spell: 1, Currency: 1, Map: 0 },
         rareMonstersSpawned: 4,
-        rareMonstersKilled: 4
+        rareMonstersKilled: 4,
+        itemRolls: {
+          itemsDropped: 2,
+          bySlot: { Weapon: 1, Ring: 1 },
+          byRarity: { Normal: 1, Magic: 1 },
+          byStatKey: { strength: 1, maxHealth: 1 },
+          byStatTier: { strength: { 1: 1 }, maxHealth: { 2: 1 } }
+        }
       },
       {
         runNumber: 2,
@@ -47,7 +54,14 @@ describe("simulationReport", () => {
         spellDrops: 0,
         lootByKind: { Item: 1, Spell: 0, Currency: 0, Map: 1 },
         rareMonstersSpawned: 2,
-        rareMonstersKilled: 1
+        rareMonstersKilled: 1,
+        itemRolls: {
+          itemsDropped: 1,
+          bySlot: { Boots: 1 },
+          byRarity: { Rare: 1 },
+          byStatKey: { agility: 1 },
+          byStatTier: { agility: { 3: 1 } }
+        }
       }
     ];
 

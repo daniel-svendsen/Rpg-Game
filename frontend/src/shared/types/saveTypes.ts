@@ -41,6 +41,9 @@ export interface CharacterStats {
 export interface DerivedStats {
   maxHealth: number;
   castSpeedMultiplier: number;
+  movementSpeedMultiplier: number;
+  armor: number;
+  evasion: number;
   critChance: number;
   spellPowerMultiplier: number;
 }
@@ -56,6 +59,9 @@ export interface InventoryItem {
   uniqueEffectDescription?: string;
   statBonuses: Partial<CharacterStats> & {
     maxHealth?: number;
+    movementSpeedBonus?: number;
+    armor?: number;
+    evasion?: number;
     critChance?: number;
     spellPowerMultiplier?: number;
   };
@@ -138,6 +144,7 @@ export interface CharacterRecord {
 
 export interface ArenaEnemyState {
   id: string;
+  packId?: string;
   x: number;
   y: number;
   health: number;

@@ -13,6 +13,43 @@ export const buildSimulationSummary = (
   autoUseLifeFlaskThreshold: number | null,
   overrides: SimulationSummary["overrides"]
 ): SimulationSummary => {
+  const itemRolls: SimulationSummary["itemRolls"] = {
+    itemsDropped: 0,
+    bySlot: {},
+    byRarity: {},
+    byStatKey: {},
+    byStatTier: {}
+  };
+
+  runs.forEach((run) => {
+    itemRolls.itemsDropped += run.itemRolls.itemsDropped;
+
+    Object.entries(run.itemRolls.bySlot).forEach(([slot, count]) => {
+      itemRolls.bySlot[slot as keyof typeof itemRolls.bySlot] =
+        (itemRolls.bySlot[slot as keyof typeof itemRolls.bySlot] ?? 0) + (count ?? 0);
+    });
+
+    Object.entries(run.itemRolls.byRarity).forEach(([rarity, count]) => {
+      itemRolls.byRarity[rarity as keyof typeof itemRolls.byRarity] =
+        (itemRolls.byRarity[rarity as keyof typeof itemRolls.byRarity] ?? 0) + (count ?? 0);
+    });
+
+    Object.entries(run.itemRolls.byStatKey).forEach(([statKey, count]) => {
+      itemRolls.byStatKey[statKey as keyof typeof itemRolls.byStatKey] =
+        (itemRolls.byStatKey[statKey as keyof typeof itemRolls.byStatKey] ?? 0) + (count ?? 0);
+    });
+
+    Object.entries(run.itemRolls.byStatTier).forEach(([statKey, tiers]) => {
+      itemRolls.byStatTier[statKey as keyof typeof itemRolls.byStatTier] ??= {};
+
+      Object.entries(tiers ?? {}).forEach(([tier, count]) => {
+        const resolvedTier = tier as unknown as 1 | 2 | 3 | 4 | 5;
+        itemRolls.byStatTier[statKey as keyof typeof itemRolls.byStatTier]![resolvedTier] =
+          (itemRolls.byStatTier[statKey as keyof typeof itemRolls.byStatTier]![resolvedTier] ?? 0) + (count ?? 0);
+      });
+    });
+  });
+
   const totals = runs.reduce(
     (summary, run) => ({
       completedRuns: summary.completedRuns + (run.completed ? 1 : 0),
@@ -73,6 +110,7 @@ export const buildSimulationSummary = (
     autoUseLifeFlaskThreshold,
     overrides,
     totals,
+    itemRolls,
     averages: {
       completionRate: totals.completedRuns / runCount,
       deathRate: totals.deaths / runCount,
@@ -134,6 +172,18 @@ export const formatSimulationSummary = (summary: SimulationSummary): string => {
     `- Spells: ${summary.totals.spellDrops} (${formatNumber(summary.averages.spellDrops)}/run)`,
     `- Items total: ${summary.totals.lootByKind.Item}`,
     `- Currency total: ${summary.totals.lootByKind.Currency}`,
-    `- Maps total: ${summary.totals.lootByKind.Map}`
+    `- Maps total: ${summary.totals.lootByKind.Map}`,
+    "",
+    "Item rolls (sampled):",
+    `- Items: ${summary.itemRolls.itemsDropped}`,
+    `- By rarity: ${Object.entries(summary.itemRolls.byRarity)
+      .map(([key, value]) => `${key}=${value}`)
+      .join(", ") || "none"}`,
+    `- Movement speed affixes: ${summary.itemRolls.byStatKey.movementSpeedBonus ?? 0}`,
+    `- Top stats: ${Object.entries(summary.itemRolls.byStatKey)
+      .sort(([, left], [, right]) => (right ?? 0) - (left ?? 0))
+      .slice(0, 10)
+      .map(([key, value]) => `${key}=${value}`)
+      .join(", ") || "none"}`
   ].join("\n");
 };

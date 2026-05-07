@@ -32,10 +32,20 @@ import type {
 
 const ARENA_WIDTH = 960;
 const ARENA_HEIGHT = 640;
-const PLAYER_X = ARENA_WIDTH / 2;
-const PLAYER_Y = ARENA_HEIGHT / 2;
+const PLAYER_BASE_MOVEMENT_SPEED = 120;
+const PLAYER_COMBAT_STOP_RANGE = 160;
+const AUTO_LOOT_DELAY_MS = 450;
+
+type PackId = string;
+
+interface MonsterPackState {
+  id: PackId;
+  centerX: number;
+  centerY: number;
+}
 
 interface InternalEnemyState extends ArenaEnemyState {
+  packId: PackId;
   damage: number;
   movementSpeed: number;
   experienceReward: number;
@@ -55,6 +65,7 @@ export interface ArenaRuntimeState {
   mapName: string;
   mapTier: number;
   enemies: InternalEnemyState[];
+  packs: MonsterPackState[];
   timeElapsedMs: number;
   snapshot: ArenaSnapshot;
   telemetry: {
@@ -62,10 +73,15 @@ export interface ArenaRuntimeState {
     rareMonstersKilled: number;
     totalMonstersKilled: number;
   };
-  enemyPoolRemaining: number;
-  nextSpawnAtMs: number;
   lastCastAtMs: number;
   lastPlayerDamageAtMs: number;
+  playerX: number;
+  playerY: number;
+  autoMove: {
+    enabled: boolean;
+    targetPackId: PackId | null;
+    lootPauseUntilMs: number;
+  };
 }
 
 const distance = (aX: number, aY: number, bX: number, bY: number): number =>
@@ -105,7 +121,13 @@ const getChainTargetIds = (
   return selectedIds;
 };
 
-const createEnemy = (map: ResolvedMapInstance, rarity: MonsterRarity): InternalEnemyState => {
+const createEnemy = (
+  map: ResolvedMapInstance,
+  rarity: MonsterRarity,
+  packId: PackId,
+  x: number,
+  y: number
+): InternalEnemyState => {
   const tierBalance = getMapBalanceByTier(map.tier);
   const monsterDefinition =
     monsterDefinitions.find((monster) => monster.rarity === rarity) ?? monsterDefinitions[0];
@@ -117,11 +139,6 @@ const createEnemy = (map: ResolvedMapInstance, rarity: MonsterRarity): InternalE
     rarity === "Rare"
       ? monsterBalance.rareDamageMultiplier
       : monsterBalance.normalDamageMultiplier;
-  const spawnEdge = Math.floor(Math.random() * 4);
-  const spawnX =
-    spawnEdge < 2 ? (spawnEdge === 0 ? 40 : ARENA_WIDTH - 40) : Math.random() * ARENA_WIDTH;
-  const spawnY =
-    spawnEdge >= 2 ? (spawnEdge === 2 ? 40 : ARENA_HEIGHT - 40) : Math.random() * ARENA_HEIGHT;
   const maxHealth = Math.round(
     monsterBalance.baseHealth * map.enemyHealthMultiplier * rarityHealthMultiplier
   );
@@ -139,8 +156,9 @@ const createEnemy = (map: ResolvedMapInstance, rarity: MonsterRarity): InternalE
 
   return {
     id: `${monsterDefinition.id}-${createClientId()}`,
-    x: spawnX,
-    y: spawnY,
+    packId,
+    x,
+    y,
     health: maxHealth,
     maxHealth,
     rarity,
@@ -167,6 +185,102 @@ const createEnemy = (map: ResolvedMapInstance, rarity: MonsterRarity): InternalE
     },
     lastContactDamageAt: 0
   };
+};
+
+const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
+
+const createMonsterPacks = (map: ResolvedMapInstance): { packs: MonsterPackState[]; enemies: InternalEnemyState[]; rareMonstersSpawned: number } => {
+  const packs: MonsterPackState[] = [];
+  const enemies: InternalEnemyState[] = [];
+
+  const packSizeMin = 3;
+  const packSizeMax = 6;
+  const packRadius = 46;
+  const packCount = Math.max(1, Math.ceil(map.monsterCount / ((packSizeMin + packSizeMax) / 2)));
+
+  const tierBalance = getMapBalanceByTier(map.tier);
+  const rareChancePerPack = tierBalance.rareMonsterChance;
+
+  let remaining = map.monsterCount;
+  let rareMonstersSpawned = 0;
+
+  for (let packIndex = 0; packIndex < packCount && remaining > 0; packIndex += 1) {
+    const packId = `pack-${packIndex}-${createClientId()}`;
+    const centerX = 80 + Math.random() * (ARENA_WIDTH - 160);
+    const centerY = 80 + Math.random() * (ARENA_HEIGHT - 160);
+
+    packs.push({ id: packId, centerX, centerY });
+
+    const packSize = Math.min(
+      remaining,
+      Math.floor(Math.random() * (packSizeMax - packSizeMin + 1)) + packSizeMin
+    );
+    remaining -= packSize;
+
+    const hasRare = Math.random() < rareChancePerPack && packSize > 0;
+    let rareUsed = false;
+
+    for (let memberIndex = 0; memberIndex < packSize; memberIndex += 1) {
+      const angle = Math.random() * Math.PI * 2;
+      const radius = Math.random() * packRadius;
+      const x = clamp(centerX + Math.cos(angle) * radius, 40, ARENA_WIDTH - 40);
+      const y = clamp(centerY + Math.sin(angle) * radius, 40, ARENA_HEIGHT - 40);
+
+      const rarity: MonsterRarity = hasRare && !rareUsed ? "Rare" : "Normal";
+      rareUsed ||= rarity === "Rare";
+      if (rarity === "Rare") {
+        rareMonstersSpawned += 1;
+      }
+
+      enemies.push(createEnemy(map, rarity, packId, x, y));
+    }
+  }
+
+  return { packs, enemies, rareMonstersSpawned };
+};
+
+const getAlivePackIds = (enemies: InternalEnemyState[]): Set<PackId> =>
+  new Set(enemies.map((enemy) => enemy.packId));
+
+const getPackCenter = (pack: MonsterPackState, enemies: InternalEnemyState[]): { x: number; y: number } => {
+  const members = enemies.filter((enemy) => enemy.packId === pack.id);
+
+  if (members.length === 0) {
+    return { x: pack.centerX, y: pack.centerY };
+  }
+
+  const sum = members.reduce(
+    (total, enemy) => ({ x: total.x + enemy.x, y: total.y + enemy.y }),
+    { x: 0, y: 0 }
+  );
+
+  return { x: sum.x / members.length, y: sum.y / members.length };
+};
+
+const selectNearestPack = (
+  packs: MonsterPackState[],
+  enemies: InternalEnemyState[],
+  playerX: number,
+  playerY: number
+): PackId | null => {
+  const alivePackIds = getAlivePackIds(enemies);
+  const candidates = packs.filter((pack) => alivePackIds.has(pack.id));
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  return (
+    [...candidates]
+      .sort((left, right) => {
+        const leftCenter = getPackCenter(left, enemies);
+        const rightCenter = getPackCenter(right, enemies);
+        return (
+          distance(playerX, playerY, leftCenter.x, leftCenter.y) -
+          distance(playerX, playerY, rightCenter.x, rightCenter.y)
+        );
+      })[0]?.id ?? null
+  );
 };
 
 const addCurrency = (currencies: CurrencyStack[], code: string, amount: number): CurrencyStack[] => {
@@ -290,6 +404,9 @@ export const createArenaRuntime = (
   enhancements: MapEnhancementInstance[] = []
 ): ArenaRuntimeState => {
   const map = resolveMapInstance(mapConfig[mapId], enhancements);
+  const initialPlayerX = ARENA_WIDTH / 2;
+  const initialPlayerY = ARENA_HEIGHT / 2;
+  const packsResult = createMonsterPacks(map);
 
   return {
     mapId,
@@ -297,29 +414,43 @@ export const createArenaRuntime = (
     player: character,
     mapName: map.name,
     mapTier: map.tier,
-    enemies: [],
+    enemies: packsResult.enemies,
+    packs: packsResult.packs,
     timeElapsedMs: 0,
     snapshot: {
       timeElapsedMs: 0,
       mapName: map.name,
       mapTier: map.tier,
-      playerX: PLAYER_X,
-      playerY: PLAYER_Y,
+      playerX: initialPlayerX,
+      playerY: initialPlayerY,
       player: character,
-      enemies: [],
+      enemies: packsResult.enemies.map((enemy) => ({
+        id: enemy.id,
+        packId: enemy.packId,
+        x: enemy.x,
+        y: enemy.y,
+        health: enemy.health,
+        maxHealth: enemy.maxHealth,
+        rarity: enemy.rarity
+      })),
       floatingTexts: [],
       lootEvents: [],
-      isComplete: false
+      isComplete: packsResult.enemies.length === 0
     },
     telemetry: {
-      rareMonstersSpawned: 0,
+      rareMonstersSpawned: packsResult.rareMonstersSpawned,
       rareMonstersKilled: 0,
       totalMonstersKilled: 0
     },
-    enemyPoolRemaining: map.monsterCount,
-    nextSpawnAtMs: 0,
     lastCastAtMs: -999_999,
-    lastPlayerDamageAtMs: -999_999
+    lastPlayerDamageAtMs: -999_999,
+    playerX: initialPlayerX,
+    playerY: initialPlayerY,
+    autoMove: {
+      enabled: true,
+      targetPackId: selectNearestPack(packsResult.packs, packsResult.enemies, initialPlayerX, initialPlayerY),
+      lootPauseUntilMs: 0
+    }
   };
 };
 
@@ -329,33 +460,56 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   let nextEnemies = [...state.enemies];
   const floatingTexts: FloatingTextState[] = [];
   const lootEvents: LootEntry[] = [];
-  let enemyPoolRemaining = state.enemyPoolRemaining;
-  let nextSpawnAtMs = state.nextSpawnAtMs;
   let lastCastAtMs = state.lastCastAtMs;
   let lastPlayerDamageAtMs = state.lastPlayerDamageAtMs;
   const mapTier = state.mapTier;
   const map = state.resolvedMap;
   let telemetry = state.telemetry;
+  let playerX = state.playerX;
+  let playerY = state.playerY;
+  const alivePackIdsBefore = getAlivePackIds(nextEnemies);
+  let autoMove = state.autoMove;
 
-  if (enemyPoolRemaining > 0 && nextTime >= nextSpawnAtMs) {
-    const tierBalance = getMapBalanceByTier(map.tier);
-    const isRareMonster =
-      Math.random() < Math.min(0.95, tierBalance.rareMonsterChance + map.enhancementEffects.rareMonsterChanceBonus);
-    const internalEnemy = createEnemy(map, isRareMonster ? "Rare" : "Normal");
-    nextEnemies = [...nextEnemies, internalEnemy];
-    if (isRareMonster) {
-      telemetry = {
-        ...telemetry,
-        rareMonstersSpawned: telemetry.rareMonstersSpawned + 1
+  if (autoMove.enabled) {
+    if (nextTime < autoMove.lootPauseUntilMs) {
+      // paused for loot pickup / post-pack downtime
+    } else {
+      const targetPackAlive = autoMove.targetPackId ? alivePackIdsBefore.has(autoMove.targetPackId) : false;
+      const targetPackId =
+        targetPackAlive
+          ? autoMove.targetPackId
+          : selectNearestPack(state.packs, nextEnemies, playerX, playerY);
+
+      autoMove = {
+        ...autoMove,
+        targetPackId
       };
+
+      if (targetPackId) {
+        const pack = state.packs.find((entry) => entry.id === targetPackId);
+
+        if (pack) {
+          const center = getPackCenter(pack, nextEnemies);
+          const distanceToPack = distance(playerX, playerY, center.x, center.y);
+
+          if (distanceToPack > PLAYER_COMBAT_STOP_RANGE) {
+            const directionX = center.x - playerX;
+            const directionY = center.y - playerY;
+            const length = Math.max(1, Math.hypot(directionX, directionY));
+            const movementSpeed =
+              PLAYER_BASE_MOVEMENT_SPEED * Math.max(0.1, nextPlayer.derivedStats.movementSpeedMultiplier);
+            const movement = (movementSpeed * deltaMs) / 1000;
+            playerX = clamp(playerX + (directionX / length) * movement, 40, ARENA_WIDTH - 40);
+            playerY = clamp(playerY + (directionY / length) * movement, 40, ARENA_HEIGHT - 40);
+          }
+        }
+      }
     }
-    enemyPoolRemaining -= 1;
-    nextSpawnAtMs = nextTime + monsterBalance.spawnIntervalMs;
   }
 
   nextEnemies = nextEnemies.map((enemy) => {
-    const directionX = PLAYER_X - enemy.x;
-    const directionY = PLAYER_Y - enemy.y;
+    const directionX = playerX - enemy.x;
+    const directionY = playerY - enemy.y;
     const length = Math.max(1, Math.hypot(directionX, directionY));
     const movement = (enemy.movementSpeed * deltaMs) / 1000;
 
@@ -367,7 +521,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   });
 
   nextEnemies = nextEnemies.map((enemy) => {
-    const closeEnoughToHit = distance(enemy.x, enemy.y, PLAYER_X, PLAYER_Y) <= 26;
+    const closeEnoughToHit = distance(enemy.x, enemy.y, playerX, playerY) <= 26;
 
     if (
       !closeEnoughToHit ||
@@ -387,8 +541,8 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
     lastPlayerDamageAtMs = nextTime;
     floatingTexts.push({
       id: `${enemy.id}-attack-${nextTime}`,
-      x: PLAYER_X - 14,
-      y: PLAYER_Y - 26,
+      x: playerX - 14,
+      y: playerY - 26,
       text: `-${enemy.damage}`
     });
 
@@ -411,8 +565,8 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
       lastCastAtMs = nextTime;
       const sortedEnemies = [...nextEnemies].sort(
         (left, right) =>
-          distance(left.x, left.y, PLAYER_X, PLAYER_Y) -
-          distance(right.x, right.y, PLAYER_X, PLAYER_Y)
+          distance(left.x, left.y, playerX, playerY) -
+          distance(right.x, right.y, playerX, playerY)
       );
       const primaryTarget = sortedEnemies[0];
 
@@ -488,16 +642,35 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
     }
   }
 
-  const allEnemiesDefeated = enemyPoolRemaining === 0 && nextEnemies.length === 0;
+  const alivePackIdsAfter = getAlivePackIds(nextEnemies);
+  const clearedAnyPack = [...alivePackIdsBefore].some((packId) => !alivePackIdsAfter.has(packId));
+
+  if (autoMove.enabled && clearedAnyPack) {
+    autoMove = {
+      ...autoMove,
+      lootPauseUntilMs: Math.max(autoMove.lootPauseUntilMs, nextTime + AUTO_LOOT_DELAY_MS),
+      targetPackId: null
+    };
+  }
+
+  if (autoMove.enabled && autoMove.targetPackId && !alivePackIdsAfter.has(autoMove.targetPackId)) {
+    autoMove = {
+      ...autoMove,
+      targetPackId: null
+    };
+  }
+
+  const allEnemiesDefeated = nextEnemies.length === 0;
   const snapshot: ArenaSnapshot = {
     timeElapsedMs: nextTime,
     mapName: state.mapName,
     mapTier,
-    playerX: PLAYER_X,
-    playerY: PLAYER_Y,
+    playerX,
+    playerY,
     player: nextPlayer,
     enemies: nextEnemies.map((enemy) => ({
       id: enemy.id,
+      packId: enemy.packId,
       x: enemy.x,
       y: enemy.y,
       health: enemy.health,
@@ -516,12 +689,14 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
     mapName: state.mapName,
     mapTier,
     enemies: nextEnemies,
+    packs: state.packs,
     timeElapsedMs: nextTime,
     telemetry,
-    enemyPoolRemaining,
-    nextSpawnAtMs,
     lastCastAtMs,
     lastPlayerDamageAtMs,
+    playerX,
+    playerY,
+    autoMove,
     snapshot
   };
 };

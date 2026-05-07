@@ -6,6 +6,9 @@ export const deriveStats = (baseStats: CharacterStats): DerivedStats => ({
     balanceConfig.statScaling.baseHealth +
     baseStats.vitality * balanceConfig.statScaling.vitalityHealthMultiplier,
   castSpeedMultiplier: 1 + baseStats.agility * balanceConfig.statScaling.agilityCastSpeedMultiplier,
+  movementSpeedMultiplier: 1,
+  armor: 0,
+  evasion: 0,
   critChance: baseStats.dexterity * balanceConfig.statScaling.dexterityCritChanceMultiplier,
   spellPowerMultiplier: 1 + baseStats.strength * balanceConfig.statScaling.strengthSpellPowerMultiplier
 });

@@ -1,4 +1,5 @@
 import { getMapBalanceByTier } from "../../config/balance";
+import { getAffixTierRangesForStat, type AffixTier } from "../../config/itemAffixConfig";
 import type { InventoryItem } from "../../../shared/types/saveTypes";
 
 const orderedStatKeys = [
@@ -7,6 +8,9 @@ const orderedStatKeys = [
   "vitality",
   "dexterity",
   "maxHealth",
+  "movementSpeedBonus",
+  "armor",
+  "evasion",
   "critChance",
   "spellPowerMultiplier"
 ] as const;
@@ -16,6 +20,12 @@ type ItemStatKey = (typeof orderedStatKeys)[number];
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
 export const getStatTier = (statKey: ItemStatKey, value: number, itemTier: number): number => {
+  if (statKey === "movementSpeedBonus" || statKey === "armor" || statKey === "evasion") {
+    const ranges = getAffixTierRangesForStat(itemTier, statKey);
+    const resolved = Object.entries(ranges).find(([, [min, max]]) => value >= min && value <= max);
+    return resolved ? (Number(resolved[0]) as AffixTier) : 5;
+  }
+
   const tierRanges = getMapBalanceByTier(itemTier).itemStatRanges as Partial<
     Record<ItemStatKey, readonly [number, number]>
   >;
@@ -40,10 +50,17 @@ export const getItemStatLines = (item: InventoryItem): string[] =>
         return [];
       }
 
-      const formattedValue =
-        statKey === "critChance" || statKey === "spellPowerMultiplier"
-          ? `+${Number(value).toFixed(2)}`
-          : `+${value}`;
+      const formattedValue = (() => {
+        if (statKey === "movementSpeedBonus") {
+          return `+${(Number(value) * 100).toFixed(1)}%`;
+        }
+
+        if (statKey === "critChance" || statKey === "spellPowerMultiplier") {
+          return `+${Number(value).toFixed(2)}`;
+        }
+
+        return `+${value}`;
+      })();
 
       return [`${statKey} ${formattedValue} (Tier ${getStatTier(statKey, Number(value), item.tier)})`];
     }),
