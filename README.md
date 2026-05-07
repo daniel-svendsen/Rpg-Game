@@ -202,34 +202,30 @@ You can also use the helper script from the repo root:
 .\start-demo.ps1
 ```
 
+By default, `start-demo.ps1` uses the stable named tunnel.
+
 If you changed backend code and want Docker to rebuild first:
 
 ```powershell
 .\start-demo.ps1 -BuildBackend
 ```
 
-If you want the stable named tunnel instead of a temporary quick tunnel:
+If you want a temporary quick tunnel instead of the named tunnel:
 
 ```powershell
-.\start-demo.ps1 -TunnelMode named
+.\start-demo.ps1 -TunnelMode quick
 ```
 
-If backend code changed and you want to rebuild first:
-
-```powershell
-.\start-demo.ps1 -TunnelMode named -BuildBackend
-```
-
-To stop the quick tunnel later:
+To stop the tunnel later:
 
 ```powershell
 .\stop-demo.ps1
 ```
 
-To stop the quick tunnel and Docker services:
+To stop the tunnel but leave Docker running:
 
 ```powershell
-.\stop-demo.ps1 -StopBackend
+.\stop-demo.ps1 -KeepBackend
 ```
 
 ### What changes and what stays the same

@@ -1,7 +1,7 @@
 param(
     [switch]$BuildBackend,
     [ValidateSet("quick", "named")]
-    [string]$TunnelMode = "quick",
+    [string]$TunnelMode = "named",
     [string]$NamedTunnelName = "rpg-game-backend"
 )
 
@@ -99,7 +99,7 @@ if ($TunnelMode -eq "named") {
     Write-Host "Backend URL: https://rpg-api.svendsenphotography.com"
     Write-Host "Cloudflared log: $tunnelLogPath"
     Write-Host "Cloudflared error log: $tunnelErrorLogPath"
-    Write-Host "Run .\stop-demo.ps1 to stop the tunnel. Add -StopBackend if you also want to stop Docker."
+    Write-Host "Run .\stop-demo.ps1 to stop the tunnel and Docker. Add -KeepBackend if you want to leave Docker running."
     exit 0
 }
 
@@ -136,4 +136,4 @@ Write-Host "Public backend URL: $publicUrl"
 Write-Host "Update VITE_API_BASE_URL in Cloudflare Pages if this URL changed, then redeploy the frontend."
 Write-Host "Cloudflared log: $tunnelLogPath"
 Write-Host "Cloudflared error log: $tunnelErrorLogPath"
-Write-Host "Run .\stop-demo.ps1 to stop the tunnel. Add -StopBackend if you also want to stop Docker."
+Write-Host "Run .\stop-demo.ps1 to stop the tunnel and Docker. Add -KeepBackend if you want to leave Docker running."

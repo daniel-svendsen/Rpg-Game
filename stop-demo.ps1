@@ -1,5 +1,5 @@
 param(
-    [switch]$StopBackend
+    [switch]$KeepBackend
 )
 
 $ErrorActionPreference = "Stop"
@@ -29,7 +29,7 @@ if (Test-Path $tunnelPidPath) {
 
 Remove-Item $tunnelModePath -Force -ErrorAction SilentlyContinue
 
-if ($StopBackend) {
+if (-not $KeepBackend) {
     Write-Host "Stopping Docker Compose services..."
     docker compose down
 }

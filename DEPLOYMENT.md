@@ -59,13 +59,13 @@ Add this variable in Cloudflare Pages:
 Run from the repo root:
 
 ```powershell
-.\start-demo.ps1
+.\start-demo.ps1 -TunnelMode quick
 ```
 
 If backend code changed and Docker should rebuild first:
 
 ```powershell
-.\start-demo.ps1 -BuildBackend
+.\start-demo.ps1 -TunnelMode quick -BuildBackend
 ```
 
 The script:
@@ -87,10 +87,10 @@ To stop the quick tunnel:
 .\stop-demo.ps1
 ```
 
-To stop both tunnel and Docker:
+To stop the tunnel but leave Docker running:
 
 ```powershell
-.\stop-demo.ps1 -StopBackend
+.\stop-demo.ps1 -KeepBackend
 ```
 
 ### Quick Tunnel downside
@@ -162,13 +162,13 @@ After that, the frontend can keep the same backend URL between restarts.
 Run from the repo root:
 
 ```powershell
-.\start-demo.ps1 -TunnelMode named
+.\start-demo.ps1
 ```
 
 If backend code changed and Docker should rebuild first:
 
 ```powershell
-.\start-demo.ps1 -TunnelMode named -BuildBackend
+.\start-demo.ps1 -BuildBackend
 ```
 
 This starts Docker Compose and then runs the named tunnel `rpg-game-backend`.
