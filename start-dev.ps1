@@ -79,15 +79,6 @@ $backendCommand = if ($CleanBackend) {
     "`$env:APP_PORT='$backendPort'; Set-Location '$backendWorkingDirectory'; mvn spring-boot:run"
 }
 
-$frontendProcess = Start-Process `
-    -FilePath "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" `
-    -ArgumentList @("-NoLogo", "-NoProfile", "-Command", $frontendCommand) `
-    -WorkingDirectory $frontendWorkingDirectory `
-    -WindowStyle Hidden `
-    -RedirectStandardOutput $frontendLogPath `
-    -RedirectStandardError $frontendErrorLogPath `
-    -PassThru
-
 $backendProcess = Start-Process `
     -FilePath "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" `
     -ArgumentList @("-NoLogo", "-NoProfile", "-Command", $backendCommand) `
@@ -95,6 +86,48 @@ $backendProcess = Start-Process `
     -WindowStyle Hidden `
     -RedirectStandardOutput $backendLogPath `
     -RedirectStandardError $backendErrorLogPath `
+    -PassThru
+
+function Wait-ForPort {
+    param(
+        [Parameter(Mandatory = $true)]
+        [int]$Port,
+        [int]$TimeoutSeconds = 40
+    )
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+
+    while ((Get-Date) -lt $deadline) {
+        try {
+            $connections = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
+
+            if ($connections) {
+                return $true
+            }
+        } catch {
+            # ignore polling failures
+        }
+
+        Start-Sleep -Milliseconds 400
+    }
+
+    return $false
+}
+
+$backendReady = Wait-ForPort -Port $backendPort -TimeoutSeconds 45
+
+if (-not $backendReady) {
+    Write-Host "Backend did not start listening on port $backendPort within the expected time."
+    Write-Host "Check backend logs: $backendErrorLogPath"
+}
+
+$frontendProcess = Start-Process `
+    -FilePath "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" `
+    -ArgumentList @("-NoLogo", "-NoProfile", "-Command", $frontendCommand) `
+    -WorkingDirectory $frontendWorkingDirectory `
+    -WindowStyle Hidden `
+    -RedirectStandardOutput $frontendLogPath `
+    -RedirectStandardError $frontendErrorLogPath `
     -PassThru
 
 Set-Content -Path $frontendPidPath -Value $frontendProcess.Id
