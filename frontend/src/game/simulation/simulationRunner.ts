@@ -2,12 +2,18 @@ import type { CharacterRecord, CurrencyStack, InventoryItem, LootEntry, OwnedMap
 import { mapConfig } from "../config/mapConfig";
 import { createArenaRuntime, stepArenaRuntime, type ArenaRuntimeState } from "../domain/combat/arenaSimulation";
 import { isExceptionalRare } from "../domain/items/itemPower";
+import { createShopStock, getShopItemPrice } from "../domain/items/shopStock";
 import { uniqueItemDefinitions } from "../config/itemConfig";
 import { canUseLifeFlask, useLifeFlask } from "../domain/player/lifeFlask";
 import { createSimulationBaselineCharacter } from "./simulationCharacter";
 import { applySimulationBalanceOverrides } from "./simulationOverrides";
 import { buildSimulationSummary } from "./simulationReport";
-import type { SimulationRunOptions, SimulationSummary, SingleRunSimulationMetrics } from "./simulationTypes";
+import type {
+  SimulationRunOptions,
+  SimulationSummary,
+  SingleRunSimulationMetrics,
+  ShopSampleSummary
+} from "./simulationTypes";
 import { getAffixTierRangesForStat, type AffixTier } from "../config/itemAffixConfig";
 
 const DEFAULT_STEP_MS = 50;
@@ -203,6 +209,31 @@ export const simulateMapRuns = (options: SimulationRunOptions): SimulationSummar
 
   try {
     const baselineCharacter = createSimulationBaselineCharacter(options.character);
+    const shopSamples = options.shopSamples ?? 0;
+    let shop: ShopSampleSummary | null = null;
+
+    if (shopSamples > 0) {
+      const tier =
+        options.shopTier ?? Math.max(1, baselineCharacter.mapProgress.highestUnlockedTier + 1);
+      const shopItems = Array.from({ length: shopSamples }, () => createShopStock(tier)).flat();
+      const prices = shopItems.map((item) => getShopItemPrice(item));
+      const totalPrice = prices.reduce((total, value) => total + value, 0);
+      const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+      const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+
+      shop = {
+        samples: shopSamples,
+        tier,
+        itemsGenerated: shopItems.length,
+        prices: {
+          min: minPrice,
+          max: maxPrice,
+          average: prices.length > 0 ? totalPrice / prices.length : 0
+        },
+        itemRolls: buildItemRollMetrics(shopItems)
+      };
+    }
+
     const runMetrics = Array.from({ length: options.runs }, (_, index) =>
       runSingleSimulation(
         baselineCharacter,
@@ -221,7 +252,8 @@ export const simulateMapRuns = (options: SimulationRunOptions): SimulationSummar
       stepMs,
       maxRunDurationMs,
       autoUseLifeFlaskThreshold,
-      options.overrides ?? null
+      options.overrides ?? null,
+      shop
     );
   } finally {
     restoreOverrides();

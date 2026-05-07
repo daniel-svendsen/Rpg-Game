@@ -1,10 +1,12 @@
 import { balanceConfig } from "../game/config/balanceConfig";
 import { spellConfig, supportSpellConfig } from "../game/config/spellConfig";
-import { generateItemDrop } from "../game/domain/items/itemGenerator";
-import { getItemPowerScore, isExceptionalRare } from "../game/domain/items/itemPower";
+import { getItemPowerScore } from "../game/domain/items/itemPower";
+import { createShopStock, getShopItemPrice } from "../game/domain/items/shopStock";
 import type { CharacterRecord, EquipmentSlot, InventoryItem } from "../shared/types/saveTypes";
 
 export type ShopItemState = InventoryItem & { price: number };
+
+export { createShopStock, getShopItemPrice };
 
 export const equipmentSlots: EquipmentSlot[] = [
   "Weapon",
@@ -19,28 +21,6 @@ export const equipmentSlots: EquipmentSlot[] = [
 ];
 
 export const accountEmailStorageKey = "arpg-account-email";
-
-export const createShopStock = (tier: number): InventoryItem[] =>
-  Array.from({ length: 3 }, (_, index) =>
-    generateItemDrop(
-      Math.max(1, tier),
-      tier >= balanceConfig.economy.guaranteedRareStartTier && index === 2
-    )
-  );
-
-export const getShopItemPrice = (item: InventoryItem): number => {
-  const powerPrice =
-    balanceConfig.economy.shopBasePrice +
-    getItemPowerScore(item) * balanceConfig.economy.shopPowerPriceMultiplier;
-  const rarityPrice = powerPrice * balanceConfig.economy.shopRarityPriceMultiplier[item.rarity];
-  const tierPrice =
-    rarityPrice * (1 + Math.max(0, item.tier - 1) * balanceConfig.economy.shopTierPriceMultiplier);
-  const exceptionalPrice = isExceptionalRare(item)
-    ? tierPrice * balanceConfig.economy.exceptionalRareShopPriceMultiplier
-    : tierPrice;
-
-  return Math.round(exceptionalPrice);
-};
 
 export const toShopItemState = (item: InventoryItem): ShopItemState => ({
   ...item,

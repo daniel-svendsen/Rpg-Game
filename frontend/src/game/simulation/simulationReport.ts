@@ -1,5 +1,5 @@
 import { mapConfig } from "../config/mapConfig";
-import type { SimulationSummary, SingleRunSimulationMetrics } from "./simulationTypes";
+import type { SimulationSummary, SingleRunSimulationMetrics, ShopSampleSummary } from "./simulationTypes";
 
 const formatPercent = (value: number): string => `${(value * 100).toFixed(1)}%`;
 const formatNumber = (value: number): string => value.toFixed(2).replace(/\.00$/, "");
@@ -11,7 +11,8 @@ export const buildSimulationSummary = (
   stepMs: number,
   maxRunDurationMs: number,
   autoUseLifeFlaskThreshold: number | null,
-  overrides: SimulationSummary["overrides"]
+  overrides: SimulationSummary["overrides"],
+  shop: ShopSampleSummary | null
 ): SimulationSummary => {
   const itemRolls: SimulationSummary["itemRolls"] = {
     itemsDropped: 0,
@@ -109,6 +110,7 @@ export const buildSimulationSummary = (
     maxRunDurationMs,
     autoUseLifeFlaskThreshold,
     overrides,
+    shop,
     totals,
     itemRolls,
     averages: {
@@ -143,7 +145,7 @@ export const formatSimulationSummary = (summary: SimulationSummary): string => {
       ? "disabled"
       : `${formatPercent(summary.autoUseLifeFlaskThreshold)} health`;
 
-  return [
+  const lines = [
     `Profile: ${summary.profileName}`,
     `Map: ${summary.mapName} (${summary.mapId})`,
     `Runs: ${summary.runs}`,
@@ -185,5 +187,18 @@ export const formatSimulationSummary = (summary: SimulationSummary): string => {
       .slice(0, 10)
       .map(([key, value]) => `${key}=${value}`)
       .join(", ") || "none"}`
-  ].join("\n");
+  ];
+
+  if (summary.shop) {
+    lines.push(
+      "",
+      `Shop samples: ${summary.shop.samples} (tier ${summary.shop.tier})`,
+      `- Items generated: ${summary.shop.itemsGenerated}`,
+      `- Average price: ${formatNumber(summary.shop.prices.average)}`,
+      `- Price range: ${formatNumber(summary.shop.prices.min)} - ${formatNumber(summary.shop.prices.max)}`,
+      `- Movement speed affixes (shop): ${summary.shop.itemRolls.byStatKey.movementSpeedBonus ?? 0}`
+    );
+  }
+
+  return lines.join("\n");
 };

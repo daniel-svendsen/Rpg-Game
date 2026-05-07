@@ -28,6 +28,8 @@ Character source:
 Optional:
   --api-base-url <url>              backend URL, default http://localhost:8080
   --runs <count>                    default 100
+  --shop-samples <count>            sample shop stock this many times (optional)
+  --shop-tier <tier>                shop tier override (default highestUnlockedTier+1)
   --output <path>                   write the full JSON report to a file
   --save-profile <path>             save the loaded character as a local simulation profile JSON
   --overrides <path>                load balance override JSON
@@ -44,6 +46,8 @@ type ParsedArgs = {
   password: string | null;
   apiBaseUrl: string;
   runs: number;
+  shopSamples: number;
+  shopTier: number | null;
   output: string | null;
   saveProfile: string | null;
   overrides: string | null;
@@ -70,6 +74,8 @@ const parseArgs = (argv: string[]): ParsedArgs => {
     password: null,
     apiBaseUrl: "http://localhost:8080",
     runs: 100,
+    shopSamples: 0,
+    shopTier: null,
     output: null,
     saveProfile: null,
     overrides: null,
@@ -111,6 +117,14 @@ const parseArgs = (argv: string[]): ParsedArgs => {
         parsed.runs = parseNumber(next ?? "", "--runs");
         index += 1;
         break;
+      case "--shop-samples":
+        parsed.shopSamples = parseNumber(next ?? "", "--shop-samples");
+        index += 1;
+        break;
+      case "--shop-tier":
+        parsed.shopTier = parseNumber(next ?? "", "--shop-tier");
+        index += 1;
+        break;
       case "--output":
         parsed.output = next ?? null;
         index += 1;
@@ -146,6 +160,14 @@ const parseArgs = (argv: string[]): ParsedArgs => {
 
   if (!Number.isInteger(parsed.runs) || parsed.runs <= 0) {
     throw new Error("--runs must be a positive integer.");
+  }
+
+  if (!Number.isInteger(parsed.shopSamples) || parsed.shopSamples < 0) {
+    throw new Error("--shop-samples must be 0 or a positive integer.");
+  }
+
+  if (parsed.shopTier !== null && (!Number.isInteger(parsed.shopTier) || parsed.shopTier <= 0)) {
+    throw new Error("--shop-tier must be a positive integer.");
   }
 
   if (!Number.isInteger(parsed.stepMs) || parsed.stepMs <= 0) {
@@ -281,6 +303,8 @@ const main = async (): Promise<void> => {
     character: characterSource.character,
     mapId: args.mapId!,
     runs: args.runs,
+    shopSamples: args.shopSamples,
+    shopTier: args.shopTier ?? undefined,
     stepMs: args.stepMs,
     maxRunDurationMs: Math.round(args.maxRunSeconds * 1000),
     autoUseLifeFlaskThreshold: args.flaskThreshold,

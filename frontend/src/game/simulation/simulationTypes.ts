@@ -33,13 +33,15 @@ export interface SingleRunSimulationMetrics {
   lootByKind: Record<LootEntry["kind"], number>;
   rareMonstersSpawned: number;
   rareMonstersKilled: number;
-  itemRolls: {
-    itemsDropped: number;
-    bySlot: Partial<Record<ItemSlot, number>>;
-    byRarity: Partial<Record<InventoryItem["rarity"], number>>;
-    byStatKey: Partial<Record<keyof InventoryItem["statBonuses"], number>>;
-    byStatTier: Partial<Record<keyof InventoryItem["statBonuses"], Partial<Record<1 | 2 | 3 | 4 | 5, number>>>>;
-  };
+  itemRolls: ItemRollMetrics;
+}
+
+export interface ItemRollMetrics {
+  itemsDropped: number;
+  bySlot: Partial<Record<ItemSlot, number>>;
+  byRarity: Partial<Record<InventoryItem["rarity"], number>>;
+  byStatKey: Partial<Record<keyof InventoryItem["statBonuses"], number>>;
+  byStatTier: Partial<Record<keyof InventoryItem["statBonuses"], Partial<Record<1 | 2 | 3 | 4 | 5, number>>>>;
 }
 
 export interface SimulationRunOptions {
@@ -47,10 +49,24 @@ export interface SimulationRunOptions {
   character: CharacterRecord;
   mapId: string;
   runs: number;
+  shopSamples?: number;
+  shopTier?: number;
   stepMs?: number;
   maxRunDurationMs?: number;
   autoUseLifeFlaskThreshold?: number;
   overrides?: SimulationBalanceOverrides;
+}
+
+export interface ShopSampleSummary {
+  samples: number;
+  tier: number;
+  itemsGenerated: number;
+  prices: {
+    min: number;
+    max: number;
+    average: number;
+  };
+  itemRolls: ItemRollMetrics;
 }
 
 export interface SimulationSummary {
@@ -62,6 +78,7 @@ export interface SimulationSummary {
   maxRunDurationMs: number;
   autoUseLifeFlaskThreshold: number | null;
   overrides: SimulationBalanceOverrides | null;
+  shop: ShopSampleSummary | null;
   totals: {
     completedRuns: number;
     deaths: number;
@@ -80,13 +97,7 @@ export interface SimulationSummary {
     rareMonstersKilled: number;
     lootByKind: Record<LootEntry["kind"], number>;
   };
-  itemRolls: {
-    itemsDropped: number;
-    bySlot: Partial<Record<ItemSlot, number>>;
-    byRarity: Partial<Record<InventoryItem["rarity"], number>>;
-    byStatKey: Partial<Record<keyof InventoryItem["statBonuses"], number>>;
-    byStatTier: Partial<Record<keyof InventoryItem["statBonuses"], Partial<Record<1 | 2 | 3 | 4 | 5, number>>>>;
-  };
+  itemRolls: ItemRollMetrics;
   averages: {
     completionRate: number;
     deathRate: number;

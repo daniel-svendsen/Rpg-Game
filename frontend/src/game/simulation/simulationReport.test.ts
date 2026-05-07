@@ -72,6 +72,7 @@ describe("simulationReport", () => {
       50,
       240_000,
       0.45,
+      null,
       null
     );
 
