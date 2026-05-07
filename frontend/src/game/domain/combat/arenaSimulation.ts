@@ -25,6 +25,7 @@ import type {
   CharacterRecord,
   CurrencyStack,
   FloatingTextState,
+  GroundLootState,
   LootEntry,
   MapEnhancementInstance,
   MonsterRarity
@@ -35,6 +36,7 @@ const ARENA_HEIGHT = 640;
 const PLAYER_BASE_MOVEMENT_SPEED = 120;
 const PLAYER_COMBAT_STOP_RANGE = 160;
 const AUTO_LOOT_DELAY_MS = 450;
+const AUTO_LOOT_SEEK_RADIUS = 240;
 
 type PackId = string;
 
@@ -66,6 +68,7 @@ export interface ArenaRuntimeState {
   mapTier: number;
   enemies: InternalEnemyState[];
   packs: MonsterPackState[];
+  groundLoot: GroundLootState[];
   timeElapsedMs: number;
   snapshot: ArenaSnapshot;
   telemetry: {
@@ -80,6 +83,7 @@ export interface ArenaRuntimeState {
   autoMove: {
     enabled: boolean;
     targetPackId: PackId | null;
+    targetLootId: string | null;
     lootPauseUntilMs: number;
   };
 }
@@ -283,6 +287,107 @@ const selectNearestPack = (
   );
 };
 
+const selectNearestLoot = (
+  groundLoot: GroundLootState[],
+  playerX: number,
+  playerY: number,
+  maxDistance: number
+): string | null => {
+  const candidates = groundLoot.filter(
+    (entry) => distance(playerX, playerY, entry.x, entry.y) <= maxDistance
+  );
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  return (
+    [...candidates].sort(
+      (left, right) =>
+        distance(playerX, playerY, left.x, left.y) - distance(playerX, playerY, right.x, right.y)
+    )[0]?.id ?? null
+  );
+};
+
+const applyGroundLootPickup = (
+  character: CharacterRecord,
+  entry: GroundLootState
+): { character: CharacterRecord; lootEvent: LootEntry } => {
+  const payload = entry.payload;
+
+  if (payload.kind === "Item") {
+    const item = payload.item;
+    const nextCharacter = {
+      ...character,
+      inventory: [...character.inventory, item]
+    };
+
+    return {
+      character: nextCharacter,
+      lootEvent: {
+        id: `${entry.id}-picked`,
+        kind: "Item",
+        name: item.name,
+        details: [
+          `Item Tier ${item.tier} ${item.slot ? getItemSlotLabel(item.slot) : "Item"}`,
+          `Power ${getItemPowerScore(item).toFixed(0)}`,
+          ...Object.entries(item.statBonuses).map(([key, value]) => `${key} +${value}`)
+        ],
+        isUpgrade: isUpgradeForCharacter(character, item)
+      }
+    };
+  }
+
+  if (payload.kind === "Currency") {
+    const nextCharacter = {
+      ...character,
+      currencies: addCurrency(character.currencies, payload.code, payload.amount)
+    };
+
+    return {
+      character: nextCharacter,
+      lootEvent: {
+        id: `${entry.id}-picked`,
+        kind: "Currency",
+        name: payload.code === "mapShard" ? "Map Shard" : payload.code,
+        details: ["Picked up from the ground"],
+        isUpgrade: false
+      }
+    };
+  }
+
+  if (payload.kind === "Spell") {
+    const nextCharacter = {
+      ...character,
+      unlockedSpellIds: [...character.unlockedSpellIds, payload.spellId]
+    };
+
+    return {
+      character: nextCharacter,
+      lootEvent: {
+        id: `${entry.id}-picked`,
+        kind: "Spell",
+        name: getSpellName(payload.spellId),
+        details: ["Unlocked permanently in your spell inventory"],
+        isUpgrade: true
+      }
+    };
+  }
+
+  const nextCharacter = addOwnedMap(character, payload.mapId, payload.tier);
+
+  return {
+    character: nextCharacter,
+    lootEvent: {
+      id: `${entry.id}-picked`,
+      kind: "Map",
+      name: `Tier ${payload.tier} Map`,
+      details: ["Consumable map added to your map inventory"],
+      isUpgrade: true
+    }
+  };
+};
+
 const addCurrency = (currencies: CurrencyStack[], code: string, amount: number): CurrencyStack[] => {
   const existing = currencies.find((entry) => entry.code === code);
 
@@ -295,19 +400,20 @@ const addCurrency = (currencies: CurrencyStack[], code: string, amount: number):
   );
 };
 
-const rollDrops = (
+const rollGroundDrops = (
   character: CharacterRecord,
   mapTier: number,
   rarity: MonsterRarity,
-  resolvedMap: ResolvedMapInstance
-): { character: CharacterRecord; lootEvents: LootEntry[] } => {
+  resolvedMap: ResolvedMapInstance,
+  dropX: number,
+  dropY: number,
+  createdAtMs: number
+): GroundLootState[] => {
   const tierBalance = getMapBalanceByTier(mapTier);
   const isRareMonster = rarity === "Rare";
   const uniqueModifiers = getEquippedUniqueModifiers(character);
-  let nextCharacter = {
-    ...character
-  };
-  const lootEvents: LootEntry[] = [];
+
+  const groundLoot: GroundLootState[] = [];
 
   const shouldDropItem =
     Math.random() < tierBalance.itemDropRate * resolvedMap.dropRateMultiplier * resolvedMap.enhancementEffects.itemDropRateMultiplier;
@@ -320,24 +426,22 @@ const rollDrops = (
         ) + tierBalance.rareItemDropsMin
       : 1;
 
-    const items = Array.from({ length: itemCount }, () =>
-      generateItemDropForCharacter(nextCharacter, Math.max(1, mapTier), isRareMonster)
-    );
-    nextCharacter = {
-      ...nextCharacter,
-      inventory: [...nextCharacter.inventory, ...items]
-    };
-    items.forEach((item) => {
-      lootEvents.push({
-        id: `${item.id}-loot`,
-        kind: "Item",
-        name: item.name,
-        details: [
-          `Item Tier ${item.tier} ${item.slot ? getItemSlotLabel(item.slot) : "Item"}`,
-          `Power ${getItemPowerScore(item).toFixed(0)}`,
-          ...Object.entries(item.statBonuses).map(([key, value]) => `${key} +${value}`)
-        ],
-        isUpgrade: isUpgradeForCharacter(character, item)
+    const items = Array.from({ length: itemCount }, () => ({
+      item: generateItemDropForCharacter(character, Math.max(1, mapTier), isRareMonster),
+      offsetX: (Math.random() - 0.5) * 26,
+      offsetY: (Math.random() - 0.5) * 26
+    }));
+
+    items.forEach(({ item, offsetX, offsetY }) => {
+      groundLoot.push({
+        id: `ground-item-${item.id}`,
+        x: clamp(dropX + offsetX, 40, ARENA_WIDTH - 40),
+        y: clamp(dropY + offsetY, 40, ARENA_HEIGHT - 40),
+        createdAtMs,
+        payload: {
+          kind: "Item",
+          item
+        }
       });
     });
   }
@@ -349,53 +453,55 @@ const rollDrops = (
       (isRareMonster ? itemBalance.rareMonsterMapShardDropMultiplier : 1) *
       uniqueModifiers.mapShardDropMultiplier
   ) {
-    nextCharacter = {
-      ...nextCharacter,
-      currencies: addCurrency(nextCharacter.currencies, "mapShard", 1)
-    };
-    lootEvents.push({
-      id: `currency-${createClientId()}`,
-      kind: "Currency",
-      name: "Map Shard",
-      details: ["Used for future map upgrades and crafting"],
-      isUpgrade: false
+    groundLoot.push({
+      id: `ground-currency-mapShard-${createClientId()}`,
+      x: clamp(dropX + (Math.random() - 0.5) * 18, 40, ARENA_WIDTH - 40),
+      y: clamp(dropY + (Math.random() - 0.5) * 18, 40, ARENA_HEIGHT - 40),
+      createdAtMs,
+      payload: {
+        kind: "Currency",
+        code: "mapShard",
+        amount: 1
+      }
     });
   }
 
   const spellId = rollSpellDrop(
-    nextCharacter,
+    character,
     mapTier,
     rarity,
     resolvedMap.enhancementEffects.itemDropRateMultiplier
   );
 
   if (spellId) {
-    nextCharacter = {
-      ...nextCharacter,
-      unlockedSpellIds: [...nextCharacter.unlockedSpellIds, spellId]
-    };
-    lootEvents.push({
-      id: `spell-${spellId}-${createClientId()}`,
-      kind: "Spell",
-      name: getSpellName(spellId),
-      details: ["Unlocked permanently in your spell inventory"],
-      isUpgrade: true
+    groundLoot.push({
+      id: `ground-spell-${spellId}-${createClientId()}`,
+      x: clamp(dropX + (Math.random() - 0.5) * 18, 40, ARENA_WIDTH - 40),
+      y: clamp(dropY + (Math.random() - 0.5) * 18, 40, ARENA_HEIGHT - 40),
+      createdAtMs,
+      payload: {
+        kind: "Spell",
+        spellId
+      }
     });
   }
 
   if (mapTier < mapBalance.maxTier && Math.random() < tierBalance.mapDropRate) {
     const nextTier = mapTier + 1;
-    nextCharacter = addOwnedMap(nextCharacter, `tier${nextTier}Map`, nextTier);
-    lootEvents.push({
-      id: `map-${nextTier}-${createClientId()}`,
-      kind: "Map",
-      name: `Tier ${nextTier} Map`,
-      details: ["Consumable map added to your map inventory"],
-      isUpgrade: true
+    groundLoot.push({
+      id: `ground-map-tier${nextTier}-${createClientId()}`,
+      x: clamp(dropX + (Math.random() - 0.5) * 18, 40, ARENA_WIDTH - 40),
+      y: clamp(dropY + (Math.random() - 0.5) * 18, 40, ARENA_HEIGHT - 40),
+      createdAtMs,
+      payload: {
+        kind: "Map",
+        mapId: `tier${nextTier}Map`,
+        tier: nextTier
+      }
     });
   }
 
-  return { character: nextCharacter, lootEvents };
+  return groundLoot;
 };
 
 export const createArenaRuntime = (
@@ -416,6 +522,7 @@ export const createArenaRuntime = (
     mapTier: map.tier,
     enemies: packsResult.enemies,
     packs: packsResult.packs,
+    groundLoot: [],
     timeElapsedMs: 0,
     snapshot: {
       timeElapsedMs: 0,
@@ -435,6 +542,7 @@ export const createArenaRuntime = (
       })),
       floatingTexts: [],
       lootEvents: [],
+      groundLoot: [],
       isComplete: packsResult.enemies.length === 0
     },
     telemetry: {
@@ -449,6 +557,7 @@ export const createArenaRuntime = (
     autoMove: {
       enabled: true,
       targetPackId: selectNearestPack(packsResult.packs, packsResult.enemies, initialPlayerX, initialPlayerY),
+      targetLootId: null,
       lootPauseUntilMs: 0
     }
   };
@@ -458,6 +567,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   const nextTime = state.timeElapsedMs + deltaMs;
   let nextPlayer = state.player;
   let nextEnemies = [...state.enemies];
+  let nextGroundLoot = [...state.groundLoot];
   const floatingTexts: FloatingTextState[] = [];
   const lootEvents: LootEntry[] = [];
   let lastCastAtMs = state.lastCastAtMs;
@@ -474,36 +584,95 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
     if (nextTime < autoMove.lootPauseUntilMs) {
       // paused for loot pickup / post-pack downtime
     } else {
-      const targetPackAlive = autoMove.targetPackId ? alivePackIdsBefore.has(autoMove.targetPackId) : false;
-      const targetPackId =
-        targetPackAlive
-          ? autoMove.targetPackId
-          : selectNearestPack(state.packs, nextEnemies, playerX, playerY);
+      const movementSpeed =
+        PLAYER_BASE_MOVEMENT_SPEED * Math.max(0.1, nextPlayer.derivedStats.movementSpeedMultiplier);
+      const movement = (movementSpeed * deltaMs) / 1000;
 
-      autoMove = {
-        ...autoMove,
-        targetPackId
-      };
+      // Prefer nearby ground loot before selecting the next pack.
+      const targetLootStillExists = autoMove.targetLootId
+        ? nextGroundLoot.some((entry) => entry.id === autoMove.targetLootId)
+        : false;
+      const targetLootId =
+        targetLootStillExists
+          ? autoMove.targetLootId
+          : selectNearestLoot(nextGroundLoot, playerX, playerY, AUTO_LOOT_SEEK_RADIUS);
 
-      if (targetPackId) {
-        const pack = state.packs.find((entry) => entry.id === targetPackId);
+      if (targetLootId) {
+        const loot = nextGroundLoot.find((entry) => entry.id === targetLootId);
 
-        if (pack) {
-          const center = getPackCenter(pack, nextEnemies);
-          const distanceToPack = distance(playerX, playerY, center.x, center.y);
+        autoMove = {
+          ...autoMove,
+          targetLootId,
+          targetPackId: null
+        };
 
-          if (distanceToPack > PLAYER_COMBAT_STOP_RANGE) {
-            const directionX = center.x - playerX;
-            const directionY = center.y - playerY;
+        if (loot) {
+          const distanceToLoot = distance(playerX, playerY, loot.x, loot.y);
+
+          if (distanceToLoot > balanceConfig.combat.autoPickupRadius) {
+            const directionX = loot.x - playerX;
+            const directionY = loot.y - playerY;
             const length = Math.max(1, Math.hypot(directionX, directionY));
-            const movementSpeed =
-              PLAYER_BASE_MOVEMENT_SPEED * Math.max(0.1, nextPlayer.derivedStats.movementSpeedMultiplier);
-            const movement = (movementSpeed * deltaMs) / 1000;
             playerX = clamp(playerX + (directionX / length) * movement, 40, ARENA_WIDTH - 40);
             playerY = clamp(playerY + (directionY / length) * movement, 40, ARENA_HEIGHT - 40);
           }
         }
+      } else {
+        const targetPackAlive = autoMove.targetPackId ? alivePackIdsBefore.has(autoMove.targetPackId) : false;
+        const targetPackId =
+          targetPackAlive
+            ? autoMove.targetPackId
+            : selectNearestPack(state.packs, nextEnemies, playerX, playerY);
+
+        autoMove = {
+          ...autoMove,
+          targetPackId,
+          targetLootId: null
+        };
+
+        if (targetPackId) {
+          const pack = state.packs.find((entry) => entry.id === targetPackId);
+
+          if (pack) {
+            const center = getPackCenter(pack, nextEnemies);
+            const distanceToPack = distance(playerX, playerY, center.x, center.y);
+
+            if (distanceToPack > PLAYER_COMBAT_STOP_RANGE) {
+              const directionX = center.x - playerX;
+              const directionY = center.y - playerY;
+              const length = Math.max(1, Math.hypot(directionX, directionY));
+              playerX = clamp(playerX + (directionX / length) * movement, 40, ARENA_WIDTH - 40);
+              playerY = clamp(playerY + (directionY / length) * movement, 40, ARENA_HEIGHT - 40);
+            }
+          }
+        }
       }
+    }
+  }
+
+  // Ground loot pickup (domain-validated).
+  const pickupRadius = balanceConfig.combat.autoPickupRadius;
+  const pickedLootIds = new Set<string>();
+
+  nextGroundLoot.forEach((entry) => {
+    if (distance(playerX, playerY, entry.x, entry.y) > pickupRadius) {
+      return;
+    }
+
+    const pickup = applyGroundLootPickup(nextPlayer, entry);
+    nextPlayer = pickup.character;
+    lootEvents.push(pickup.lootEvent);
+    pickedLootIds.add(entry.id);
+  });
+
+  if (pickedLootIds.size > 0) {
+    nextGroundLoot = nextGroundLoot.filter((entry) => !pickedLootIds.has(entry.id));
+
+    if (autoMove.enabled && autoMove.targetLootId && pickedLootIds.has(autoMove.targetLootId)) {
+      autoMove = {
+        ...autoMove,
+        targetLootId: null
+      };
     }
   }
 
@@ -627,9 +796,8 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
             : balanceConfig.healing.lifeFlask.normalKillCharges) +
             getEquippedUniqueModifiers(nextPlayer).extraLifeFlaskChargesOnKill
         );
-        const dropResult = rollDrops(nextPlayer, mapTier, enemy.rarity, map);
-        nextPlayer = dropResult.character;
-        lootEvents.push(...dropResult.lootEvents);
+        const groundDrops = rollGroundDrops(nextPlayer, mapTier, enemy.rarity, map, enemy.x, enemy.y, nextTime);
+        nextGroundLoot = [...nextGroundLoot, ...groundDrops];
         telemetry = {
           ...telemetry,
           totalMonstersKilled: telemetry.totalMonstersKilled + 1,
@@ -648,8 +816,9 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   if (autoMove.enabled && clearedAnyPack) {
     autoMove = {
       ...autoMove,
-      lootPauseUntilMs: Math.max(autoMove.lootPauseUntilMs, nextTime + AUTO_LOOT_DELAY_MS),
-      targetPackId: null
+      lootPauseUntilMs: 0,
+      targetPackId: null,
+      targetLootId: selectNearestLoot(nextGroundLoot, playerX, playerY, AUTO_LOOT_SEEK_RADIUS * 2)
     };
   }
 
@@ -679,6 +848,27 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
     })),
     floatingTexts,
     lootEvents,
+    groundLoot: nextGroundLoot.map((entry) => {
+      const kind = entry.payload.kind;
+      const name =
+        kind === "Item"
+          ? entry.payload.item.name
+          : kind === "Currency"
+            ? entry.payload.code === "mapShard"
+              ? "Map Shard"
+              : entry.payload.code
+            : kind === "Spell"
+              ? getSpellName(entry.payload.spellId)
+              : `Tier ${entry.payload.tier} Map`;
+
+      return {
+        id: entry.id,
+        kind,
+        x: entry.x,
+        y: entry.y,
+        name
+      };
+    }),
     isComplete: allEnemiesDefeated
   };
 
@@ -690,6 +880,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
     mapTier,
     enemies: nextEnemies,
     packs: state.packs,
+    groundLoot: nextGroundLoot,
     timeElapsedMs: nextTime,
     telemetry,
     lastCastAtMs,

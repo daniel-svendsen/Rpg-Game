@@ -75,6 +75,22 @@ export interface LootEntry {
   isUpgrade: boolean;
 }
 
+export type GroundLootKind = LootEntry["kind"];
+
+export type GroundLootPayload =
+  | { kind: "Item"; item: InventoryItem }
+  | { kind: "Currency"; code: string; amount: number }
+  | { kind: "Spell"; spellId: string }
+  | { kind: "Map"; mapId: string; tier: number };
+
+export interface GroundLootState {
+  id: string;
+  x: number;
+  y: number;
+  createdAtMs: number;
+  payload: GroundLootPayload;
+}
+
 export interface CurrencyStack {
   code: string;
   amount: number;
@@ -169,5 +185,12 @@ export interface ArenaSnapshot {
   enemies: ArenaEnemyState[];
   floatingTexts: FloatingTextState[];
   lootEvents: LootEntry[];
+  groundLoot: Array<{
+    id: string;
+    kind: GroundLootKind;
+    x: number;
+    y: number;
+    name: string;
+  }>;
   isComplete: boolean;
 }
