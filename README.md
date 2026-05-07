@@ -488,6 +488,8 @@ Useful options:
 
 - `--map trainingGrounds|tier1Map|tier2Map|...`
 - `--runs 100|500|1000`
+- `--shop-samples 500` to sample shop stock rolls/prices alongside map runs
+- `--shop-tier 6` to force the shop sampling tier (default is highestUnlockedTier+1)
 - `--output reports/tier3.json` to save the full JSON report
 - `--save-profile sim-profiles/daniel-current-build.json` to snapshot your current backend character into a reusable local sim profile
 - `--overrides sim-overrides/example-balancedrops.json` to apply balance multipliers without editing core config directly
@@ -518,6 +520,14 @@ Current `Phase 2` usage:
 - tune spell rarity toward a true chase-drop identity
 - separate normal uniques from higher-tier unique jackpots
 - evaluate whether shop pricing is still too cheap relative to current gold income
+- sample shop item rolls/prices and compare against drop item rolls
+
+Sample shop stock (without needing to buy items in-game):
+
+```powershell
+cd frontend
+npm run sim -- --profile starter-caster --map trainingGrounds --runs 25 --shop-samples 500
+```
 
 Frontend production build:
 
