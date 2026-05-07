@@ -1,12 +1,16 @@
 import Phaser from "phaser";
 import type { ArenaSnapshot } from "../../../shared/types/saveTypes";
 
+const ARENA_WIDTH = 2000;
+const ARENA_HEIGHT = 1400;
+
 export class ArenaScene extends Phaser.Scene {
   private latestSnapshot: ArenaSnapshot | null = null;
   private playerCircle?: Phaser.GameObjects.Arc;
   private enemyCircles = new Map<string, Phaser.GameObjects.Arc>();
   private enemyHealthBars = new Map<string, Phaser.GameObjects.Rectangle>();
   private floatingTexts = new Map<string, Phaser.GameObjects.Text>();
+  private background?: Phaser.GameObjects.TileSprite;
 
   constructor() {
     super("ArenaScene");
@@ -17,11 +21,47 @@ export class ArenaScene extends Phaser.Scene {
     this.renderSnapshot();
   }
 
+  update(): void {
+    if (!this.background) {
+      return;
+    }
+
+    const camera = this.cameras.main;
+    this.background.tilePositionX = camera.scrollX;
+    this.background.tilePositionY = camera.scrollY;
+  }
+
   create(): void {
     this.cameras.main.setBackgroundColor("#050a12");
-    this.cameras.main.setBounds(0, 0, 2000, 1400);
-    this.add.rectangle(1000, 700, 1920, 1320, 0x0b1220, 1).setStrokeStyle(2, 0x1f2937);
-    this.playerCircle = this.add.circle(1000, 700, 18, 0xf59e0b);
+    this.cameras.main.setBounds(0, 0, ARENA_WIDTH, ARENA_HEIGHT);
+
+    const gridKey = "arena-grid";
+
+    if (!this.textures.exists(gridKey)) {
+      const gridSize = 96;
+      const grid = this.add.graphics();
+      grid.fillStyle(0x0b1220, 1);
+      grid.fillRect(0, 0, gridSize, gridSize);
+      grid.lineStyle(1, 0x1f2937, 0.55);
+      grid.strokeRect(0, 0, gridSize, gridSize);
+      grid.lineStyle(1, 0x111827, 0.35);
+      grid.beginPath();
+      grid.moveTo(gridSize / 2, 0);
+      grid.lineTo(gridSize / 2, gridSize);
+      grid.moveTo(0, gridSize / 2);
+      grid.lineTo(gridSize, gridSize / 2);
+      grid.strokePath();
+      grid.generateTexture(gridKey, gridSize, gridSize);
+      grid.destroy();
+    }
+
+    this.background = this.add
+      .tileSprite(0, 0, ARENA_WIDTH, ARENA_HEIGHT, gridKey)
+      .setOrigin(0, 0)
+      .setDepth(-10);
+
+    this.add.rectangle(1000, 700, 1920, 1320, 0x0b1220, 0).setStrokeStyle(2, 0x1f2937);
+    this.playerCircle = this.add.circle(1000, 700, 18, 0xf59e0b).setDepth(10);
     this.cameras.main.startFollow(this.playerCircle, true, 0.08, 0.08);
     this.renderSnapshot();
   }
