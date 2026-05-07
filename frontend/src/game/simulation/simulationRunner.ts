@@ -8,6 +8,7 @@ import { createSimulationBaselineCharacter } from "./simulationCharacter";
 import { applySimulationBalanceOverrides } from "./simulationOverrides";
 import { buildSimulationSummary } from "./simulationReport";
 import type { SimulationRunOptions, SimulationSummary, SingleRunSimulationMetrics } from "./simulationTypes";
+import { getAffixTierRangesForStat, type AffixTier } from "../config/itemAffixConfig";
 
 const DEFAULT_STEP_MS = 50;
 const DEFAULT_MAX_RUN_DURATION_MS = 240_000;
@@ -47,6 +48,49 @@ const uniqueTierById = new Map(uniqueItemDefinitions.map((item) => [item.id, ite
 const getNewItems = (baselineItems: InventoryItem[], finalItems: InventoryItem[]): InventoryItem[] => {
   const baselineIds = new Set(baselineItems.map((item) => item.id));
   return finalItems.filter((item) => !baselineIds.has(item.id));
+};
+
+type StatKey = keyof InventoryItem["statBonuses"];
+
+const getTierForValue = (itemTier: number, statKey: StatKey, value: number): AffixTier | null => {
+  const ranges = getAffixTierRangesForStat(itemTier, statKey);
+  const resolved = Object.entries(ranges).find(([, [min, max]]) => value >= min && value <= max);
+  return resolved ? (Number(resolved[0]) as AffixTier) : null;
+};
+
+const buildItemRollMetrics = (items: InventoryItem[]): SingleRunSimulationMetrics["itemRolls"] => {
+  const metrics: SingleRunSimulationMetrics["itemRolls"] = {
+    itemsDropped: 0,
+    bySlot: {},
+    byRarity: {},
+    byStatKey: {},
+    byStatTier: {}
+  };
+
+  items.forEach((item) => {
+    metrics.itemsDropped += 1;
+
+    if (item.slot) {
+      metrics.bySlot[item.slot] = (metrics.bySlot[item.slot] ?? 0) + 1;
+    }
+
+    metrics.byRarity[item.rarity] = (metrics.byRarity[item.rarity] ?? 0) + 1;
+
+    (Object.entries(item.statBonuses) as Array<[StatKey, number]>).forEach(([statKey, value]) => {
+      metrics.byStatKey[statKey] = (metrics.byStatKey[statKey] ?? 0) + 1;
+
+      const tier = getTierForValue(item.tier, statKey, value);
+
+      if (!tier) {
+        return;
+      }
+
+      metrics.byStatTier[statKey] ??= {};
+      metrics.byStatTier[statKey]![tier] = (metrics.byStatTier[statKey]![tier] ?? 0) + 1;
+    });
+  });
+
+  return metrics;
 };
 
 const runSingleSimulation = (
@@ -113,6 +157,7 @@ const runSingleSimulation = (
   const mapsGained =
     getTotalConsumableMaps(finalPlayer.mapProgress.consumableMaps) -
     getTotalConsumableMaps(baselineCharacter.mapProgress.consumableMaps);
+  const itemRolls = buildItemRollMetrics(newItems);
 
   return {
     runNumber,
@@ -134,7 +179,8 @@ const runSingleSimulation = (
     spellDrops: accumulatedLootByKind.Spell,
     lootByKind: accumulatedLootByKind,
     rareMonstersSpawned: runtime.telemetry.rareMonstersSpawned,
-    rareMonstersKilled: runtime.telemetry.rareMonstersKilled
+    rareMonstersKilled: runtime.telemetry.rareMonstersKilled,
+    itemRolls
   };
 };
 

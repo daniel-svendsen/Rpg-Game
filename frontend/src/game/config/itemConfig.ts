@@ -6,6 +6,13 @@ export interface ItemBaseDefinition {
   name: string;
   slot: ItemSlot;
   tags: Tag[];
+  minTier?: number;
+  maxTier?: number;
+  defenseProfile?: "Armor" | "Evasion" | "Hybrid";
+  baseArmor?: number;
+  baseEvasion?: number;
+  baseCastSpeedMultiplier?: number;
+  baseAttackSpeedMultiplier?: number;
 }
 
 export interface CurrencyDefinition {
@@ -51,12 +58,21 @@ export interface UniqueItemDefinition {
 }
 
 export const itemBases: ItemBaseDefinition[] = [
-  { id: "oakWand", name: "Oak Wand", slot: "Weapon", tags: ["SpellDamage"] },
-  { id: "travelerBoots", name: "Traveler Boots", slot: "Boots", tags: ["CastSpeed"] },
-  { id: "bronzeHelm", name: "Bronze Helm", slot: "Helmet", tags: ["Physical"] },
-  { id: "chainmailVest", name: "Chainmail Vest", slot: "BodyArmor", tags: ["Physical"] },
+  { id: "oakWand", name: "Oak Wand", slot: "Weapon", tags: ["SpellDamage"], minTier: 1, maxTier: 2, baseCastSpeedMultiplier: 1.0 },
+  { id: "yewWand", name: "Yew Wand", slot: "Weapon", tags: ["SpellDamage"], minTier: 3, maxTier: 4, baseCastSpeedMultiplier: 1.2 },
+  { id: "runicWand", name: "Runic Wand", slot: "Weapon", tags: ["SpellDamage"], minTier: 5, maxTier: 10, baseCastSpeedMultiplier: 1.35 },
+  { id: "rustySword", name: "Rusty Sword", slot: "Weapon", tags: ["Physical"], minTier: 1, maxTier: 2, baseAttackSpeedMultiplier: 1.0 },
+  { id: "steelSword", name: "Steel Sword", slot: "Weapon", tags: ["Physical"], minTier: 3, maxTier: 4, baseAttackSpeedMultiplier: 1.2 },
+  { id: "gladiatorBlade", name: "Gladiator Blade", slot: "Weapon", tags: ["Physical"], minTier: 5, maxTier: 10, baseAttackSpeedMultiplier: 1.35 },
+  { id: "travelerBoots", name: "Traveler Boots", slot: "Boots", tags: ["CastSpeed"], defenseProfile: "Evasion", baseEvasion: 28 },
+  { id: "ironGreaves", name: "Iron Greaves", slot: "Boots", tags: ["Physical"], defenseProfile: "Armor", baseArmor: 32 },
+  { id: "bronzeHelm", name: "Bronze Helm", slot: "Helmet", tags: ["Physical"], defenseProfile: "Armor", baseArmor: 36 },
+  { id: "leatherCap", name: "Leather Cap", slot: "Helmet", tags: ["Physical"], defenseProfile: "Evasion", baseEvasion: 34 },
+  { id: "chainmailVest", name: "Chainmail Vest", slot: "BodyArmor", tags: ["Physical"], defenseProfile: "Armor", baseArmor: 47 },
+  { id: "leatherTunic", name: "Leather Tunic", slot: "BodyArmor", tags: ["Physical"], defenseProfile: "Evasion", baseEvasion: 44 },
   { id: "studdedBelt", name: "Studded Belt", slot: "Belt", tags: ["Physical"] },
-  { id: "wovenGloves", name: "Woven Gloves", slot: "Gloves", tags: ["Critical"] },
+  { id: "wovenGloves", name: "Woven Gloves", slot: "Gloves", tags: ["Critical"], defenseProfile: "Evasion", baseEvasion: 22 },
+  { id: "ironGauntlets", name: "Iron Gauntlets", slot: "Gloves", tags: ["Physical"], defenseProfile: "Armor", baseArmor: 24 },
   { id: "amberAmulet", name: "Amber Amulet", slot: "Amulet", tags: ["SpellDamage"] },
   { id: "topazRing", name: "Topaz Ring", slot: "Ring", tags: ["Lightning", "Critical"] },
   { id: "rubyRing", name: "Ruby Ring", slot: "Ring", tags: ["Fire", "SpellDamage"] }

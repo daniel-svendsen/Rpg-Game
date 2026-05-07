@@ -144,6 +144,126 @@ Phase completion will likely require:
 - at least one meaningful override-driven comparison workflow
 - a balance pass where the simulator is clearly driving concrete map, loot, and economy decisions rather than just existing as tooling
 
+### Phase 2 Scope Extensions (Planned, Simulator-First)
+
+These are explicitly intended to stay within the `Phase 2` mindset because they materially affect
+clear speed, danger, and loot economy, and therefore must be modeled by the simulator.
+
+#### Movement + Auto-Movement (Maps)
+
+Goal:
+
+- make movement speed and movement behavior first-class simulation inputs
+
+Acceptance targets:
+
+- runtime state supports dynamic `playerX/playerY` (no fixed center player)
+- movement uses character-derived movement speed (items can change it)
+- movement is clamped within map/arena bounds
+- simulator supports both manual-move mode (for testing) and auto-move mode (default)
+- auto-move selects a target pack (or nearest relevant target) and moves in a straight line initially
+- auto-move can stop when within spell/combat range
+- auto-move continues to next pack when a pack is dead
+- auto-move can optionally prioritize nearby ground loot pickup after a pack is cleared
+- Phaser remains an adapter (visualizes movement + input intent); domain remains source of truth
+
+Simulator reporting (minimum):
+
+- time spent moving vs fighting
+- distance moved
+- average clear time impact from movement speed and auto-move behavior
+
+#### Monster Packs + Aggro
+
+Goal:
+
+- replace single-spawn behavior with pack-based spawning and behavior that the simulator can model
+
+Acceptance targets:
+
+- monsters spawn in packs with a stable pack id + pack center
+- pack size and spacing are balance/config driven
+- enemies have an explicit state: `idle`, `chasing`, `attacking`
+- enemies aggro only within an aggro radius, then chase, then attack within attack range
+- auto-move naturally triggers aggro as the player approaches packs
+
+Simulator reporting (minimum):
+
+- packs spawned / packs cleared
+- monsters aggroed
+- time-to-first-contact per pack (proxy for danger spikes)
+
+#### Ground Loot + Pickup
+
+Goal:
+
+- move from “loot directly into inventory” to ground loot with world position, validated by domain rules
+
+Acceptance targets:
+
+- ground loot has a real payload (item/currency/spell/map) and a world position
+- pickup occurs by proximity/overlap, but is validated and applied by domain logic
+- simulator models drop positions and pickup movement so loot outcomes match runtime
+
+Simulator reporting (minimum):
+
+- ground loot dropped / picked up
+- time spent picking up loot (if auto-loot is enabled)
+- loot breakdown by type and by tier/rarity
+
+#### Item Stat Rolls (PoE-Inspired, Data-Driven)
+
+Goal:
+
+- make item generation produce a smaller number of meaningful rolled stats from slot-based pools
+- make the simulator able to sample rolls and report distributions
+
+Acceptance targets:
+
+- item stats are generated from slot-based stat pools (boots/weapon/armor/etc)
+- not all stats exist on all items; items roll a limited set based on rarity
+- some item bases influence what can roll (e.g. armor base can roll armor OR evasion focus)
+- weapons can roll cast/attack speed in a range (example: `1.0`–`1.5` multiplier)
+- rarity influences number of stats and roll quality
+- unique items keep fixed stats/effects
+
+Tiering + roll ranges:
+
+- each stat tier has an explicit numeric range, and a roll is sampled inside that range
+- ranges should have meaningful separation (example: Tier 1 = `1`–`10`, Tier 2 = `11`–`15`, etc)
+- tier ranges and weights are config-driven and overrideable
+
+Simulator reporting (minimum):
+
+- roll distribution per stat key (histograms or bucket summaries)
+- tier distribution per slot and rarity
+- item power score sensitivity to new stats (movement speed, resists, armor/evasion, cast speed, crit multi, penetration)
+
+#### Combat Foundations: Resistances + Penetration + Armor + Evasion + Crit Multiplier
+
+Goal:
+
+- unify combat math in domain so runtime and simulator share identical rules
+
+Acceptance targets:
+
+- resistances are stored and computed as decimals (e.g. `0.25` for 25%)
+- resistance cap is explicit (initial target: `0.75`)
+- player penetration reduces enemy resistance for matching elemental types
+- enemies have a damage type (`Physical`, `Fire`, `Cold`, `Lightning` at minimum)
+- incoming damage uses player resistances for elemental types
+- physical damage is influenced by armor/evasion (start simple; avoid PoE-complex formulas initially)
+- crit multiplier becomes a derived stat (replaces hardcoded crit damage multiplier)
+- cast speed affects spell cooldown consistently in domain
+
+Simulator reporting (minimum):
+
+- damage taken by type
+- damage prevented by resistances
+- damage prevented by armor
+- evasion count / evade rate
+- crit count and effective crit multiplier impact
+
 ## Phase 3 - UI Readability And Gameplay Clarity
 
 Status: `Planned`

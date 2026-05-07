@@ -37,12 +37,31 @@ export const applyEquipmentState = (character: CharacterRecord): CharacterRecord
   const nextMaxHealth = Math.round(
     (derivedStats.maxHealth + levelHealthBonus + bonusHealth) * uniqueModifiers.maxHealthMultiplier
   );
+  const movementSpeedBonus = Object.values(character.equippedItems).reduce(
+    (total, item) => total + (item?.statBonuses.movementSpeedBonus ?? 0),
+    0
+  );
+  const armorBonus = Object.values(character.equippedItems).reduce(
+    (total, item) => total + (item?.statBonuses.armor ?? 0),
+    0
+  );
+  const evasionBonus = Object.values(character.equippedItems).reduce(
+    (total, item) => total + (item?.statBonuses.evasion ?? 0),
+    0
+  );
+  const weaponCastSpeedMultiplier = character.equippedItems.Weapon?.statBonuses.castSpeedMultiplier ?? 1;
+  const weaponAttackSpeedMultiplier = character.equippedItems.Weapon?.statBonuses.attackSpeedMultiplier ?? 1;
 
   return {
     ...character,
     derivedStats: {
       ...derivedStats,
       maxHealth: nextMaxHealth,
+      castSpeedMultiplier: derivedStats.castSpeedMultiplier * weaponCastSpeedMultiplier,
+      attackSpeedMultiplier: derivedStats.attackSpeedMultiplier * weaponAttackSpeedMultiplier,
+      movementSpeedMultiplier: derivedStats.movementSpeedMultiplier + movementSpeedBonus,
+      armor: derivedStats.armor + armorBonus,
+      evasion: derivedStats.evasion + evasionBonus,
       critChance:
         derivedStats.critChance +
         Object.values(character.equippedItems).reduce((total, item) => total + (item?.statBonuses.critChance ?? 0), 0),

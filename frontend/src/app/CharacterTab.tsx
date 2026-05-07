@@ -33,6 +33,28 @@ export const CharacterTab = ({
       </div>
     </section>
     <section className="panel stack">
+      <h4>Character Stats</h4>
+      <div className="status-text">Max health: {character?.derivedStats.maxHealth ?? 0}</div>
+      <div className="status-text">Armor: {character?.derivedStats.armor ?? 0}</div>
+      <div className="status-text">Evasion: {character?.derivedStats.evasion ?? 0}</div>
+      <div className="status-text">
+        Cast speed: x{(character?.derivedStats.castSpeedMultiplier ?? 1).toFixed(2)}
+      </div>
+      <div className="status-text">
+        Attack speed: x{(character?.derivedStats.attackSpeedMultiplier ?? 1).toFixed(2)}
+      </div>
+      <div className="status-text">
+        Movement speed: {(((character?.derivedStats.movementSpeedMultiplier ?? 1) - 1) * 100).toFixed(1)}%
+      </div>
+      <div className="status-text">
+        Crit chance: {((character?.derivedStats.critChance ?? 0) * 100).toFixed(1)}%
+      </div>
+      <div className="status-text">
+        Spell power: {(((character?.derivedStats.spellPowerMultiplier ?? 1) - 1) * 100).toFixed(1)}%
+      </div>
+      <div className="status-text">Resistances: not implemented yet.</div>
+    </section>
+    <section className="panel stack">
       <h4>Level Up Stats</h4>
       <p className="status-text">Unspent points: {character?.unspentStatPoints ?? 0}</p>
       {(["strength", "agility", "vitality", "dexterity"] as const).map((statKey) => (

@@ -41,6 +41,10 @@ export interface CharacterStats {
 export interface DerivedStats {
   maxHealth: number;
   castSpeedMultiplier: number;
+  attackSpeedMultiplier: number;
+  movementSpeedMultiplier: number;
+  armor: number;
+  evasion: number;
   critChance: number;
   spellPowerMultiplier: number;
 }
@@ -56,6 +60,11 @@ export interface InventoryItem {
   uniqueEffectDescription?: string;
   statBonuses: Partial<CharacterStats> & {
     maxHealth?: number;
+    movementSpeedBonus?: number;
+    armor?: number;
+    evasion?: number;
+    castSpeedMultiplier?: number;
+    attackSpeedMultiplier?: number;
     critChance?: number;
     spellPowerMultiplier?: number;
   };
@@ -67,6 +76,22 @@ export interface LootEntry {
   name: string;
   details: string[];
   isUpgrade: boolean;
+}
+
+export type GroundLootKind = LootEntry["kind"];
+
+export type GroundLootPayload =
+  | { kind: "Item"; item: InventoryItem }
+  | { kind: "Currency"; code: string; amount: number }
+  | { kind: "Spell"; spellId: string }
+  | { kind: "Map"; mapId: string; tier: number };
+
+export interface GroundLootState {
+  id: string;
+  x: number;
+  y: number;
+  createdAtMs: number;
+  payload: GroundLootPayload;
 }
 
 export interface CurrencyStack {
@@ -138,6 +163,7 @@ export interface CharacterRecord {
 
 export interface ArenaEnemyState {
   id: string;
+  packId?: string;
   x: number;
   y: number;
   health: number;
@@ -162,5 +188,12 @@ export interface ArenaSnapshot {
   enemies: ArenaEnemyState[];
   floatingTexts: FloatingTextState[];
   lootEvents: LootEntry[];
+  groundLoot: Array<{
+    id: string;
+    kind: GroundLootKind;
+    x: number;
+    y: number;
+    name: string;
+  }>;
   isComplete: boolean;
 }

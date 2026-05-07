@@ -1,4 +1,4 @@
-import type { CharacterRecord, LootEntry } from "../../shared/types/saveTypes";
+import type { CharacterRecord, LootEntry, ItemSlot, InventoryItem } from "../../shared/types/saveTypes";
 
 export interface SimulationBalanceOverrides {
   enemyBaseHealthMultiplier?: number;
@@ -33,6 +33,13 @@ export interface SingleRunSimulationMetrics {
   lootByKind: Record<LootEntry["kind"], number>;
   rareMonstersSpawned: number;
   rareMonstersKilled: number;
+  itemRolls: {
+    itemsDropped: number;
+    bySlot: Partial<Record<ItemSlot, number>>;
+    byRarity: Partial<Record<InventoryItem["rarity"], number>>;
+    byStatKey: Partial<Record<keyof InventoryItem["statBonuses"], number>>;
+    byStatTier: Partial<Record<keyof InventoryItem["statBonuses"], Partial<Record<1 | 2 | 3 | 4 | 5, number>>>>;
+  };
 }
 
 export interface SimulationRunOptions {
@@ -72,6 +79,13 @@ export interface SimulationSummary {
     rareMonstersSpawned: number;
     rareMonstersKilled: number;
     lootByKind: Record<LootEntry["kind"], number>;
+  };
+  itemRolls: {
+    itemsDropped: number;
+    bySlot: Partial<Record<ItemSlot, number>>;
+    byRarity: Partial<Record<InventoryItem["rarity"], number>>;
+    byStatKey: Partial<Record<keyof InventoryItem["statBonuses"], number>>;
+    byStatTier: Partial<Record<keyof InventoryItem["statBonuses"], Partial<Record<1 | 2 | 3 | 4 | 5, number>>>>;
   };
   averages: {
     completionRate: number;

@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
-import { createCharacter, loadCharacter } from "../api/gameApi";
+import { createCharacter, loadCharacterWithAuthState } from "../api/gameApi";
 import { login, register } from "../api/authApi";
 import type { AuthFormState } from "../auth/authTypes";
 import { AuthScreen } from "./AuthScreen";
@@ -140,7 +140,17 @@ export const App = () => {
     }
 
     void (async () => {
-      const loadedCharacter = await loadCharacter(token);
+      const result = await loadCharacterWithAuthState(token);
+
+      if (result.isUnauthorized) {
+        localStorage.removeItem("arpg-token");
+        setToken(null);
+        setScreenMode("auth");
+        setStatusMessage("Session expired. Please log in again.");
+        return;
+      }
+
+      const loadedCharacter = result.character;
 
       if (loadedCharacter) {
         const normalizedCharacter = normalizeCharacterRecord(loadedCharacter);
