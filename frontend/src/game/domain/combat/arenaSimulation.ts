@@ -19,6 +19,7 @@ import { getSpellName, rollSpellDrop } from "../spells/spellDrops";
 import { resolveSpell } from "../spells/spellEngine";
 import { getItemSlotLabel } from "../../config/itemConfig";
 import { createClientId } from "../../../shared/utils/id";
+import { applyResistanceToDamage, clampEnemyResistance, clampPlayerResistance, resolveEnemyDamageType } from "./combatMath";
 import type {
   ArenaEnemyState,
   ArenaSnapshot,
@@ -28,7 +29,8 @@ import type {
   GroundLootState,
   LootEntry,
   MapEnhancementInstance,
-  MonsterRarity
+  MonsterRarity,
+  DamageType
 } from "../../../shared/types/saveTypes";
 
 const ARENA_WIDTH = 2000;
@@ -52,6 +54,7 @@ interface MonsterPackState {
 interface InternalEnemyState extends ArenaEnemyState {
   packId: PackId;
   damage: number;
+  damageType: DamageType;
   movementSpeed: number;
   experienceReward: number;
   goldReward: number;
@@ -172,6 +175,7 @@ const createEnemy = (
     damage: Math.round(
       monsterBalance.baseDamage * map.enemyDamageMultiplier * rarityDamageMultiplier
     ),
+    damageType: resolveEnemyDamageType(monsterDefinition.tags),
     movementSpeed:
       (rarity === "Rare" ? tierBalance.rareMonsterSpeed : tierBalance.normalMonsterSpeed) *
       map.enhancementEffects.enemySpeedMultiplier,
@@ -739,12 +743,24 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
       return enemy;
     }
 
+    const baseContactDamage = Math.max(
+      1,
+      Math.round(enemy.damage * getEquippedUniqueModifiers(nextPlayer).enemyContactDamageTakenMultiplier)
+    );
+    const resistance =
+      enemy.damageType === "Physical"
+        ? 0
+        : clampPlayerResistance(nextPlayer.derivedStats.resistances[enemy.damageType]);
+    const appliedDamage =
+      enemy.damageType === "Physical"
+        ? baseContactDamage
+        : applyResistanceToDamage(baseContactDamage, resistance);
+
     nextPlayer = {
       ...nextPlayer,
       currentHealth: Math.max(
         0,
-        nextPlayer.currentHealth -
-          Math.max(1, Math.round(enemy.damage * getEquippedUniqueModifiers(nextPlayer).enemyContactDamageTakenMultiplier))
+        nextPlayer.currentHealth - appliedDamage
       )
     };
     lastPlayerDamageAtMs = nextTime;
@@ -752,7 +768,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
       id: `${enemy.id}-attack-${nextTime}`,
       x: playerX - 14,
       y: playerY - 26,
-      text: `-${enemy.damage}`
+      text: `-${appliedDamage}`
     });
 
     return {
@@ -805,10 +821,10 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
         const baseDamage = didCrit ? Math.round(resolvedSpell.damage * 1.6) : resolvedSpell.damage;
         const relevantResistances = (["Fire", "Cold", "Lightning"] as const)
           .filter((type) => resolvedSpell.tags.includes(type))
-          .map((type) => Math.max(0, enemy.resistances[type] - resolvedSpell.resistancePenetration[type]));
+          .map((type) => clampEnemyResistance(enemy.resistances[type] - resolvedSpell.resistancePenetration[type]));
         const appliedResistance =
           relevantResistances.length > 0 ? Math.max(...relevantResistances) : 0;
-        const totalDamage = Math.max(1, Math.round(baseDamage * (1 - appliedResistance)));
+        const totalDamage = applyResistanceToDamage(baseDamage, appliedResistance);
         const remainingHealth = enemy.health - totalDamage;
 
         floatingTexts.push({

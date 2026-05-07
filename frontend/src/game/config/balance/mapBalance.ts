@@ -8,6 +8,9 @@ export type ItemStatRangeSet = {
   vitality: readonly [number, number];
   dexterity: readonly [number, number];
   maxHealth: readonly [number, number];
+  fireResistance: readonly [number, number];
+  coldResistance: readonly [number, number];
+  lightningResistance: readonly [number, number];
   critChance: readonly [number, number];
   spellPowerMultiplier: readonly [number, number];
 };
@@ -40,6 +43,9 @@ const createItemStatRanges = (tier: number): ItemStatRangeSet => ({
   vitality: statRange(1 + tier, 4 + tier * 3),
   dexterity: statRange(1 + (tier - 1), 3 + tier * 2),
   maxHealth: statRange(6 + tier * 6, 16 + tier * 14),
+  fireResistance: statRange(0.02 + tier * 0.004, 0.05 + tier * 0.008),
+  coldResistance: statRange(0.02 + tier * 0.004, 0.05 + tier * 0.008),
+  lightningResistance: statRange(0.02 + tier * 0.004, 0.05 + tier * 0.008),
   critChance: statRange(0.01 + tier * 0.002, 0.03 + tier * 0.005),
   spellPowerMultiplier: statRange(0.02 + tier * 0.004, 0.05 + tier * 0.008)
 });

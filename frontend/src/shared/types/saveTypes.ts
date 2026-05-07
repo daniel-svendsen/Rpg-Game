@@ -18,6 +18,7 @@ export type Tag =
 
 export type ItemRarity = "Normal" | "Magic" | "Rare" | "Unique";
 export type MonsterRarity = "Normal" | "Rare";
+export type DamageType = "Physical" | "Fire" | "Cold" | "Lightning";
 export type EquipmentSlot =
   | "Weapon"
   | "Helmet"
@@ -45,6 +46,7 @@ export interface DerivedStats {
   movementSpeedMultiplier: number;
   armor: number;
   evasion: number;
+  resistances: Record<Exclude<DamageType, "Physical">, number>;
   critChance: number;
   spellPowerMultiplier: number;
 }
@@ -63,6 +65,9 @@ export interface InventoryItem {
     movementSpeedBonus?: number;
     armor?: number;
     evasion?: number;
+    fireResistance?: number;
+    coldResistance?: number;
+    lightningResistance?: number;
     castSpeedMultiplier?: number;
     attackSpeedMultiplier?: number;
     critChance?: number;

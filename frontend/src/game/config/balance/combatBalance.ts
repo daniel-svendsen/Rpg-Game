@@ -1,5 +1,9 @@
 export const combatBalance = {
   autoPickupRadius: 9999,
+  resistances: {
+    playerCap: 0.75,
+    minEffectiveResistance: -0.25
+  },
   healing: {
     refillToFullOnMapStart: true,
     lifeFlask: {

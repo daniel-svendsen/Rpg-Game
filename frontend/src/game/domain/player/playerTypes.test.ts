@@ -65,6 +65,11 @@ describe("playerTypes", () => {
         movementSpeedMultiplier: 1,
         armor: 0,
         evasion: 0,
+        resistances: {
+          Fire: 0,
+          Cold: 0,
+          Lightning: 0
+        },
         critChance: 0,
         spellPowerMultiplier: 1
       },

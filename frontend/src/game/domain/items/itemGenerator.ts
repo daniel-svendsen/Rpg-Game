@@ -64,6 +64,9 @@ const maybeCreateExceptionalRare = (
         item.statBonuses.movementSpeedBonus,
         itemBalance.exceptionalRare.statMultiplier
       ),
+      fireResistance: scaleStatBonus(item.statBonuses.fireResistance, itemBalance.exceptionalRare.statMultiplier),
+      coldResistance: scaleStatBonus(item.statBonuses.coldResistance, itemBalance.exceptionalRare.statMultiplier),
+      lightningResistance: scaleStatBonus(item.statBonuses.lightningResistance, itemBalance.exceptionalRare.statMultiplier),
       critChance: scaleStatBonus(item.statBonuses.critChance, itemBalance.exceptionalRare.statMultiplier),
       spellPowerMultiplier: scaleStatBonus(
         item.statBonuses.spellPowerMultiplier,

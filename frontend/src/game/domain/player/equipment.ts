@@ -4,6 +4,8 @@ import { getItemPowerScore } from "../items/itemPower";
 import { getEquippedUniqueModifiers } from "../items/uniqueEffects";
 import { deriveStats } from "./statCalculation";
 
+const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
+
 const applyEquipmentBonuses = (
   baseStats: CharacterStats,
   equippedItems: CharacterRecord["equippedItems"]
@@ -49,8 +51,21 @@ export const applyEquipmentState = (character: CharacterRecord): CharacterRecord
     (total, item) => total + (item?.statBonuses.evasion ?? 0),
     0
   );
+  const fireResistanceBonus = Object.values(character.equippedItems).reduce(
+    (total, item) => total + (item?.statBonuses.fireResistance ?? 0),
+    0
+  );
+  const coldResistanceBonus = Object.values(character.equippedItems).reduce(
+    (total, item) => total + (item?.statBonuses.coldResistance ?? 0),
+    0
+  );
+  const lightningResistanceBonus = Object.values(character.equippedItems).reduce(
+    (total, item) => total + (item?.statBonuses.lightningResistance ?? 0),
+    0
+  );
   const weaponCastSpeedMultiplier = character.equippedItems.Weapon?.statBonuses.castSpeedMultiplier ?? 1;
   const weaponAttackSpeedMultiplier = character.equippedItems.Weapon?.statBonuses.attackSpeedMultiplier ?? 1;
+  const resistanceCap = balanceConfig.combat.resistances.playerCap;
 
   return {
     ...character,
@@ -62,6 +77,11 @@ export const applyEquipmentState = (character: CharacterRecord): CharacterRecord
       movementSpeedMultiplier: derivedStats.movementSpeedMultiplier + movementSpeedBonus,
       armor: derivedStats.armor + armorBonus,
       evasion: derivedStats.evasion + evasionBonus,
+      resistances: {
+        Fire: clamp(derivedStats.resistances.Fire + fireResistanceBonus, -1, resistanceCap),
+        Cold: clamp(derivedStats.resistances.Cold + coldResistanceBonus, -1, resistanceCap),
+        Lightning: clamp(derivedStats.resistances.Lightning + lightningResistanceBonus, -1, resistanceCap)
+      },
       critChance:
         derivedStats.critChance +
         Object.values(character.equippedItems).reduce((total, item) => total + (item?.statBonuses.critChance ?? 0), 0),

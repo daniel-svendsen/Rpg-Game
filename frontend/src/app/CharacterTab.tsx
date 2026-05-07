@@ -52,7 +52,12 @@ export const CharacterTab = ({
       <div className="status-text">
         Spell power: {(((character?.derivedStats.spellPowerMultiplier ?? 1) - 1) * 100).toFixed(1)}%
       </div>
-      <div className="status-text">Resistances: not implemented yet.</div>
+      <div className="status-text">
+        Resistances:{" "}
+        {character
+          ? `Fire ${(character.derivedStats.resistances.Fire * 100).toFixed(1)}% | Cold ${(character.derivedStats.resistances.Cold * 100).toFixed(1)}% | Lightning ${(character.derivedStats.resistances.Lightning * 100).toFixed(1)}%`
+          : "—"}
+      </div>
     </section>
     <section className="panel stack">
       <h4>Level Up Stats</h4>

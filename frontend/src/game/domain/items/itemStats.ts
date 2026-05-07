@@ -9,6 +9,9 @@ const orderedStatKeys = [
   "dexterity",
   "maxHealth",
   "movementSpeedBonus",
+  "fireResistance",
+  "coldResistance",
+  "lightningResistance",
   "critChance",
   "spellPowerMultiplier"
 ] as const;
@@ -58,6 +61,10 @@ export const getItemStatLines = (item: InventoryItem): string[] =>
 
       const formattedValue = (() => {
         if (statKey === "movementSpeedBonus") {
+          return `+${(Number(value) * 100).toFixed(1)}%`;
+        }
+
+        if (statKey === "fireResistance" || statKey === "coldResistance" || statKey === "lightningResistance") {
           return `+${(Number(value) * 100).toFixed(1)}%`;
         }
 
