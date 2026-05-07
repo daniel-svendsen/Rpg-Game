@@ -4,6 +4,7 @@ import type { ArenaSnapshot } from "../../../shared/types/saveTypes";
 export class ArenaScene extends Phaser.Scene {
   private latestSnapshot: ArenaSnapshot | null = null;
   private playerCircle?: Phaser.GameObjects.Arc;
+  private arenaBackground?: Phaser.GameObjects.Rectangle;
   private enemyCircles = new Map<string, Phaser.GameObjects.Arc>();
   private enemyHealthBars = new Map<string, Phaser.GameObjects.Rectangle>();
   private floatingTexts = new Map<string, Phaser.GameObjects.Text>();
@@ -19,8 +20,12 @@ export class ArenaScene extends Phaser.Scene {
 
   create(): void {
     this.cameras.main.setBackgroundColor("#050a12");
-    this.add.rectangle(480, 320, 880, 560, 0x0b1220, 1).setStrokeStyle(2, 0x1f2937);
-    this.playerCircle = this.add.circle(480, 320, 18, 0xf59e0b);
+    this.cameras.main.setBounds(0, 0, 2000, 1400);
+    this.arenaBackground = this.add
+      .rectangle(1000, 700, 1920, 1320, 0x0b1220, 1)
+      .setStrokeStyle(2, 0x1f2937);
+    this.playerCircle = this.add.circle(1000, 700, 18, 0xf59e0b);
+    this.cameras.main.startFollow(this.playerCircle, true, 0.08, 0.08);
     this.renderSnapshot();
   }
 
@@ -102,4 +107,3 @@ export class ArenaScene extends Phaser.Scene {
     });
   }
 }
-

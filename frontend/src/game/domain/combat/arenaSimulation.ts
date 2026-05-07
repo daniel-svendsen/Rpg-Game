@@ -31,12 +31,16 @@ import type {
   MonsterRarity
 } from "../../../shared/types/saveTypes";
 
-const ARENA_WIDTH = 960;
-const ARENA_HEIGHT = 640;
+const ARENA_WIDTH = 2000;
+const ARENA_HEIGHT = 1400;
 const PLAYER_BASE_MOVEMENT_SPEED = 120;
 const PLAYER_COMBAT_STOP_RANGE = 160;
 const AUTO_LOOT_DELAY_MS = 450;
 const AUTO_LOOT_SEEK_RADIUS = 240;
+const PLAYER_SPAWN_PADDING = 220;
+const PACK_MIN_CENTER_DISTANCE = 240;
+const PACK_CENTER_PADDING = 140;
+const PACK_COUNT_BONUS = 2;
 
 type PackId = string;
 
@@ -193,14 +197,49 @@ const createEnemy = (
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
-const createMonsterPacks = (map: ResolvedMapInstance): { packs: MonsterPackState[]; enemies: InternalEnemyState[]; rareMonstersSpawned: number } => {
+const samplePackCenter = (
+  existingCenters: Array<{ x: number; y: number }>,
+  playerStartX: number,
+  playerStartY: number
+): { x: number; y: number } => {
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    const x = PACK_CENTER_PADDING + Math.random() * (ARENA_WIDTH - PACK_CENTER_PADDING * 2);
+    const y = PACK_CENTER_PADDING + Math.random() * (ARENA_HEIGHT - PACK_CENTER_PADDING * 2);
+
+    if (distance(x, y, playerStartX, playerStartY) < PLAYER_SPAWN_PADDING) {
+      continue;
+    }
+
+    if (existingCenters.some((center) => distance(x, y, center.x, center.y) < PACK_MIN_CENTER_DISTANCE)) {
+      continue;
+    }
+
+    return { x, y };
+  }
+
+  // fallback: place farther from the player even if clustering occurs under high density
+  const fallbackAngle = Math.random() * Math.PI * 2;
+  const fallbackRadius = Math.max(PLAYER_SPAWN_PADDING, PACK_MIN_CENTER_DISTANCE);
+  return {
+    x: clamp(playerStartX + Math.cos(fallbackAngle) * fallbackRadius, PACK_CENTER_PADDING, ARENA_WIDTH - PACK_CENTER_PADDING),
+    y: clamp(playerStartY + Math.sin(fallbackAngle) * fallbackRadius, PACK_CENTER_PADDING, ARENA_HEIGHT - PACK_CENTER_PADDING)
+  };
+};
+
+const createMonsterPacks = (
+  map: ResolvedMapInstance,
+  playerStartX: number,
+  playerStartY: number
+): { packs: MonsterPackState[]; enemies: InternalEnemyState[]; rareMonstersSpawned: number } => {
   const packs: MonsterPackState[] = [];
   const enemies: InternalEnemyState[] = [];
+  const centers: Array<{ x: number; y: number }> = [];
 
-  const packSizeMin = 3;
-  const packSizeMax = 6;
+  const packSizeMin = 2;
+  const packSizeMax = 5;
   const packRadius = 46;
-  const packCount = Math.max(1, Math.ceil(map.monsterCount / ((packSizeMin + packSizeMax) / 2)));
+  const averagePackSize = (packSizeMin + packSizeMax) / 2;
+  const packCount = Math.max(1, Math.ceil(map.monsterCount / averagePackSize) + PACK_COUNT_BONUS);
 
   const tierBalance = getMapBalanceByTier(map.tier);
   const rareChancePerPack = tierBalance.rareMonsterChance;
@@ -210,8 +249,10 @@ const createMonsterPacks = (map: ResolvedMapInstance): { packs: MonsterPackState
 
   for (let packIndex = 0; packIndex < packCount && remaining > 0; packIndex += 1) {
     const packId = `pack-${packIndex}-${createClientId()}`;
-    const centerX = 80 + Math.random() * (ARENA_WIDTH - 160);
-    const centerY = 80 + Math.random() * (ARENA_HEIGHT - 160);
+    const sampled = samplePackCenter(centers, playerStartX, playerStartY);
+    const centerX = sampled.x;
+    const centerY = sampled.y;
+    centers.push({ x: centerX, y: centerY });
 
     packs.push({ id: packId, centerX, centerY });
 
@@ -225,8 +266,8 @@ const createMonsterPacks = (map: ResolvedMapInstance): { packs: MonsterPackState
     let rareUsed = false;
 
     for (let memberIndex = 0; memberIndex < packSize; memberIndex += 1) {
-      const angle = Math.random() * Math.PI * 2;
-      const radius = Math.random() * packRadius;
+      const angle = (memberIndex / Math.max(1, packSize)) * Math.PI * 2 + Math.random() * 0.45;
+      const radius = 14 + Math.random() * (packRadius - 14);
       const x = clamp(centerX + Math.cos(angle) * radius, 40, ARENA_WIDTH - 40);
       const y = clamp(centerY + Math.sin(angle) * radius, 40, ARENA_HEIGHT - 40);
 
@@ -512,7 +553,7 @@ export const createArenaRuntime = (
   const map = resolveMapInstance(mapConfig[mapId], enhancements);
   const initialPlayerX = ARENA_WIDTH / 2;
   const initialPlayerY = ARENA_HEIGHT / 2;
-  const packsResult = createMonsterPacks(map);
+  const packsResult = createMonsterPacks(map, initialPlayerX, initialPlayerY);
 
   return {
     mapId,
