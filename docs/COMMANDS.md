@@ -96,6 +96,15 @@ cd backend
 mvn test
 ```
 
+Optional real database integration test against a temporary PostgreSQL database:
+
+```powershell
+cd backend
+mvn verify -Pdb-integration-tests
+```
+
+This creates a temporary test database from your local `dev.local.properties`, runs the integration test there, and drops that database afterward. It does not touch your normal `simple_arpg` database rows.
+
 Fresh database verification:
 
 ```powershell

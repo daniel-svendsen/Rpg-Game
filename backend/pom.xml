@@ -10,11 +10,11 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.example</groupId>
-    <artifactId>simple-arpg-backend</artifactId>
+    <groupId>com.shardborne</groupId>
+    <artifactId>shardborne-backend</artifactId>
     <version>0.1.0</version>
-    <name>simple-arpg-backend</name>
-    <description>Backend for the simple ARPG prototype</description>
+    <name>shardborne-backend</name>
+    <description>Backend for Shardborne</description>
 
     <properties>
         <java.version>17</java.version>
@@ -83,4 +83,32 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>db-integration-tests</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>3.2.5</version>
+                        <configuration>
+                            <includes>
+                                <include>**/*IT.java</include>
+                            </includes>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
