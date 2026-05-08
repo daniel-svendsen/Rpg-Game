@@ -53,7 +53,7 @@ const createItemStatRanges = (tier: number): ItemStatRangeSet => ({
 export const mapBalance = {
   maxTier: 10,
   trainingGrounds: {
-    monsterCount: 30,
+    monsterCount: 42,
     monsterLevel: 1,
     normalMonsterSpeed: 44,
     rareMonsterSpeed: 52,
@@ -75,7 +75,7 @@ export const mapBalance = {
   },
   tiers: {
     1: {
-      monsterCount: 32,
+      monsterCount: 46,
       monsterLevel: 2,
       normalMonsterSpeed: 45,
       rareMonsterSpeed: 53,
@@ -96,7 +96,7 @@ export const mapBalance = {
       itemStatRanges: createItemStatRanges(1)
     },
     2: {
-      monsterCount: 36,
+      monsterCount: 52,
       monsterLevel: 3,
       normalMonsterSpeed: 46,
       rareMonsterSpeed: 54,
@@ -117,7 +117,7 @@ export const mapBalance = {
       itemStatRanges: createItemStatRanges(2)
     },
     3: {
-      monsterCount: 40,
+      monsterCount: 58,
       monsterLevel: 4,
       normalMonsterSpeed: 47,
       rareMonsterSpeed: 55,
@@ -138,7 +138,7 @@ export const mapBalance = {
       itemStatRanges: createItemStatRanges(3)
     },
     4: {
-      monsterCount: 44,
+      monsterCount: 64,
       monsterLevel: 5,
       normalMonsterSpeed: 48,
       rareMonsterSpeed: 56,
@@ -159,7 +159,7 @@ export const mapBalance = {
       itemStatRanges: createItemStatRanges(4)
     },
     5: {
-      monsterCount: 48,
+      monsterCount: 70,
       monsterLevel: 6,
       normalMonsterSpeed: 49,
       rareMonsterSpeed: 57,
@@ -180,7 +180,7 @@ export const mapBalance = {
       itemStatRanges: createItemStatRanges(5)
     },
     6: {
-      monsterCount: 52,
+      monsterCount: 76,
       monsterLevel: 7,
       normalMonsterSpeed: 50,
       rareMonsterSpeed: 58,
@@ -201,7 +201,7 @@ export const mapBalance = {
       itemStatRanges: createItemStatRanges(6)
     },
     7: {
-      monsterCount: 56,
+      monsterCount: 82,
       monsterLevel: 8,
       normalMonsterSpeed: 51,
       rareMonsterSpeed: 59,
@@ -222,7 +222,7 @@ export const mapBalance = {
       itemStatRanges: createItemStatRanges(7)
     },
     8: {
-      monsterCount: 60,
+      monsterCount: 88,
       monsterLevel: 9,
       normalMonsterSpeed: 52,
       rareMonsterSpeed: 60,
@@ -243,7 +243,7 @@ export const mapBalance = {
       itemStatRanges: createItemStatRanges(8)
     },
     9: {
-      monsterCount: 64,
+      monsterCount: 94,
       monsterLevel: 10,
       normalMonsterSpeed: 53,
       rareMonsterSpeed: 61,
@@ -264,7 +264,7 @@ export const mapBalance = {
       itemStatRanges: createItemStatRanges(9)
     },
     10: {
-      monsterCount: 68,
+      monsterCount: 100,
       monsterLevel: 11,
       normalMonsterSpeed: 54,
       rareMonsterSpeed: 62,

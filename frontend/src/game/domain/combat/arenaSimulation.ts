@@ -41,7 +41,9 @@ const AUTO_LOOT_SEEK_RADIUS = 240;
 const PLAYER_SPAWN_PADDING = 220;
 const PACK_MIN_CENTER_DISTANCE = 240;
 const PACK_CENTER_PADDING = 140;
-const PACK_COUNT_BONUS = 2;
+const PACK_COUNT_BONUS_BASE = 2;
+const PACK_COUNT_BONUS_MAX_EXTRA = 4;
+const MAP_COMPLETE_DELAY_MS = 1000;
 
 type PackId = string;
 
@@ -76,6 +78,7 @@ export interface ArenaRuntimeState {
   packs: MonsterPackState[];
   groundLoot: GroundLootState[];
   timeElapsedMs: number;
+  completionDelayUntilMs: number | null;
   snapshot: ArenaSnapshot;
   telemetry: {
     rareMonstersSpawned: number;
@@ -242,7 +245,9 @@ const createMonsterPacks = (
   const packSizeMax = 5;
   const packRadius = 46;
   const averagePackSize = (packSizeMin + packSizeMax) / 2;
-  const packCount = Math.max(1, Math.ceil(map.monsterCount / averagePackSize) + PACK_COUNT_BONUS);
+  const packCountBonusExtra = Math.min(PACK_COUNT_BONUS_MAX_EXTRA, Math.max(0, Math.floor(map.tier / 2)));
+  const packCountBonus = PACK_COUNT_BONUS_BASE + packCountBonusExtra;
+  const packCount = Math.max(1, Math.ceil(map.monsterCount / averagePackSize) + packCountBonus);
 
   const tierBalance = getMapBalanceByTier(map.tier);
   const rareChancePerPack = tierBalance.rareMonsterChance;
@@ -568,6 +573,7 @@ export const createArenaRuntime = (
     packs: packsResult.packs,
     groundLoot: [],
     timeElapsedMs: 0,
+    completionDelayUntilMs: null,
     snapshot: {
       timeElapsedMs: 0,
       mapName: map.name,
@@ -721,6 +727,12 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   }
 
   nextEnemies = nextEnemies.map((enemy) => {
+    const shouldAggro = distance(enemy.x, enemy.y, playerX, playerY) <= balanceConfig.combat.enemyAggroRadius;
+
+    if (!shouldAggro) {
+      return enemy;
+    }
+
     const directionX = playerX - enemy.x;
     const directionY = playerY - enemy.y;
     const length = Math.max(1, Math.hypot(directionX, directionY));
@@ -886,6 +898,11 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   }
 
   const allEnemiesDefeated = nextEnemies.length === 0;
+  const completionDelayUntilMs = allEnemiesDefeated
+    ? state.completionDelayUntilMs ?? nextTime + MAP_COMPLETE_DELAY_MS
+    : null;
+  const isComplete = allEnemiesDefeated && completionDelayUntilMs !== null && nextTime >= completionDelayUntilMs;
+
   const snapshot: ArenaSnapshot = {
     timeElapsedMs: nextTime,
     mapName: state.mapName,
@@ -925,7 +942,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
         name
       };
     }),
-    isComplete: allEnemiesDefeated
+    isComplete
   };
 
   return {
@@ -938,6 +955,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
     packs: state.packs,
     groundLoot: nextGroundLoot,
     timeElapsedMs: nextTime,
+    completionDelayUntilMs,
     telemetry,
     lastCastAtMs,
     lastPlayerDamageAtMs,

@@ -26,6 +26,7 @@ export const balanceConfig = {
   itemTierStatRanges,
   combat: {
     autoPickupRadius: combatBalance.autoPickupRadius,
+    enemyAggroRadius: combatBalance.enemyAggroRadius,
     enemyContactDamageIntervalMs: monsterBalance.contactDamageIntervalMs,
     resistances: combatBalance.resistances
   },
