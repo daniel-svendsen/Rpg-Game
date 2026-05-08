@@ -1,4 +1,4 @@
-type HubTab = "maps" | "equipment" | "spells" | "inventory" | "shop" | "character";
+import type { HubTab } from "./appTypes";
 
 interface HubBottomTabsProps {
   activeTab: HubTab;
@@ -7,9 +7,9 @@ interface HubBottomTabsProps {
 
 const tabs: Array<{ id: HubTab; label: string }> = [
   { id: "maps", label: "Maps" },
+  { id: "boss", label: "Boss" },
   { id: "equipment", label: "Gear" },
   { id: "spells", label: "Spells" },
-  { id: "inventory", label: "Bag" },
   { id: "shop", label: "Shop" },
   { id: "character", label: "Account" }
 ];

@@ -23,7 +23,14 @@ const getCurrencyAmount = (currencies: CurrencyStack[], code: string): number =>
   currencies.find((entry) => entry.code === code)?.amount ?? 0;
 
 const getTotalConsumableMaps = (consumableMaps: OwnedMapStack[]): number =>
-  consumableMaps.reduce((total, entry) => total + entry.quantity, 0);
+  consumableMaps
+    .filter((entry) => entry.mapId.startsWith("tier"))
+    .reduce((total, entry) => total + entry.quantity, 0);
+
+const getTotalBossKeys = (consumableMaps: OwnedMapStack[]): number =>
+  consumableMaps
+    .filter((entry) => entry.mapId.startsWith("bossTier"))
+    .reduce((total, entry) => total + entry.quantity, 0);
 
 const countLootKinds = (lootEvents: LootEntry[]): Record<LootEntry["kind"], number> =>
   lootEvents.reduce(
@@ -160,9 +167,15 @@ const runSingleSimulation = (
   const mapShardsGained =
     getCurrencyAmount(finalPlayer.currencies, "mapShard") -
     getCurrencyAmount(baselineCharacter.currencies, "mapShard");
+  const imbuingOrbsGained =
+    getCurrencyAmount(finalPlayer.currencies, "imbuingOrb") -
+    getCurrencyAmount(baselineCharacter.currencies, "imbuingOrb");
   const mapsGained =
     getTotalConsumableMaps(finalPlayer.mapProgress.consumableMaps) -
     getTotalConsumableMaps(baselineCharacter.mapProgress.consumableMaps);
+  const bossKeysGained =
+    getTotalBossKeys(finalPlayer.mapProgress.consumableMaps) -
+    getTotalBossKeys(baselineCharacter.mapProgress.consumableMaps);
   const itemRolls = buildItemRollMetrics(newItems);
 
   return {
@@ -175,7 +188,9 @@ const runSingleSimulation = (
     durationMs: runtime.timeElapsedMs,
     goldGained,
     mapShardsGained,
+    imbuingOrbsGained,
     mapsGained,
+    bossKeysGained,
     rareItemsDropped,
     exceptionalRareItemsDropped,
     uniqueItemsDropped,

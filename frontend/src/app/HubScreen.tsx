@@ -2,8 +2,8 @@ import { HealthHud } from "./HealthHud";
 import { HubBottomTabs } from "./HubBottomTabs";
 import { HubOverlayPanel } from "./HubOverlayPanel";
 import { HubTopBar } from "./HubTopBar";
-import { EquipmentTab } from "./EquipmentTab";
-import { InventoryTab } from "./InventoryTab";
+import { BossTab } from "./BossTab";
+import { GearTab } from "./GearTab";
 import { MapsTab } from "./MapsTab";
 import { ShopTab } from "./ShopTab";
 import { SpellsTab } from "./SpellsTab";
@@ -57,6 +57,7 @@ interface HubScreenProps {
   selectedMapTarget: SelectedMapTarget;
   selectedSupportSlot: 0 | 1;
   shopItems: ShopItemState[];
+  onStartBossTier: (tier: number) => void;
   onBuyShopItem: (itemId: string) => void;
   onCloseOverlay: () => void;
   onConvertShardsToMaps: () => void;
@@ -114,6 +115,7 @@ export const HubScreen = ({
   onSelectMainSpell,
   onSelectMap,
   onSelectSupportSpell,
+  onStartBossTier,
   onSellAllItems,
   onSellItem,
   onSpendStatPoint,
@@ -171,6 +173,7 @@ export const HubScreen = ({
       onUseLifeFlask={onUseLifeFlask}
     />
   );
+  const sellAllValue = character ? character.inventory.reduce((total, item) => total + getItemSellPrice(item), 0) : 0;
 
   return (
     <div className="hub-shell">
@@ -195,11 +198,18 @@ export const HubScreen = ({
           onConvertShardsToMaps={onConvertShardsToMaps}
         />
       ) : null}
+      {hubTab === "boss" ? (
+        <BossTab topBar={topBar} healthHud={healthHud} character={character} onStartBossTier={onStartBossTier} />
+      ) : null}
       {hubTab === "equipment" ? (
-        <EquipmentTab
+        <GearTab
           topBar={topBar}
           character={character}
           equipmentSlots={equipmentSlots}
+          recentLoot={recentLoot}
+          getItemSellPrice={getItemSellPrice}
+          onSellItem={onSellItem}
+          onEquipItem={onEquipItem}
           onSelectEquipmentSlot={onSelectEquipmentSlot}
           onOpenEquipmentPicker={onOpenEquipmentPicker}
         />
@@ -216,22 +226,12 @@ export const HubScreen = ({
           onOpenSupportPicker={onOpenSupportPicker}
         />
       ) : null}
-      {hubTab === "inventory" ? (
-        <InventoryTab
-          topBar={topBar}
-          character={character}
-          recentLoot={recentLoot}
-          getItemSellPrice={getItemSellPrice}
-          onSellItem={onSellItem}
-          onEquipItem={onEquipItem}
-          onSelectEquipmentSlot={onSelectEquipmentSlot}
-        />
-      ) : null}
       {hubTab === "shop" ? (
         <ShopTab
           topBar={topBar}
           character={character}
           shopItems={shopItems}
+          sellAllValue={sellAllValue}
           formatPowerChange={formatPowerChange}
           onBuyShopItem={onBuyShopItem}
           onSellAllItems={onSellAllItems}

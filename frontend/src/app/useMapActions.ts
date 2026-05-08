@@ -59,6 +59,8 @@ export const useMapActions = ({
     const ownedMapStack =
       mapTarget !== "trainingGrounds" ? getOwnedMapStack(nextCharacter.mapProgress, mapTarget) : null;
     const mapId = ownedMapStack?.mapId ?? "trainingGrounds";
+    const mapTier = ownedMapStack?.tier ?? mapConfig[mapId]?.tier ?? 0;
+    const isBossMap = mapId.startsWith("bossTier");
     const mapEnhancements = ownedMapStack?.enhancements ?? [];
 
     if (balanceConfig.healing.refillToFullOnMapStart) {
@@ -74,6 +76,18 @@ export const useMapActions = ({
     if (mapTarget !== "trainingGrounds") {
       if (!ownedMapStack || ownedMapStack.quantity <= 0) {
         setErrorMessage("You do not own that map.");
+        return false;
+      }
+
+      const unlockedTier = nextCharacter.mapProgress.highestUnlockedTier;
+
+      if (isBossMap) {
+        if (mapTier > unlockedTier + 1) {
+          setErrorMessage(`That boss lair is locked. Unlock Tier ${mapTier - 1} first.`);
+          return false;
+        }
+      } else if (mapTier > unlockedTier) {
+        setErrorMessage(`That map is locked. Defeat the Tier ${mapTier} boss first.`);
         return false;
       }
 
@@ -118,6 +132,30 @@ export const useMapActions = ({
 
     const [firstMapId, ...remainingQueue] = queue;
     startMapRun(firstMapId, character, remainingQueue);
+  };
+
+  const handleStartBossTier = (tier: number): void => {
+    if (!character) {
+      return;
+    }
+
+    const bossKeyEntry =
+      character.mapProgress.consumableMaps.find((entry) => entry.mapId === `bossTier${tier}` && entry.quantity > 0) ??
+      null;
+
+    if (!bossKeyEntry) {
+      setErrorMessage(`You do not own a Tier ${tier} boss key.`);
+      return;
+    }
+
+    const unlockedTier = character.mapProgress.highestUnlockedTier;
+
+    if (tier > unlockedTier + 1) {
+      setErrorMessage(`That boss lair is locked. Unlock Tier ${tier - 1} first.`);
+      return;
+    }
+
+    startMapRun(bossKeyEntry.stackId, character);
   };
 
   const handleEnhanceSelectedMap = (): void => {
@@ -219,6 +257,7 @@ export const useMapActions = ({
     startMapRun,
     handleStartMap,
     handleRunAllMaps,
+    handleStartBossTier,
     handleEnhanceSelectedMap,
     handleConvertShardsToMaps
   };

@@ -124,6 +124,8 @@ Current progress:
 - reports now include:
   - completion, death, and timeout rates
   - average run time, gold, map shards, and map sustain
+  - map drop run rate and expected zero-map streak pressure
+  - boss keys and imbuing orb output
   - rare monsters encountered and killed
   - rare item drops
   - exceptional rare drops
@@ -386,14 +388,15 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 ### UX and feedback
 
 - [x] Improve login/register error handling so the UI shows clear causes such as wrong password, invalid email, existing account, missing fields, short password, and backend/API failures.
-- [ ] Show total gold value before confirming `Sell all`.
+- [x] Show total gold value before confirming `Sell all`.
 - [ ] Hide, move, or replace low-value `Active spell` and `Map state` panels during map runs.
 
 ### Map pacing and sustain
 
 - [ ] Re-evaluate map pacing so runs feel longer and more meaningful than short arena bursts.
 - [ ] Tune map sustain so map progression stalls less often due to low map drops.
-- [ ] Make simulator output clearly show whether map sustain is too low.
+- [x] Make simulator output clearly show whether map sustain is too low.
+- Note: A first pass landed on May 8, 2026 (higher monster counts per tier, tier-scaled pack count, enemy aggro radius, and a short completion delay for loot pickup). Follow up with simulator-driven tuning.
 
 ### Item readability and visuals
 
@@ -402,9 +405,10 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 
 ### Longer-term chase systems
 
-- [ ] Brainstorm a rare-spawn system that can sometimes lead to boss key drops.
-- [ ] Brainstorm boss key structure: rarity, tier links, boss specificity, fragments, and sell/save/use trade-offs.
-- [ ] Brainstorm boss reward structure: separate drop pools, better uniques, and simulator-visible expected value.
+- [x] Add a first-pass rare-spawn boss key loop for progression and farming.
+- [x] Add a first-pass boss key structure with tier-linked unlocks and reusable farming keys.
+- [x] Add a first-pass boss reward structure with a separate boss drop pool and simulator-visible expected value.
+- [ ] Expand boss rewards into tier-specific unique pools, stronger crafting materials, and a fuller long-term chase structure.
 
 ## Phase 2 Scope Extensions Status Snapshot
 
@@ -415,12 +419,17 @@ Implemented (first pass):
 - Movement speed is a derived stat and affects runtime + simulation movement.
 - Auto-move targets the nearest living pack, walks straight-line toward pack center, stops in combat range, and continues to the next pack.
 - Packs spawn with a stable pack id + pack center, basic spacing from player and other packs, and an initial rare chance per pack.
+- Map pacing first pass: increased monster counts per tier + tier-scaled pack count (more fights + more travel).
+- Enemy aggro radius exists so enemies only chase when the player is nearby.
+- Map completion has a short delay after the last kill to allow final loot pickup.
 - Ground loot drops to the world with real payloads (item/currency/spell/map) and is picked up by proximity, validated/applied by domain logic.
 - Item generation is PoE-inspired:
   - slot-scoped prefix/suffix pools
   - rarity controls affix count with `max 3 prefixes` + `max 3 suffixes`
   - base items provide inherent armor/evasion (defense bases) and inherent weapon speed multipliers (weapon bases), gated by map tier
-- Simulator reporting includes item roll distributions (tier buckets) and movement-speed affix visibility.
+- Boss keys now drop from the first rare kill per non-boss run, support repeated same-tier farming, and unlock higher map tiers by defeating the matching boss tier.
+- Boss lairs now exist as challengeable tier bosses with a separate boss drop pool, first-pass boss uniques, and imbuing orb rewards.
+- Simulator reporting includes item roll distributions (tier buckets), movement-speed affix visibility, boss key gain rate, imbuing orb output, and clearer map-sustain stall signals.
 
 Partially implemented (needs follow-through):
 

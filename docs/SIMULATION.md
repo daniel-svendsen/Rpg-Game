@@ -15,6 +15,7 @@ It is used to:
 - tune loot and spell rarity
 - compare drop and shop reward pressure
 - validate balance changes with profiles and overrides
+- tune boss key farming rates and boss material pressure
 
 ## Main Command
 
@@ -22,6 +23,12 @@ Run from `frontend/`:
 
 ```powershell
 npm run sim -- --profile starter-caster --map trainingGrounds --runs 100
+```
+
+Generate rough benchmark profiles for tiered boss and map checks:
+
+```powershell
+npm run sim:bench
 ```
 
 Use the current backend character instead of a saved local profile:
@@ -45,10 +52,18 @@ npm run sim -- --email you@example.com --password your-password --map tier3Map -
 
 That lets you snapshot a real character and reuse it for repeatable comparisons later.
 
+Benchmark shortcuts:
+
+- `npm run sim:bench` writes `frontend/sim-profiles/benchmark-tier1.json` through `benchmark-tier9.json`
+- `npm run sim -- --benchmark-tier 4 --map tier4Map --runs 200` runs an in-memory tier benchmark without creating a file first
+- `npm run sim -- --benchmark-tier 4 --map bossTier4 --runs 200` is the fastest way to sanity-check whether a rough tier-4 build can beat the tier-4 boss
+
 ## Useful Options
 
 - `--map trainingGrounds|tier1Map|tier2Map|...`
 - `--runs 100|500|1000`
+- `--benchmark-tier 1|2|3|...`
+- `--write-tier-benchmarks 9`
 - `--shop-samples 500`
 - `--shop-tier 6`
 - `--output reports/tier3.json`
@@ -63,6 +78,25 @@ Quick baseline run:
 
 ```powershell
 npm run sim -- --profile starter-caster --map trainingGrounds --runs 100
+```
+
+Quick key-farming baseline:
+
+```powershell
+npm run sim:keys
+```
+
+Boss progression check with a rough tier benchmark:
+
+```powershell
+npm run sim -- --benchmark-tier 3 --map bossTier3 --runs 200
+```
+
+Generate reusable tier benchmarks, then run a same-tier farm check:
+
+```powershell
+npm run sim:bench
+npm run sim -- --profile benchmark-tier5 --map tier5Map --runs 250
 ```
 
 Repeatable comparison with overrides:
@@ -89,7 +123,9 @@ Key metrics:
 - average run time
 - average gold
 - average map shards
+- average imbuing orbs
 - map sustain
+- boss keys per run
 - rare monsters encountered and killed
 - item / spell / currency / map loot totals
 - unique tier breakdown
@@ -141,4 +177,3 @@ It should not be treated as proof that:
 - pacing is visually or emotionally correct
 
 It helps answer balance questions faster. It does not replace runtime play judgment.
-

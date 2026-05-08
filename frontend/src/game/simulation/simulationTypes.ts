@@ -22,7 +22,9 @@ export interface SingleRunSimulationMetrics {
   durationMs: number;
   goldGained: number;
   mapShardsGained: number;
+  imbuingOrbsGained: number;
   mapsGained: number;
+  bossKeysGained: number;
   rareItemsDropped: number;
   exceptionalRareItemsDropped: number;
   uniqueItemsDropped: number;
@@ -79,13 +81,21 @@ export interface SimulationSummary {
   autoUseLifeFlaskThreshold: number | null;
   overrides: SimulationBalanceOverrides | null;
   shop: ShopSampleSummary | null;
+  sustain: {
+    zeroMapRuns: number;
+    atLeastOneMapRuns: number;
+    zeroMapRunRate: number;
+    expectedZeroMapRunsBeforeDrop: number;
+  };
   totals: {
     completedRuns: number;
     deaths: number;
     timedOutRuns: number;
     goldGained: number;
     mapShardsGained: number;
+    imbuingOrbsGained: number;
     mapsGained: number;
+    bossKeysGained: number;
     rareItemsDropped: number;
     exceptionalRareItemsDropped: number;
     uniqueItemsDropped: number;
@@ -105,7 +115,9 @@ export interface SimulationSummary {
     durationSeconds: number;
     goldGained: number;
     mapShardsGained: number;
+    imbuingOrbsGained: number;
     mapsGained: number;
+    bossKeysGained: number;
     rareItemsDropped: number;
     exceptionalRareItemsDropped: number;
     uniqueItemsDropped: number;

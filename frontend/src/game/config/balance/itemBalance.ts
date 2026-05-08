@@ -183,6 +183,56 @@ export const itemBalance = {
         critChance: 0.04,
         spellPowerMultiplier: 0.1
       }
+    },
+    {
+      id: "warlordSignet",
+      name: "Warlord Signet",
+      slot: "Ring",
+      minTier: 2,
+      dropWeight: 0,
+      uniqueTier: 1,
+      tags: ["Physical", "Critical", "Unique"],
+      uniqueEffectId: "warlordSignet",
+      uniqueEffectDescription: "Boss slayer ring: gain crit chance and max life while mapping.",
+      statBonuses: {
+        strength: 6,
+        maxHealth: 28,
+        critChance: 0.05
+      }
+    },
+    {
+      id: "lairbornMantle",
+      name: "Lairborn Mantle",
+      slot: "BodyArmor",
+      minTier: 2,
+      dropWeight: 0,
+      uniqueTier: 2,
+      tags: ["SpellDamage", "Unique"],
+      uniqueEffectId: "lairbornMantle",
+      uniqueEffectDescription: "Boss killer armor: spells deal more damage and you gain a burst of health.",
+      statBonuses: {
+        vitality: 10,
+        maxHealth: 40,
+        spellPowerMultiplier: 0.12
+      }
+    },
+    {
+      id: "crownOfAscension",
+      name: "Crown of Ascension",
+      slot: "Helmet",
+      minTier: 2,
+      dropWeight: 0,
+      uniqueTier: 3,
+      tags: ["Critical", "SpellDamage", "Unique"],
+      uniqueEffectId: "crownOfAscension",
+      uniqueEffectDescription: "Chase drop: spells gain huge crit chance and power, but you take more contact damage.",
+      statBonuses: {
+        agility: 8,
+        vitality: 8,
+        maxHealth: 50,
+        critChance: 0.12,
+        spellPowerMultiplier: 0.22
+      }
     }
   ] satisfies UniqueItemDefinition[]
 } as const;

@@ -9,6 +9,8 @@
     "build:pages": "tsc -p tsconfig.app.json && vite build",
     "test": "vitest run",
     "sim": "vite-node tools/runSimulationCli.ts",
+    "sim:bench": "vite-node tools/runSimulationCli.ts --write-tier-benchmarks 9",
+    "sim:keys": "vite-node tools/runSimulationCli.ts --profile starter-caster --map trainingGrounds --runs 500",
     "preview": "vite preview",
     "build:mobile": "npm run build",
     "cap:sync": "npx cap sync android",

@@ -120,6 +120,20 @@ cd frontend
 npm run sim -- --profile starter-caster --map trainingGrounds --runs 100
 ```
 
+Generate rough tier benchmark profiles:
+
+```powershell
+cd frontend
+npm run sim:bench
+```
+
+Quick boss-key farming baseline:
+
+```powershell
+cd frontend
+npm run sim:keys
+```
+
 Simulation with backend character:
 
 ```powershell

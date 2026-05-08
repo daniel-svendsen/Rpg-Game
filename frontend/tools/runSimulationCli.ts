@@ -1,9 +1,10 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { normalizeCharacterRecord } from "../src/game/domain/player/playerTypes";
 import { formatSimulationSummary, simulateMapRuns } from "../src/game/simulation";
 import type { SimulationBalanceOverrides } from "../src/game/simulation";
-import type { CharacterRecord } from "../src/shared/types/saveTypes";
+import type { CharacterRecord, CharacterStats } from "../src/shared/types/saveTypes";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,13 +18,18 @@ Examples:
   npm run sim -- --email you@example.com --password secret --map trainingGrounds --runs 100
   npm run sim -- --profile daniel-current-build --map tier3Map --runs 500 --output reports/tier3.json
   npm run sim -- --profile daniel-current-build --map tier5Map --runs 200 --overrides sim-overrides/example-balancedrops.json
+  npm run sim -- --benchmark-tier 4 --map tier4Map --runs 200
+  npm run sim:bench
 
 Required:
   --map <mapId>                     trainingGrounds, tier1Map, tier2Map, ...
+                                      not required when using --write-tier-benchmarks
 
 Character source:
   --profile <name-or-path>          load a saved simulation profile JSON
   --email <email> --password <pw>   login to the backend and use the current saved character
+  --benchmark-tier <tier>           build a rough tier benchmark from starter-caster
+  --write-tier-benchmarks <maxTier> write benchmark-tier1..N profiles to sim-profiles/
 
 Optional:
   --api-base-url <url>              backend URL, default http://localhost:8080
@@ -54,6 +60,8 @@ type ParsedArgs = {
   stepMs: number;
   maxRunSeconds: number;
   flaskThreshold: number | null;
+  benchmarkTier: number | null;
+  writeTierBenchmarks: number | null;
 };
 
 const parseNumber = (value: string, name: string): number => {
@@ -81,7 +89,9 @@ const parseArgs = (argv: string[]): ParsedArgs => {
     overrides: null,
     stepMs: 50,
     maxRunSeconds: 240,
-    flaskThreshold: 0.45
+    flaskThreshold: 0.45,
+    benchmarkTier: null,
+    writeTierBenchmarks: null
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -133,6 +143,14 @@ const parseArgs = (argv: string[]): ParsedArgs => {
         parsed.saveProfile = next ?? null;
         index += 1;
         break;
+      case "--benchmark-tier":
+        parsed.benchmarkTier = parseNumber(next ?? "", "--benchmark-tier");
+        index += 1;
+        break;
+      case "--write-tier-benchmarks":
+        parsed.writeTierBenchmarks = parseNumber(next ?? "", "--write-tier-benchmarks");
+        index += 1;
+        break;
       case "--overrides":
         parsed.overrides = next ?? null;
         index += 1;
@@ -154,7 +172,7 @@ const parseArgs = (argv: string[]): ParsedArgs => {
     }
   }
 
-  if (!parsed.mapId) {
+  if (!parsed.mapId && parsed.writeTierBenchmarks === null) {
     throw new Error("Missing required --map <mapId>.");
   }
 
@@ -174,6 +192,17 @@ const parseArgs = (argv: string[]): ParsedArgs => {
     throw new Error("--step-ms must be a positive integer.");
   }
 
+  if (parsed.benchmarkTier !== null && (!Number.isInteger(parsed.benchmarkTier) || parsed.benchmarkTier <= 0)) {
+    throw new Error("--benchmark-tier must be a positive integer.");
+  }
+
+  if (
+    parsed.writeTierBenchmarks !== null &&
+    (!Number.isInteger(parsed.writeTierBenchmarks) || parsed.writeTierBenchmarks <= 0)
+  ) {
+    throw new Error("--write-tier-benchmarks must be a positive integer.");
+  }
+
   if (parsed.maxRunSeconds <= 0) {
     throw new Error("--max-run-seconds must be greater than 0.");
   }
@@ -185,7 +214,12 @@ const parseArgs = (argv: string[]): ParsedArgs => {
     throw new Error("--flask-threshold must be between 0 and 1, or 'none'.");
   }
 
-  if (!parsed.profile && !(parsed.email && parsed.password)) {
+  if (
+    !parsed.profile &&
+    !(parsed.email && parsed.password) &&
+    parsed.benchmarkTier === null &&
+    parsed.writeTierBenchmarks === null
+  ) {
     throw new Error("Provide either --profile <name-or-path> or --email with --password.");
   }
 
@@ -197,6 +231,33 @@ const resolveInputPath = (inputPath: string): string =>
 
 const ensureParentDirectory = async (filePath: string): Promise<void> => {
   await mkdir(path.dirname(filePath), { recursive: true });
+};
+
+const createBenchmarkStatsForTier = (tier: number): CharacterStats => {
+  const vitality = 3 + tier * 2;
+  const strength = 1 + Math.floor(tier / 2);
+  const agility = 1 + Math.floor(tier / 2);
+  const dexterity = 1 + Math.floor(tier / 2);
+
+  return { strength, agility, vitality, dexterity };
+};
+
+const createTierBenchmarkCharacter = (base: CharacterRecord, tier: number): CharacterRecord => {
+  const level = Math.max(1, tier * 2);
+  const baseStats = createBenchmarkStatsForTier(tier);
+
+  return normalizeCharacterRecord({
+    ...base,
+    name: `Benchmark Tier ${tier}`,
+    level,
+    baseStats,
+    unspentStatPoints: 0,
+    mapProgress: {
+      ...base.mapProgress,
+      highestUnlockedTier: tier,
+      lastCompletedTier: Math.max(0, tier - 1)
+    }
+  });
 };
 
 const resolveProfilePath = async (profileInput: string): Promise<string> => {
@@ -283,15 +344,55 @@ const saveReport = async (filePath: string, report: unknown): Promise<void> => {
   await writeFile(resolvedPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
 };
 
+const writeTierBenchmarkProfiles = async (
+  baseCharacter: CharacterRecord,
+  maxTier: number
+): Promise<string[]> => {
+  const savedPaths: string[] = [];
+
+  for (let tier = 1; tier <= maxTier; tier += 1) {
+    const benchmarkCharacter = createTierBenchmarkCharacter(baseCharacter, tier);
+    const profilePath = path.resolve(defaultProfilesDirectory, `benchmark-tier${tier}.json`);
+    await ensureParentDirectory(profilePath);
+    await writeFile(profilePath, `${JSON.stringify(benchmarkCharacter, null, 2)}\n`, "utf8");
+    savedPaths.push(profilePath);
+  }
+
+  return savedPaths;
+};
+
 const main = async (): Promise<void> => {
   const args = parseArgs(process.argv.slice(2));
-  const characterSource =
+  const baseCharacterSource =
     args.profile !== null
       ? await loadProfileCharacter(args.profile)
-      : {
-          character: await loginAndLoadCharacter(args.apiBaseUrl, args.email!, args.password!),
-          profileName: "current-backend-character"
-        };
+      : args.email && args.password
+        ? {
+            character: await loginAndLoadCharacter(args.apiBaseUrl, args.email, args.password),
+            profileName: "current-backend-character"
+          }
+        : await loadProfileCharacter("starter-caster");
+
+  if (args.writeTierBenchmarks !== null) {
+    const savedPaths = await writeTierBenchmarkProfiles(
+      baseCharacterSource.character,
+      args.writeTierBenchmarks
+    );
+
+    for (const savedPath of savedPaths) {
+      console.log(`Saved ${savedPath}`);
+    }
+
+    return;
+  }
+
+  const characterSource =
+    args.benchmarkTier !== null
+      ? {
+          character: createTierBenchmarkCharacter(baseCharacterSource.character, args.benchmarkTier),
+          profileName: `benchmark-tier${args.benchmarkTier}`
+        }
+      : baseCharacterSource;
   const overrides = args.overrides ? await loadOverrideFile(args.overrides) : undefined;
 
   if (args.saveProfile) {

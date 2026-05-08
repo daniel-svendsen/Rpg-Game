@@ -167,6 +167,12 @@ export const useHubActions = ({
     }
 
     const totalGold = character.inventory.reduce((total, item) => total + getItemSellPrice(item), 0);
+    const isConfirmed = window.confirm(`Sell all items for ${totalGold} gold?`);
+
+    if (!isConfirmed) {
+      return;
+    }
+
     commitCharacter({
       ...character,
       gold: character.gold + totalGold,

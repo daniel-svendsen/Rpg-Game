@@ -30,6 +30,23 @@ const createTierMapDefinition = (tier: number): MapDefinition => {
   };
 };
 
+const createBossMapDefinition = (tier: number): MapDefinition => {
+  const tierBalance = getMapTierBalance(tier);
+
+  return {
+    id: `bossTier${tier}`,
+    name: `Boss Lair (Tier ${tier})`,
+    tier,
+    monsterCount: 1,
+    monsterLevel: tierBalance.monsterLevel + 1,
+    dropRateMultiplier: 2.4,
+    experienceMultiplier: tierBalance.experienceGainMultiplier * 1.2,
+    goldMultiplier: tierBalance.goldGainMultiplier * 1.25,
+    enemyHealthMultiplier: tierBalance.enemyHealthMultiplier * 3.8,
+    enemyDamageMultiplier: tierBalance.enemyDamageMultiplier * 2.5
+  };
+};
+
 export const mapConfig: Record<string, MapDefinition> = {
   trainingGrounds: {
     id: "trainingGrounds",
@@ -47,6 +64,13 @@ export const mapConfig: Record<string, MapDefinition> = {
     Array.from({ length: mapBalance.maxTier }, (_, index) => {
       const tier = index + 1;
       const map = createTierMapDefinition(tier);
+      return [map.id, map];
+    })
+  ),
+  ...Object.fromEntries(
+    Array.from({ length: mapBalance.maxTier }, (_, index) => {
+      const tier = index + 1;
+      const map = createBossMapDefinition(tier);
       return [map.id, map];
     })
   )
