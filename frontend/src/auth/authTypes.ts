@@ -7,3 +7,7 @@ export interface AuthFormState {
   password: string;
 }
 
+export interface AuthFieldErrors {
+  email?: string;
+  password?: string;
+}

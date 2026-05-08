@@ -384,7 +384,7 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 
 ### UX and feedback
 
-- [ ] Improve login/register error handling so the UI shows clear causes such as wrong password, invalid email, existing account, missing fields, short password, and backend/API failures.
+- [x] Improve login/register error handling so the UI shows clear causes such as wrong password, invalid email, existing account, missing fields, short password, and backend/API failures.
 - [ ] Show total gold value before confirming `Sell all`.
 - [ ] Hide, move, or replace low-value `Active spell` and `Map state` panels during map runs.
 

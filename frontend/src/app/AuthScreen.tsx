@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
-import type { AuthFormState } from "../auth/authTypes";
+import type { AuthFieldErrors, AuthFormState } from "../auth/authTypes";
 
 interface AuthScreenProps {
   feedback: ReactNode;
   authMode: "login" | "register";
   authForm: AuthFormState;
+  authFieldErrors: AuthFieldErrors;
   onChangeAuthForm: (nextForm: AuthFormState) => void;
   onSubmit: () => void;
   onToggleMode: () => void;
@@ -14,6 +15,7 @@ export const AuthScreen = ({
   feedback,
   authMode,
   authForm,
+  authFieldErrors,
   onChangeAuthForm,
   onSubmit,
   onToggleMode
@@ -65,7 +67,9 @@ export const AuthScreen = ({
               value={authForm.email}
               onChange={(event) => onChangeAuthForm({ ...authForm, email: event.target.value })}
             />
-            {hasTypedEmail && !emailLooksValid ? (
+            {authFieldErrors.email ? (
+              <span className="error-text">{authFieldErrors.email}</span>
+            ) : hasTypedEmail && !emailLooksValid ? (
               <span className="error-text">Enter a valid email address.</span>
             ) : (
               <span className="status-text">This will be your account login.</span>
@@ -80,8 +84,16 @@ export const AuthScreen = ({
               value={authForm.password}
               onChange={(event) => onChangeAuthForm({ ...authForm, password: event.target.value })}
             />
-            <span className={hasTypedPassword && !passwordIsLongEnough ? "error-text" : "status-text"}>
-              {passwordIsLongEnough
+            <span
+              className={
+                authFieldErrors.password || (hasTypedPassword && !passwordIsLongEnough)
+                  ? "error-text"
+                  : "status-text"
+              }
+            >
+              {authFieldErrors.password
+                ? authFieldErrors.password
+                : passwordIsLongEnough
                 ? "Password length looks good."
                 : `Minimum 8 characters. Current length: ${authForm.password.length}`}
             </span>

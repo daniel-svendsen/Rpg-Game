@@ -1,7 +1,9 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
+import type { ApiRequestError } from "../api/http";
 import { createCharacter, loadCharacterWithAuthState } from "../api/gameApi";
 import { login, register } from "../api/authApi";
-import type { AuthFormState } from "../auth/authTypes";
+import type { AuthFieldErrors, AuthFormState } from "../auth/authTypes";
+import { resolveAuthErrorMessage } from "./authFeedback";
 import { AuthScreen } from "./AuthScreen";
 import type { HubTab, OverlayPanel, ScreenMode, SelectedMapTarget } from "./appTypes";
 import { HubScreen } from "./HubScreen";
@@ -51,6 +53,7 @@ export const App = () => {
   const [overlayPanel, setOverlayPanel] = useState<OverlayPanel>(null);
   const [authMode, setAuthMode] = useState<"login" | "register">("register");
   const [authForm, setAuthForm] = useState<AuthFormState>(initialAuthForm);
+  const [authFieldErrors, setAuthFieldErrors] = useState<AuthFieldErrors>({});
   const [token, setToken] = useState<string | null>(localStorage.getItem("arpg-token"));
   const [accountEmail, setAccountEmail] = useState<string>(localStorage.getItem(accountEmailStorageKey) ?? "");
   const [characterName, setCharacterName] = useState("Warden");
@@ -232,8 +235,14 @@ export const App = () => {
     });
   };
 
+  const handleChangeAuthForm = (nextForm: AuthFormState) => {
+    setAuthForm(nextForm);
+    setAuthFieldErrors({});
+  };
+
   const handleAuth = async (): Promise<void> => {
     setErrorMessage(null);
+    setAuthFieldErrors({});
 
     try {
       const response =
@@ -247,7 +256,9 @@ export const App = () => {
       setAccountEmail(authForm.email);
       setStatusMessage(authMode === "register" ? "Account created." : "Login successful.");
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Authentication failed.");
+      const requestError = error as ApiRequestError;
+      setAuthFieldErrors((requestError.fieldErrors as AuthFieldErrors | undefined) ?? {});
+      setErrorMessage(error instanceof Error ? resolveAuthErrorMessage(requestError) : "Authentication failed.");
     }
   };
 
@@ -329,9 +340,14 @@ export const App = () => {
       feedback={renderInlineFeedback(false)}
       authMode={authMode}
       authForm={authForm}
-      onChangeAuthForm={setAuthForm}
+      authFieldErrors={authFieldErrors}
+      onChangeAuthForm={handleChangeAuthForm}
       onSubmit={() => void handleAuth()}
-      onToggleMode={() => setAuthMode((current) => (current === "register" ? "login" : "register"))}
+      onToggleMode={() => {
+        setAuthMode((current) => (current === "register" ? "login" : "register"));
+        setAuthFieldErrors({});
+        setErrorMessage(null);
+      }}
     />
   );
 

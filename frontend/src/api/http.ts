@@ -18,6 +18,18 @@ const API_BASE_URL = resolveApiBaseUrl();
 
 export const getApiBaseUrl = (): string => API_BASE_URL;
 
+export interface ApiRequestError extends Error {
+  status?: number;
+  code?: string;
+  fieldErrors?: Record<string, string>;
+}
+
+interface ApiErrorPayload {
+  code?: string;
+  message?: string;
+  fieldErrors?: Record<string, string>;
+}
+
 export const jsonRequest = async <T>(
   path: string,
   options: RequestInit = {},
@@ -33,9 +45,24 @@ export const jsonRequest = async <T>(
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    const error = new Error(errorText || `Request failed with status ${response.status}`);
-    (error as Error & { status?: number }).status = response.status;
+    const contentType = response.headers.get("content-type") ?? "";
+    let payload: ApiErrorPayload | null = null;
+    let fallbackText = "";
+
+    if (contentType.includes("application/json")) {
+      try {
+        payload = (await response.json()) as ApiErrorPayload;
+      } catch {
+        payload = null;
+      }
+    } else {
+      fallbackText = await response.text();
+    }
+
+    const error = new Error(payload?.message || fallbackText || `Request failed with status ${response.status}`) as ApiRequestError;
+    error.status = response.status;
+    error.code = payload?.code;
+    error.fieldErrors = payload?.fieldErrors;
     throw error;
   }
 

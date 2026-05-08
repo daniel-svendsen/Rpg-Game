@@ -165,4 +165,71 @@ class AuthFlowIntegrationTest {
         mockMvc.perform(get("/api/characters/me"))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    void duplicateRegistrationReturnsClearConflictMessage() throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "player@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "player@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("EMAIL_ALREADY_REGISTERED"))
+                .andExpect(jsonPath("$.message").value("An account with this email already exists."));
+    }
+
+    @Test
+    void invalidLoginReturnsClearUnauthorizedMessage() throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "player@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "player@example.com",
+                                  "password": "wrongpass123"
+                                }
+                                """))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"))
+                .andExpect(jsonPath("$.message").value("Incorrect email or password."));
+    }
+
+    @Test
+    void invalidRegistrationPayloadReturnsFieldErrors() throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "not-an-email",
+                                  "password": "short"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.message").value("Please correct the highlighted fields."))
+                .andExpect(jsonPath("$.fieldErrors.email").value("Enter a valid email address."))
+                .andExpect(jsonPath("$.fieldErrors.password").value("Password must be between 8 and 100 characters."));
+    }
 }

@@ -6,11 +6,12 @@ import com.example.arpg.user.UserAccountRepository;
 import com.example.arpg.user.UserPrincipalService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.http.HttpStatus.CONFLICT;
 
 @Service
@@ -39,7 +40,7 @@ public class AuthService {
     @Transactional
     public AuthResponse register(AuthRequest request) {
         if (userAccountRepository.existsByEmail(request.email())) {
-            throw new ResponseStatusException(CONFLICT, "Email is already registered");
+            throw new AuthException(CONFLICT, "EMAIL_ALREADY_REGISTERED", "An account with this email already exists.");
         }
 
         UserAccountEntity user = new UserAccountEntity();
@@ -52,9 +53,13 @@ public class AuthService {
     }
 
     public AuthResponse login(AuthRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password())
-        );
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.email(), request.password())
+            );
+        } catch (AuthenticationException exception) {
+            throw new AuthException(UNAUTHORIZED, "INVALID_CREDENTIALS", "Incorrect email or password.");
+        }
 
         String token = jwtService.generateToken(userPrincipalService.loadUserByUsername(request.email()));
         return new AuthResponse(token);
