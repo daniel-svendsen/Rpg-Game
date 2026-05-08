@@ -394,6 +394,7 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 - [ ] Re-evaluate map pacing so runs feel longer and more meaningful than short arena bursts.
 - [ ] Tune map sustain so map progression stalls less often due to low map drops.
 - [ ] Make simulator output clearly show whether map sustain is too low.
+- Note: A first pass landed on May 8, 2026 (higher monster counts per tier, tier-scaled pack count, enemy aggro radius, and a short completion delay for loot pickup). Follow up with simulator-driven tuning.
 
 ### Item readability and visuals
 
@@ -415,6 +416,9 @@ Implemented (first pass):
 - Movement speed is a derived stat and affects runtime + simulation movement.
 - Auto-move targets the nearest living pack, walks straight-line toward pack center, stops in combat range, and continues to the next pack.
 - Packs spawn with a stable pack id + pack center, basic spacing from player and other packs, and an initial rare chance per pack.
+- Map pacing first pass: increased monster counts per tier + tier-scaled pack count (more fights + more travel).
+- Enemy aggro radius exists so enemies only chase when the player is nearby.
+- Map completion has a short delay after the last kill to allow final loot pickup.
 - Ground loot drops to the world with real payloads (item/currency/spell/map) and is picked up by proximity, validated/applied by domain logic.
 - Item generation is PoE-inspired:
   - slot-scoped prefix/suffix pools
