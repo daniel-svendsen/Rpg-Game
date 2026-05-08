@@ -147,7 +147,7 @@ ingress:
 
 This repo also includes a template at:
 
-- [cloudflared/config.named-tunnel.example.yml](/C:/Users/danie/Documents/New%20project/cloudflared/config.named-tunnel.example.yml)
+- [cloudflared/config.named-tunnel.example.yml](cloudflared/config.named-tunnel.example.yml)
 
 5. Update Cloudflare Pages one last time:
 

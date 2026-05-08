@@ -5,6 +5,7 @@
 - Backend-specific instructions for `backend/`.
 - Inherit repo-wide rules from the root `AGENTS.md`.
 - Read `ROADMAP.md` before proposing major backend work.
+- Read `docs/PROJECT_VISION.md` when product direction or gameplay progression intent matters.
 
 ## Backend Priorities
 
@@ -32,6 +33,10 @@
 - Do not turn JSONB-backed save sections into an unreviewed dumping ground.
 - If frontend save shape changes, verify whether backend DTOs, mapping, and migrations must change too.
 - Be careful with saved ids, item shapes, map ownership, spell progression, support links, currencies, and life flask state.
+- Treat saved progression as a first-class system.
+- Spell progression is saved progression.
+- Life flask state is saved progression.
+- When save shape changes, think through migration or normalization impact for existing saves.
 
 ## API And Error Handling
 
@@ -39,6 +44,7 @@
 - Avoid silent fallback behavior that can hide persistence bugs.
 - Keep controller and service responsibilities clear.
 - If adding fields to save-related requests, keep naming explicit and consistent with frontend types.
+- Prefer backend/API errors that help the frontend show specific user-facing feedback instead of generic failures.
 
 ## Acceptance Mindset
 
@@ -52,6 +58,20 @@ Backend acceptance for the current phase means the following areas feel stable a
 - important backend tests for stat calculation and persistence behavior
 
 Do not keep expanding the definition of "done" without a concrete product reason.
+
+## Cost And Network Guardrails
+
+- Prefer low-chatter client/server designs.
+- Avoid frequent polling when event-driven or batched updates are sufficient.
+- Batch writes where practical, especially for progression, inventory, and analytics.
+- Do not send full game-state payloads when partial updates are enough.
+- Optimize for mobile bandwidth, battery usage, and backend cost from the start.
+- Do not sacrifice correctness, save safety, or user experience just to reduce request count.
+- When changing backend or persistence behavior, consider:
+  - request volume
+  - database writes
+  - payload size
+  - idle infrastructure cost
 
 ## Dependency And Pattern Guidance
 
@@ -75,3 +95,4 @@ Do not keep expanding the definition of "done" without a concrete product reason
   - migration impact
   - compatibility with existing saves
 - If a persistence change affects gameplay progression, mention the risk explicitly.
+- If auth or validation behavior changes, consider whether the frontend can now surface clearer login/register/save error feedback.

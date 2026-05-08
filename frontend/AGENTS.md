@@ -5,6 +5,7 @@
 - Frontend-specific instructions for `frontend/`.
 - Inherit repo-wide rules from the root `AGENTS.md`.
 - Read `ROADMAP.md` before proposing major frontend work.
+- Read `docs/PROJECT_VISION.md` when product direction or gameplay intent matters.
 
 ## Frontend Priorities
 
@@ -14,6 +15,7 @@
 - Keep `frontend/src/game/domain` as the source of truth for gameplay behavior.
 - Keep `frontend/src/game/phaser` as a rendering adapter, not a gameplay authority.
 - Do not introduce major frontend stack drift unless there is a clear product or maintainability reason.
+- Prefer splitting large UI flows into focused hooks and components instead of growing one oversized screen file.
 
 ## Current Phase Awareness
 
@@ -28,12 +30,22 @@
 - Prefer explicit helper modules over repeated inline calculations.
 - Keep persistence normalization and save-related orchestration readable and testable.
 - Do not move gameplay rules into React components or Phaser scenes.
+- When a React file starts carrying too many responsibilities, prefer extracting hooks, presentational components, and small utility modules.
+- Prefer custom hooks for reusable stateful UI logic and side-effect orchestration.
+- If a file or solution is becoming too large, too coupled, or hard to reason about, say so explicitly and propose a more modular direction.
 
 ## Gameplay And Visual Readiness
 
 - Keep spell behavior data-driven and centralized in config and domain.
 - When adding spell, support, or unique-item behavior, consider whether it will later need a visual signal.
 - Prefer semantic visual hooks over renderer-specific implementation details.
+- Keep balance values centralized.
+- Keep drop rates, map progression, item generation, spell behavior, and progression rules data-driven where practical.
+- Keep spell behavior modular and not tightly coupled to rendering.
+- Support spells should modify main spells through reusable rules, not custom per-spell hacks.
+- Spell progression should use the shared reusable spell progression system.
+- Healing rules should stay centralized and readable.
+- Gold income, shop pricing, shop item power, and item drop rates should be balanced together.
 
 Examples of good early hooks:
 
@@ -51,11 +63,32 @@ Avoid:
 - baking Phaser-only implementation details into domain logic
 - introducing visual metadata that is so specific it limits future iteration
 
+## Product Priorities
+
+- `Training Grounds` is rerunnable forever.
+- Consumable maps are part of saved progression.
+- `Map Shards` are part of the early map-crafting loop.
+- Items can be sold for gold.
+- The shop should keep evolving as a dedicated mobile-friendly screen.
+- Spell/support UX should keep moving toward a simplified FF7 materia-style flow.
+- Equipment selection should use slot-first mobile pickers.
+- Level-up stat spending should stay in a dedicated character/stats view.
+- Spell UI should show real gameplay information when practical, including:
+  - damage
+  - cooldown
+  - crit chance
+  - chain count
+  - chain radius
+  - area radius
+  - upgrade costs
+
 ## Balance And Simulation
 
 - Keep balance values centralized under `frontend/src/game/config`.
 - Favor data-driven overrides and tooling over manual tuning scattered through code.
 - If balance work is requested, prefer reusable simulation or reporting tools over one-off guesswork.
+- If map pacing, drop rate, sustain, loot pressure, or shop pressure are in question, prefer using the simulator before making purely intuitive changes.
+- Keep broader readability and presentation work out of `Phase 2` unless it directly improves balance iteration.
 
 ## Dependency And Pattern Guidance
 
@@ -75,3 +108,4 @@ Avoid:
 - If tests are not updated where they would normally be expected, explain why.
 - Prefer validating domain-heavy changes with automated tests before relying on visual behavior.
 - If a change affects spells, loot, maps, inventory, progression, or save normalization, assume extra verification is needed.
+- If a frontend change also affects saved progression shape or persistence flow, call out the backend/persistence risk explicitly.

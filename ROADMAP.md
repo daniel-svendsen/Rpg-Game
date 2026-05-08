@@ -13,6 +13,19 @@ Use it to track:
 
 `README.md` stays focused on project overview and setup. `AGENTS.md` files should read this file before proposing major direction changes.
 
+## Roadmap Workflow
+
+Use the checklist states consistently:
+
+- `[x]` means implemented, verified enough for current scope, or explicitly accepted
+- `[ ]` means not implemented yet, still being evaluated, or not accepted yet
+
+Keep three layers separate:
+
+- phase acceptance checklists for what must be true before a phase is considered done
+- phase candidate tasks for likely implementation work inside that phase
+- backlog ideas for things that are interesting but not yet committed or fully scoped
+
 ## Current Phase
 
 - Current phase: `Phase 2 - Balance Infrastructure`
@@ -30,7 +43,7 @@ Use it to track:
 
 ## Phase 0 - Project Guardrails
 
-Status: `Started`
+Status: `Accepted`
 
 Goals:
 
@@ -39,11 +52,11 @@ Goals:
 - split agent instructions into root, frontend, and backend scopes
 - establish one place to track current phase and next step
 
-Done when:
+Acceptance checklist:
 
-- `ROADMAP.md` exists and is kept current
-- root `AGENTS.md` points agents to this roadmap
-- `frontend/AGENTS.md` and `backend/AGENTS.md` define scoped rules
+- [x] `ROADMAP.md` exists and is kept current
+- [x] root `AGENTS.md` points agents to this roadmap
+- [x] `frontend/AGENTS.md` and `backend/AGENTS.md` define scoped rules
 
 ## Phase 1 - Backend Acceptance
 
@@ -55,13 +68,13 @@ Make the backend robust and predictable for the current gameplay scope before in
 
 Acceptance checklist:
 
-- register, login, and JWT validation work reliably
-- character creation, load, and save work reliably
-- saved progression includes inventory, equipment, spells, supports, spell progression, map progression, currencies, and life flask state
-- save shape is explicit through DTOs and mapping, not a dumping ground for arbitrary nested JSON
-- Flyway migrations work from a fresh local database
-- backend tests cover important stat calculation and persistence flows
-- there are no known progression-corruption risks in the current gameplay loop
+- [x] register, login, and JWT validation work reliably
+- [x] character creation, load, and save work reliably
+- [x] saved progression includes inventory, equipment, spells, supports, spell progression, map progression, currencies, and life flask state
+- [x] save shape is explicit through DTOs and mapping, not a dumping ground for arbitrary nested JSON
+- [x] Flyway migrations work from a fresh local database
+- [x] backend tests cover important stat calculation and persistence flows
+- [x] there are no known progression-corruption risks in the current gameplay loop
 
 Not required for phase completion:
 
@@ -91,18 +104,22 @@ Goal:
 
 Build tooling that makes balancing faster, more repeatable, and less subjective.
 
-Acceptance targets:
+Acceptance checklist:
 
-- a headless simulation path can run many map attempts without Phaser
-- a script can simulate at least `100` map runs and summarize outcomes
-- output includes clear rate, deaths, average map time, gold, shards, map sustain, and loot distribution
-- balance overrides can be applied without editing core config values directly
-- the simulation output is easy to read and compare, but broad player-facing UI polish stays out of this phase
+- [x] a headless simulation path can run many map attempts without Phaser
+- [x] a script can simulate at least `100` map runs and summarize outcomes
+- [x] output includes clear rate, deaths, average map time, gold, shards, map sustain, and loot distribution
+- [x] balance overrides can be applied without editing core config values directly
+- [x] at least one stable baseline profile or preset set exists for repeatable comparisons
+- [x] at least one meaningful override-driven comparison workflow exists and is used in practice
+- [ ] the simulator is the default balance loop for repeated `tier3` through `tier9` tuning decisions
+- [ ] the current phase has a documented balance pass that clearly informed map, loot, and economy decisions
 
 Current progress:
 
 - a reusable headless simulator now runs map attempts without Phaser rendering
 - the simulation CLI can load either a local profile or the current backend character
+- a reusable local baseline profile already exists under `frontend/sim-profiles`, and backend characters can be snapshotted into reusable profiles
 - reports now include:
   - completion, death, and timeout rates
   - average run time, gold, map shards, and map sustain
@@ -112,6 +129,7 @@ Current progress:
   - total unique drops plus `T1`, `T2`, and `T3` unique breakdown
   - spell drops
   - total loot breakdown by item, currency, spell, and map
+- optional shop stock sampling can now report generated item rolls and price ranges alongside map-run output
 - balance overrides can be applied from JSON without editing core config values directly
 - the simulator is already being used to tune:
   - early and mid-tier map difficulty
@@ -138,11 +156,10 @@ Recommended next steps inside this phase:
 3. Tighten map sustain and reward pressure where farm loops still look too generous.
 4. Keep broader readability and presentation work for `Phase 3` unless it directly improves balance iteration.
 
-Phase completion will likely require:
+Phase exit notes:
 
-- a stable baseline profile or small preset set for repeated comparisons
-- at least one meaningful override-driven comparison workflow
-- a balance pass where the simulator is clearly driving concrete map, loot, and economy decisions rather than just existing as tooling
+- Broad player-facing UI polish still stays out of this phase unless it directly improves balance iteration.
+- Remaining work is now more about repeatable usage and documented tuning outcomes than about missing core simulator capability.
 
 ### Phase 2 Scope Extensions (Planned, Simulator-First)
 
@@ -281,10 +298,10 @@ Focus areas:
 
 Candidate tasks:
 
-- Show item rarity color in the equipment/gear view (not only inventory/loot/shop).
-- Simplify item comparison UI: remove "Compared to X" and rely on power delta (+/-).
-- Map pacing: maps currently feel short; brainstorm and tune levers (monster count, arena size, spawn cadence, movement speed, pack density).
-- Fix mobile horizontal scrolling/overflow where content extends beyond the viewport.
+- [ ] Show item rarity color in the equipment/gear view (not only inventory/loot/shop).
+- [ ] Simplify item comparison UI: remove "Compared to X" and rely on power delta (+/-).
+- [ ] Map pacing: maps currently feel short; brainstorm and tune levers (monster count, arena size, spawn cadence, movement speed, pack density).
+- [ ] Fix mobile horizontal scrolling/overflow where content extends beyond the viewport.
 
 Note:
 
@@ -342,10 +359,51 @@ Success criteria:
 - Prefer marking a phase complete only when the acceptance criteria are actually satisfied.
 - If work from a later phase is proposed early, call it out explicitly as out-of-phase unless it is a small enabling change.
 - When an agent believes the current phase is close to done, it should say so directly and reference the acceptance checklist.
+- When an item is implemented, update the relevant checklist state instead of leaving roadmap status implicit.
+- Keep future ideas in `Planned Workstreams` until they are concrete enough to become phase tasks or acceptance work.
+- If a larger task needs a short design or risk pass first, add that as a checklist item before implementation.
 
 ## Next Recommended Step
 
 - Use the current simulator to finish the first full balance pass on map difficulty, spell rarity, unique tier pacing, map sustain, and shop pressure before expanding into broader UI readability work.
+
+## Planned Workstreams
+
+These workstreams are now part of the roadmap direction, but many of their individual tasks are still unstarted or need evaluation before implementation details are locked in.
+
+### Documentation and workflow
+
+- [x] Restructure repo docs so `README.md` stays GitHub-friendly and deeper topics move into focused docs.
+- [x] Add a dedicated project vision doc if the game direction starts stretching beyond what belongs in `README.md`.
+- [x] Add a simulator-focused doc for how to run reports and interpret results.
+- [x] Add a command reference doc for `dev`, `demo`, `start`, `stop`, `build`, and `test` workflows.
+- [x] Decide which command content should stay in `README.md` versus dedicated docs.
+- [ ] Break roadmap work into smaller phase checklists when that improves continuity and portfolio readability.
+- [x] Keep roadmap/checklist status updated when implementation changes project status.
+- [x] Start larger tasks with a short brainstorming / impact-check step before coding.
+
+### UX and feedback
+
+- [ ] Improve login/register error handling so the UI shows clear causes such as wrong password, invalid email, existing account, missing fields, short password, and backend/API failures.
+- [ ] Show total gold value before confirming `Sell all`.
+- [ ] Hide, move, or replace low-value `Active spell` and `Map state` panels during map runs.
+
+### Map pacing and sustain
+
+- [ ] Re-evaluate map pacing so runs feel longer and more meaningful than short arena bursts.
+- [ ] Tune map sustain so map progression stalls less often due to low map drops.
+- [ ] Make simulator output clearly show whether map sustain is too low.
+
+### Item readability and visuals
+
+- [ ] Centralize item rarity colors so equipped gear, inventory, loot, shop, and item cards use the same visual rules.
+- [ ] Add more varied map backgrounds driven by config, with room for tier-specific and random variants.
+
+### Longer-term chase systems
+
+- [ ] Brainstorm a rare-spawn system that can sometimes lead to boss key drops.
+- [ ] Brainstorm boss key structure: rarity, tier links, boss specificity, fragments, and sell/save/use trade-offs.
+- [ ] Brainstorm boss reward structure: separate drop pools, better uniques, and simulator-visible expected value.
 
 ## Phase 2 Scope Extensions Status Snapshot
 
@@ -365,9 +423,13 @@ Implemented (first pass):
 
 Partially implemented (needs follow-through):
 
+- Combat foundation follow-through is underway:
+  - elemental resistances, enemy damage types, resistance penetration, and resistance caps now exist in shared domain combat logic
+  - equipment and affixes can now grant armor, evasion, and elemental resistances
+  - character UI now exposes the new defense stats for visibility during tuning
+  - physical mitigation via armor/evasion and a derived crit multiplier still need fuller combat-math follow-through
 - Phaser map readability: a simple moving grid background exists to make movement obvious, but world/loot visuals are still intentionally minimal.
 
 Still planned (next major domain work):
 
-- Full resistance + penetration + armor/evasion damage math unification (decimals, caps, player penetration, enemy damage types, crit multiplier derived stat).
 - Richer simulator telemetry for damage prevention by type, time moving vs fighting, pack/aggro stats, and loot pickup time.
