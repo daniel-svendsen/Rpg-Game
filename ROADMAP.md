@@ -141,6 +141,7 @@ Current progress:
   - exceptional rare frequency
   - unique tier distribution
   - shop pricing pressure
+  - boss reward guarantees and boss-vs-map difficulty tuning
 
 Recommended tooling:
 

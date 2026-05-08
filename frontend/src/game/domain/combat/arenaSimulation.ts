@@ -140,6 +140,47 @@ const resolvePlayerTargetingRange = (_player: CharacterRecord): number => {
   return balanceConfig.combat.playerTargetingRange;
 };
 
+const getPerMonsterDropChance = (dropsPerRunTarget: number, monsterCount: number): number =>
+  Math.max(0, Math.min(0.95, dropsPerRunTarget / Math.max(1, monsterCount)));
+
+const createGuaranteedBossRewardDrops = (
+  tier: number,
+  dropX: number,
+  dropY: number,
+  createdAtMs: number
+): GroundLootState[] => {
+  const bossUnique = createBossUniqueDrop(Math.max(1, tier));
+
+  if (bossUnique) {
+    return [
+      {
+        id: `ground-item-${bossUnique.id}`,
+        x: clamp(dropX + (Math.random() - 0.5) * 24, 40, ARENA_WIDTH - 40),
+        y: clamp(dropY + (Math.random() - 0.5) * 24, 40, ARENA_HEIGHT - 40),
+        createdAtMs,
+        payload: {
+          kind: "Item",
+          item: bossUnique
+        }
+      }
+    ];
+  }
+
+  return [
+    {
+      id: `ground-currency-imbuingOrb-${createClientId()}`,
+      x: clamp(dropX + (Math.random() - 0.5) * 18, 40, ARENA_WIDTH - 40),
+      y: clamp(dropY + (Math.random() - 0.5) * 18, 40, ARENA_HEIGHT - 40),
+      createdAtMs,
+      payload: {
+        kind: "Currency",
+        code: "imbuingOrb",
+        amount: 1
+      }
+    }
+  ];
+};
+
 const getChainTargetIds = (
   enemies: InternalEnemyState[],
   firstEnemyId: string,
@@ -586,20 +627,7 @@ const rollGroundDrops = (
   }
 
   if (isBossMap && isRareMonster) {
-    const bossUnique = createBossUniqueDrop(Math.max(1, mapTier));
-
-    if (bossUnique) {
-      groundLoot.push({
-        id: `ground-item-${bossUnique.id}`,
-        x: clamp(dropX + (Math.random() - 0.5) * 24, 40, ARENA_WIDTH - 40),
-        y: clamp(dropY + (Math.random() - 0.5) * 24, 40, ARENA_HEIGHT - 40),
-        createdAtMs,
-        payload: {
-          kind: "Item",
-          item: bossUnique
-        }
-      });
-    }
+    groundLoot.push(...createGuaranteedBossRewardDrops(mapTier, dropX, dropY, createdAtMs));
 
     if (Math.random() < 0.6) {
       groundLoot.push({
@@ -616,19 +644,49 @@ const rollGroundDrops = (
     }
   }
 
-  if (mapTier < mapBalance.maxTier && Math.random() < tierBalance.mapDropRate) {
-    const nextTier = mapTier + 1;
-    groundLoot.push({
-      id: `ground-map-tier${nextTier}-${createClientId()}`,
-      x: clamp(dropX + (Math.random() - 0.5) * 18, 40, ARENA_WIDTH - 40),
-      y: clamp(dropY + (Math.random() - 0.5) * 18, 40, ARENA_HEIGHT - 40),
-      createdAtMs,
-      payload: {
-        kind: "Map",
-        mapId: `tier${nextTier}Map`,
-        tier: nextTier
+  if (!isBossMap) {
+    const sameTierMapId = mapTier <= 0 ? "tier1Map" : `tier${mapTier}Map`;
+    const sameTierMapTier = mapTier <= 0 ? 1 : mapTier;
+    const sameTierMapDropChance = getPerMonsterDropChance(
+      tierBalance.sameTierMapDropsPerRunTarget,
+      resolvedMap.monsterCount
+    );
+
+    if (Math.random() < sameTierMapDropChance) {
+      groundLoot.push({
+        id: `ground-map-tier${sameTierMapTier}-${createClientId()}`,
+        x: clamp(dropX + (Math.random() - 0.5) * 18, 40, ARENA_WIDTH - 40),
+        y: clamp(dropY + (Math.random() - 0.5) * 18, 40, ARENA_HEIGHT - 40),
+        createdAtMs,
+        payload: {
+          kind: "Map",
+          mapId: sameTierMapId,
+          tier: sameTierMapTier
+        }
+      });
+    }
+
+    if (mapTier < mapBalance.maxTier) {
+      const nextTier = Math.max(1, mapTier + 1);
+      const nextTierMapDropChance = getPerMonsterDropChance(
+        tierBalance.nextTierMapDropsPerRunTarget,
+        resolvedMap.monsterCount
+      );
+
+      if (Math.random() < nextTierMapDropChance) {
+        groundLoot.push({
+          id: `ground-map-tier${nextTier}-${createClientId()}`,
+          x: clamp(dropX + (Math.random() - 0.5) * 18, 40, ARENA_WIDTH - 40),
+          y: clamp(dropY + (Math.random() - 0.5) * 18, 40, ARENA_HEIGHT - 40),
+          createdAtMs,
+          payload: {
+            kind: "Map",
+            mapId: `tier${nextTier}Map`,
+            tier: nextTier
+          }
+        });
       }
-    });
+    }
   }
 
   return groundLoot;

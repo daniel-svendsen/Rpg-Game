@@ -17,9 +17,11 @@ Status: implemented (first pass) on May 8, 2026.
   - If the next tier is already unlocked: attempt current-tier key at 5% (boss farming).
 - Boss lairs spawn a single guaranteed rare boss.
 - Boss lairs drop:
-  - 1 boss-only unique per run (5% chance the chase unique)
-  - `Imbuing Orb` currency (60% chance)
+  - at least `1` guaranteed boss reward on a successful boss kill
+  - the guaranteed reward is currently a boss-only unique (with `Imbuing Orb` as the fallback if the unique definition cannot be resolved)
+  - an additional `Imbuing Orb` currency drop still has a `60%` chance
 - Boss lairs can be farmed indefinitely as long as you have keys. The first kill of `bossTierN` is what unlocks Tier `N` maps.
+- Normal maps now target roughly `1.0` same-tier map and `0.25` next-tier maps per full clear. Boss lairs do not participate in that normal map-sustain model.
 
 ## Questions to answer before implementation
 

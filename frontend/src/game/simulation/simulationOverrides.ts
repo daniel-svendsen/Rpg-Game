@@ -9,7 +9,8 @@ type MutableMonsterBalance = {
 type MutableMapTierFields = {
   itemDropRate: number;
   mapShardDropRate: number;
-  mapDropRate: number;
+  sameTierMapDropsPerRunTarget: number;
+  nextTierMapDropsPerRunTarget: number;
   enemyHealthMultiplier: number;
   enemyDamageMultiplier: number;
   rareMonsterChance: number;
@@ -35,7 +36,14 @@ const scaleMapFields = (
   }
 
   if (overrides.mapDropRateMultiplier !== undefined) {
-    target.mapDropRate = clampChance(target.mapDropRate * overrides.mapDropRateMultiplier);
+    target.sameTierMapDropsPerRunTarget = Math.max(
+      0,
+      target.sameTierMapDropsPerRunTarget * overrides.mapDropRateMultiplier
+    );
+    target.nextTierMapDropsPerRunTarget = Math.max(
+      0,
+      target.nextTierMapDropsPerRunTarget * overrides.mapDropRateMultiplier
+    );
   }
 
   if (overrides.mapEnemyHealthMultiplier !== undefined) {

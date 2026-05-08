@@ -16,6 +16,7 @@ It is used to:
 - compare drop and shop reward pressure
 - validate balance changes with profiles and overrides
 - tune boss key farming rates and boss material pressure
+- compare normal-map sustain targets against boss reward output
 
 ## Main Command
 
@@ -131,6 +132,11 @@ Key metrics:
 - unique tier breakdown
 - item roll summaries
 - optional shop sample price and roll summaries
+
+Current sustain model notes:
+
+- Normal maps currently target about `1.0` same-tier map and `0.25` next-tier maps per full clear.
+- Boss lairs do not use the normal map-sustain target; they are measured mainly through completion rate, guaranteed boss reward output, and optional extra `Imbuing Orb` drops.
 
 ## How To Use It Well
 
