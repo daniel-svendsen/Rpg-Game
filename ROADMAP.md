@@ -94,6 +94,7 @@ Accepted because:
 - character create, save, and load flows are covered by backend verification
 - saved progression coverage includes inventory, equipment, spells, supports, spell progression, map progression, currencies, and life flask state
 - fresh local database migration startup is verified through the dedicated backend verification script
+- opt-in real database integration coverage now verifies register, character creation, and current-character load against an isolated temporary PostgreSQL database
 - backend persistence contracts are more explicit in the highest-risk JSONB sections and no known progression-corruption issue is currently open
 
 ## Phase 2 - Balance Infrastructure
@@ -378,7 +379,7 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 - [x] Add a simulator-focused doc for how to run reports and interpret results.
 - [x] Add a command reference doc for `dev`, `demo`, `start`, `stop`, `build`, and `test` workflows.
 - [x] Decide which command content should stay in `README.md` versus dedicated docs.
-- [ ] Break roadmap work into smaller phase checklists when that improves continuity and portfolio readability.
+- [x] Break roadmap work into smaller phase checklists when that improves continuity and portfolio readability.
 - [x] Keep roadmap/checklist status updated when implementation changes project status.
 - [x] Start larger tasks with a short brainstorming / impact-check step before coding.
 

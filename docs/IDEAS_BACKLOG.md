@@ -4,7 +4,16 @@ This file is a living backlog of thoughts, cleanup ideas, and future directions.
 
 It is intentionally **not** an implementation order.
 
+Some items here have since been promoted into `ROADMAP.md` workstreams or completed in implementation.
+Keep this file focused on still-useful notes, follow-ups, and early ideas that are not yet clear enough
+to become concrete roadmap tasks.
+
 ## Documentation and info files
+
+Status:
+
+- Core docs split is now in place through `README.md`, `ROADMAP.md`, `docs/PROJECT_VISION.md`, `docs/SIMULATION.md`, and `docs/COMMANDS.md`.
+- Remaining value here is mostly about future cleanup and keeping those docs aligned as workflows change.
 
 Goals:
 
@@ -41,6 +50,11 @@ Success criteria:
 - Runs feel like “real maps” instead of very short arenas.
 
 ## Error handling and user feedback (auth)
+
+Status:
+
+- Core login/register feedback is now improved in the current build.
+- Remaining follow-ups should focus on polish, edge cases, and keeping backend/frontend auth feedback aligned.
 
 Problem:
 
@@ -187,4 +201,3 @@ Notes:
 
 - If background is purely visual, the simulator likely does not need to care.
 - Prefer making the choice config-driven so it is easy to add more later.
-
