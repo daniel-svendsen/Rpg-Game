@@ -1,6 +1,8 @@
 export const combatBalance = {
   autoPickupRadius: 9999,
   enemyAggroRadius: 420,
+  playerTargetingRange: 180,
+  enemyContactRange: 26,
   resistances: {
     playerCap: 0.75,
     minEffectiveResistance: -0.25

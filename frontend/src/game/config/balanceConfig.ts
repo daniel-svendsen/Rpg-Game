@@ -27,6 +27,8 @@ export const balanceConfig = {
   combat: {
     autoPickupRadius: combatBalance.autoPickupRadius,
     enemyAggroRadius: combatBalance.enemyAggroRadius,
+    playerTargetingRange: combatBalance.playerTargetingRange,
+    enemyContactRange: combatBalance.enemyContactRange,
     enemyContactDamageIntervalMs: monsterBalance.contactDamageIntervalMs,
     resistances: combatBalance.resistances
   },

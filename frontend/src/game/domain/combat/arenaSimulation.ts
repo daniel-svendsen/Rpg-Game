@@ -70,7 +70,6 @@ const createBossUniqueDrop = (tier: number): InventoryItem | null => {
 const ARENA_WIDTH = 2000;
 const ARENA_HEIGHT = 1400;
 const PLAYER_BASE_MOVEMENT_SPEED = 120;
-const PLAYER_COMBAT_STOP_RANGE = 160;
 const AUTO_LOOT_SEEK_RADIUS = 240;
 const PLAYER_SPAWN_PADDING = 220;
 const PACK_MIN_CENTER_DISTANCE = 240;
@@ -134,6 +133,12 @@ export interface ArenaRuntimeState {
 
 const distance = (aX: number, aY: number, bX: number, bY: number): number =>
   Math.hypot(aX - bX, aY - bY);
+
+const resolvePlayerTargetingRange = (_player: CharacterRecord): number => {
+  // Keep range logic centralized so future item rolls can extend it without
+  // rewriting combat flow in multiple places.
+  return balanceConfig.combat.playerTargetingRange;
+};
 
 const getChainTargetIds = (
   enemies: InternalEnemyState[],
@@ -715,6 +720,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
       const movementSpeed =
         PLAYER_BASE_MOVEMENT_SPEED * Math.max(0.1, nextPlayer.derivedStats.movementSpeedMultiplier);
       const movement = (movementSpeed * deltaMs) / 1000;
+      const playerTargetingRange = resolvePlayerTargetingRange(nextPlayer);
 
       // Prefer nearby ground loot before selecting the next pack.
       const targetLootStillExists = autoMove.targetLootId
@@ -765,7 +771,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
             const center = getPackCenter(pack, nextEnemies);
             const distanceToPack = distance(playerX, playerY, center.x, center.y);
 
-            if (distanceToPack > PLAYER_COMBAT_STOP_RANGE) {
+            if (distanceToPack > playerTargetingRange) {
               const directionX = center.x - playerX;
               const directionY = center.y - playerY;
               const length = Math.max(1, Math.hypot(directionX, directionY));
@@ -824,7 +830,8 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   });
 
   nextEnemies = nextEnemies.map((enemy) => {
-    const closeEnoughToHit = distance(enemy.x, enemy.y, playerX, playerY) <= 26;
+    const closeEnoughToHit =
+      distance(enemy.x, enemy.y, playerX, playerY) <= balanceConfig.combat.enemyContactRange;
 
     if (
       !closeEnoughToHit ||
@@ -878,7 +885,11 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
 
     if (nextTime - lastCastAtMs >= resolvedSpell.cooldownMs) {
       lastCastAtMs = nextTime;
-      const sortedEnemies = [...nextEnemies].sort(
+      const playerTargetingRange = resolvePlayerTargetingRange(nextPlayer);
+      const enemiesInRange = nextEnemies.filter(
+        (enemy) => distance(enemy.x, enemy.y, playerX, playerY) <= playerTargetingRange
+      );
+      const sortedEnemies = [...enemiesInRange].sort(
         (left, right) =>
           distance(left.x, left.y, playerX, playerY) -
           distance(right.x, right.y, playerX, playerY)
