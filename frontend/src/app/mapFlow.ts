@@ -93,6 +93,11 @@ export const getMapVariantLabel = (enhancementCount: number): string =>
   enhancementCount === 0 ? "Unmodified" : `Modified +${enhancementCount}`;
 
 export const getMapDisplayName = (mapId: string, enhancementCount: number): string => {
+  if (mapId.startsWith("bossTier")) {
+    const tier = mapConfig[mapId]?.tier ?? 0;
+    return `Boss Key (Tier ${tier})`;
+  }
+
   const baseName = mapConfig[mapId]?.name ?? mapId;
   return enhancementCount === 0 ? baseName : `${baseName} of Alteration`;
 };

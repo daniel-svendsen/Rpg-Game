@@ -18,6 +18,7 @@ import { applyExperience } from "../progression/progression";
 import { getSpellName, rollSpellDrop } from "../spells/spellDrops";
 import { resolveSpell } from "../spells/spellEngine";
 import { getItemSlotLabel } from "../../config/itemConfig";
+import { uniqueItemDefinitions } from "../../config/itemConfig";
 import { createClientId } from "../../../shared/utils/id";
 import { applyResistanceToDamage, clampEnemyResistance, clampPlayerResistance, resolveEnemyDamageType } from "./combatMath";
 import type {
@@ -27,11 +28,44 @@ import type {
   CurrencyStack,
   FloatingTextState,
   GroundLootState,
+  InventoryItem,
   LootEntry,
   MapEnhancementInstance,
   MonsterRarity,
   DamageType
 } from "../../../shared/types/saveTypes";
+
+const bossUniqueIds = {
+  common1: "warlordSignet",
+  common2: "lairbornMantle",
+  chase: "crownOfAscension"
+} as const;
+
+const createBossUniqueDrop = (tier: number): InventoryItem | null => {
+  const chaseRoll = Math.random() < 0.05;
+  const selectedId = chaseRoll
+    ? bossUniqueIds.chase
+    : Math.random() < 0.5
+      ? bossUniqueIds.common1
+      : bossUniqueIds.common2;
+  const definition = uniqueItemDefinitions.find((entry) => entry.id === selectedId);
+
+  if (!definition) {
+    return null;
+  }
+
+  return {
+    id: `${definition.id}-${createClientId()}`,
+    name: definition.name,
+    slot: definition.slot,
+    rarity: "Unique",
+    tier,
+    tags: definition.tags,
+    uniqueEffectId: definition.uniqueEffectId,
+    uniqueEffectDescription: definition.uniqueEffectDescription,
+    statBonuses: definition.statBonuses
+  };
+};
 
 const ARENA_WIDTH = 2000;
 const ARENA_HEIGHT = 1400;
@@ -85,6 +119,7 @@ export interface ArenaRuntimeState {
     rareMonstersKilled: number;
     totalMonstersKilled: number;
   };
+  bossKeyDropRolled: boolean;
   lastCastAtMs: number;
   lastPlayerDamageAtMs: number;
   playerX: number;
@@ -241,8 +276,9 @@ const createMonsterPacks = (
   const enemies: InternalEnemyState[] = [];
   const centers: Array<{ x: number; y: number }> = [];
 
-  const packSizeMin = 2;
-  const packSizeMax = 5;
+  const isBossMap = map.id.startsWith("bossTier");
+  const packSizeMin = isBossMap ? 1 : 2;
+  const packSizeMax = isBossMap ? 1 : 5;
   const packRadius = 46;
   const averagePackSize = (packSizeMin + packSizeMax) / 2;
   const packCountBonusExtra = Math.min(PACK_COUNT_BONUS_MAX_EXTRA, Math.max(0, Math.floor(map.tier / 2)));
@@ -250,7 +286,7 @@ const createMonsterPacks = (
   const packCount = Math.max(1, Math.ceil(map.monsterCount / averagePackSize) + packCountBonus);
 
   const tierBalance = getMapBalanceByTier(map.tier);
-  const rareChancePerPack = tierBalance.rareMonsterChance;
+  const rareChancePerPack = isBossMap ? 1 : tierBalance.rareMonsterChance;
 
   let remaining = map.monsterCount;
   let rareMonstersSpawned = 0;
@@ -424,14 +460,22 @@ const applyGroundLootPickup = (
   }
 
   const nextCharacter = addOwnedMap(character, payload.mapId, payload.tier);
+  const isBossKey = payload.mapId.startsWith("bossTier");
+  const mapName = isBossKey ? `Boss Key (Tier ${payload.tier})` : `Tier ${payload.tier} Map`;
+  const details = isBossKey
+    ? [
+        "Consumable boss key added to your map inventory",
+        `Defeat this boss to unlock Tier ${payload.tier} maps.`
+      ]
+    : ["Consumable map added to your map inventory"];
 
   return {
     character: nextCharacter,
     lootEvent: {
       id: `${entry.id}-picked`,
       kind: "Map",
-      name: `Tier ${payload.tier} Map`,
-      details: ["Consumable map added to your map inventory"],
+      name: mapName,
+      details,
       isUpgrade: true
     }
   };
@@ -461,6 +505,7 @@ const rollGroundDrops = (
   const tierBalance = getMapBalanceByTier(mapTier);
   const isRareMonster = rarity === "Rare";
   const uniqueModifiers = getEquippedUniqueModifiers(character);
+  const isBossMap = resolvedMap.id.startsWith("bossTier");
 
   const groundLoot: GroundLootState[] = [];
 
@@ -535,6 +580,37 @@ const rollGroundDrops = (
     });
   }
 
+  if (isBossMap && isRareMonster) {
+    const bossUnique = createBossUniqueDrop(Math.max(1, mapTier));
+
+    if (bossUnique) {
+      groundLoot.push({
+        id: `ground-item-${bossUnique.id}`,
+        x: clamp(dropX + (Math.random() - 0.5) * 24, 40, ARENA_WIDTH - 40),
+        y: clamp(dropY + (Math.random() - 0.5) * 24, 40, ARENA_HEIGHT - 40),
+        createdAtMs,
+        payload: {
+          kind: "Item",
+          item: bossUnique
+        }
+      });
+    }
+
+    if (Math.random() < 0.6) {
+      groundLoot.push({
+        id: `ground-currency-imbuingOrb-${createClientId()}`,
+        x: clamp(dropX + (Math.random() - 0.5) * 18, 40, ARENA_WIDTH - 40),
+        y: clamp(dropY + (Math.random() - 0.5) * 18, 40, ARENA_HEIGHT - 40),
+        createdAtMs,
+        payload: {
+          kind: "Currency",
+          code: "imbuingOrb",
+          amount: 1
+        }
+      });
+    }
+  }
+
   if (mapTier < mapBalance.maxTier && Math.random() < tierBalance.mapDropRate) {
     const nextTier = mapTier + 1;
     groundLoot.push({
@@ -600,6 +676,7 @@ export const createArenaRuntime = (
       rareMonstersKilled: 0,
       totalMonstersKilled: 0
     },
+    bossKeyDropRolled: false,
     lastCastAtMs: -999_999,
     lastPlayerDamageAtMs: -999_999,
     playerX: initialPlayerX,
@@ -629,6 +706,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   let playerY = state.playerY;
   const alivePackIdsBefore = getAlivePackIds(nextEnemies);
   let autoMove = state.autoMove;
+  let bossKeyDropRolled = state.bossKeyDropRolled;
 
   if (autoMove.enabled) {
     if (nextTime < autoMove.lootPauseUntilMs) {
@@ -873,6 +951,40 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
             telemetry.rareMonstersKilled + (enemy.rarity === "Rare" ? 1 : 0)
         };
 
+        if (
+          !bossKeyDropRolled &&
+          enemy.rarity === "Rare" &&
+          !state.mapId.startsWith("bossTier") &&
+          mapTier >= 1 &&
+          mapTier < mapBalance.maxTier
+        ) {
+          bossKeyDropRolled = true;
+
+          const nextTier = mapTier + 1;
+          const unlockedTier = nextPlayer.mapProgress.highestUnlockedTier;
+
+          const shouldDropNextTierKey = unlockedTier < nextTier ? Math.random() < 0.1 : false;
+          const shouldDropCurrentTierKey = !shouldDropNextTierKey && mapTier > 1 ? Math.random() < 0.05 : false;
+          const keyDropTier = shouldDropNextTierKey ? nextTier : shouldDropCurrentTierKey ? mapTier : null;
+
+          if (keyDropTier !== null) {
+            nextGroundLoot = [
+              ...nextGroundLoot,
+              {
+                id: `ground-map-bossTier${keyDropTier}-${createClientId()}`,
+                x: clamp(enemy.x + (Math.random() - 0.5) * 18, 40, ARENA_WIDTH - 40),
+                y: clamp(enemy.y + (Math.random() - 0.5) * 18, 40, ARENA_HEIGHT - 40),
+                createdAtMs: nextTime,
+                payload: {
+                  kind: "Map",
+                  mapId: `bossTier${keyDropTier}`,
+                  tier: keyDropTier
+                }
+              }
+            ];
+          }
+        }
+
         return [];
       });
     }
@@ -902,6 +1014,25 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
     ? state.completionDelayUntilMs ?? nextTime + MAP_COMPLETE_DELAY_MS
     : null;
   const isComplete = allEnemiesDefeated && completionDelayUntilMs !== null && nextTime >= completionDelayUntilMs;
+  const justCompleted = !state.snapshot.isComplete && isComplete;
+
+  if (justCompleted) {
+    const mapProgress = nextPlayer.mapProgress;
+    const isBossMap = state.mapId.startsWith("bossTier");
+    const nextHighestUnlockedTier = isBossMap
+      ? Math.max(mapProgress.highestUnlockedTier, mapTier)
+      : mapProgress.highestUnlockedTier;
+    const nextLastCompletedTier = Math.max(mapProgress.lastCompletedTier, mapTier);
+
+    nextPlayer = {
+      ...nextPlayer,
+      mapProgress: {
+        ...mapProgress,
+        highestUnlockedTier: nextHighestUnlockedTier,
+        lastCompletedTier: nextLastCompletedTier
+      }
+    };
+  }
 
   const snapshot: ArenaSnapshot = {
     timeElapsedMs: nextTime,
@@ -957,6 +1088,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
     timeElapsedMs: nextTime,
     completionDelayUntilMs,
     telemetry,
+    bossKeyDropRolled,
     lastCastAtMs,
     lastPlayerDamageAtMs,
     playerX,

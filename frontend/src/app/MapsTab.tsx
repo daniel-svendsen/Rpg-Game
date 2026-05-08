@@ -51,6 +51,9 @@ export const MapsTab = ({
 }: MapsTabProps) => {
   const selectedMap = mapConfig[selectedMapId];
   const consumableMapEntries = character?.mapProgress.consumableMaps ?? [];
+  const highestUnlockedTier = character?.mapProgress.highestUnlockedTier ?? 1;
+  const selectedTier = selectedMap?.tier ?? 0;
+  const isSelectedMapLocked = selectedMapTarget !== "trainingGrounds" && selectedTier > highestUnlockedTier;
   const selectedResolvedMap = resolveMapInstance(selectedMap, selectedMapEnhancements);
   const nextEnhancementCost =
     selectedMapTarget !== "trainingGrounds" && selectedMapEntry
@@ -64,20 +67,23 @@ export const MapsTab = ({
       <section className="panel stack">
         <h4>Maps</h4>
         <div className="actions">
-          <button className="primary-button" onClick={onStartMap}>
+          <button className="primary-button" disabled={isSelectedMapLocked} onClick={onStartMap}>
             Start
           </button>
           {selectedMapTarget !== "trainingGrounds" ? (
-            <button className="secondary-button" onClick={onRunAllMaps}>
+            <button className="secondary-button" disabled={isSelectedMapLocked} onClick={onRunAllMaps}>
               Run all maps in this tier
             </button>
           ) : null}
           {selectedMapTarget !== "trainingGrounds" ? (
-            <button className="secondary-button" onClick={onEnhanceSelectedMap}>
+            <button className="secondary-button" disabled={isSelectedMapLocked} onClick={onEnhanceSelectedMap}>
               Enhance ({nextEnhancementCost} shards)
             </button>
           ) : null}
         </div>
+        {isSelectedMapLocked ? (
+          <p className="error-text">Locked. Unlocked by defeating the Tier {selectedTier} boss.</p>
+        ) : null}
         {selectedMapTarget !== "trainingGrounds" ? (
           <div className="status-text">
             {getMapDisplayName(selectedMapId, selectedMapEnhancements.length)} | {getMapVariantLabel(selectedMapEnhancements.length)}{" "}
@@ -112,6 +118,9 @@ export const MapsTab = ({
                 <div className="status-text">
                   Tier {entry.tier} • Quantity {entry.quantity}
                 </div>
+                {entry.tier > highestUnlockedTier ? (
+                  <div className="error-text">Unlocked by defeating the Tier {entry.tier} boss.</div>
+                ) : null}
               </div>
               <div className="status-text">
                 {getMapVariantLabel(entry.enhancements.length)} | Enhancements {entry.enhancements.length}/

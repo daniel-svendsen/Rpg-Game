@@ -92,7 +92,13 @@ export const App = () => {
       : null;
   const selectedMapId = selectedMapEntry?.mapId ?? "trainingGrounds";
   const selectedMapEnhancements = selectedMapEntry?.enhancements ?? [];
-  const { handleConvertShardsToMaps, handleEnhanceSelectedMap, handleRunAllMaps, handleStartMap } = useMapActions({
+  const {
+    handleConvertShardsToMaps,
+    handleEnhanceSelectedMap,
+    handleRunAllMaps,
+    handleStartBossTier,
+    handleStartMap
+  } = useMapActions({
     character,
     selectedMapTarget,
     commitCharacter,
@@ -401,6 +407,7 @@ export const App = () => {
         onSelectMainSpell={handleSelectMainSpell}
         onSelectMap={setSelectedMapTarget}
         onSelectSupportSpell={handleSelectSupportSpell}
+        onStartBossTier={handleStartBossTier}
         onSellAllItems={handleSellAllItems}
         onSellItem={handleSellItem}
         onSpendStatPoint={handleSpendStatPoint}

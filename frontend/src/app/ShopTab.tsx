@@ -16,6 +16,7 @@ interface ShopTabProps {
   topBar: ReactNode;
   character: CharacterRecord | null;
   shopItems: ShopItemState[];
+  sellAllValue: number;
   formatPowerChange: (powerChange: number | null) => string;
   onBuyShopItem: (itemId: string) => void;
   onSellAllItems: () => void;
@@ -26,6 +27,7 @@ export const ShopTab = ({
   topBar,
   character,
   shopItems,
+  sellAllValue,
   formatPowerChange,
   onBuyShopItem,
   onSellAllItems,
@@ -36,8 +38,8 @@ export const ShopTab = ({
     <section className="panel stack">
       <div className="inventory-row">
         <h4>Shop</h4>
-        <button className="secondary-button" onClick={onSellAllItems}>
-          Sell all
+        <button className="secondary-button" disabled={sellAllValue <= 0} onClick={onSellAllItems}>
+          {sellAllValue > 0 ? `Sell all (+${sellAllValue}g)` : "Sell all"}
         </button>
       </div>
       {shopItems.map((item) => {

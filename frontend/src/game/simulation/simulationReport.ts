@@ -58,7 +58,9 @@ export const buildSimulationSummary = (
       timedOutRuns: summary.timedOutRuns + (run.timedOut ? 1 : 0),
       goldGained: summary.goldGained + run.goldGained,
       mapShardsGained: summary.mapShardsGained + run.mapShardsGained,
+      imbuingOrbsGained: summary.imbuingOrbsGained + run.imbuingOrbsGained,
       mapsGained: summary.mapsGained + run.mapsGained,
+      bossKeysGained: summary.bossKeysGained + run.bossKeysGained,
       rareItemsDropped: summary.rareItemsDropped + run.rareItemsDropped,
       exceptionalRareItemsDropped: summary.exceptionalRareItemsDropped + run.exceptionalRareItemsDropped,
       uniqueItemsDropped: summary.uniqueItemsDropped + run.uniqueItemsDropped,
@@ -81,7 +83,9 @@ export const buildSimulationSummary = (
       timedOutRuns: 0,
       goldGained: 0,
       mapShardsGained: 0,
+      imbuingOrbsGained: 0,
       mapsGained: 0,
+      bossKeysGained: 0,
       rareItemsDropped: 0,
       exceptionalRareItemsDropped: 0,
       uniqueItemsDropped: 0,
@@ -100,6 +104,11 @@ export const buildSimulationSummary = (
     }
   );
   const runCount = Math.max(1, runs.length);
+  const zeroMapRuns = runs.reduce((total, run) => total + (run.mapsGained <= 0 ? 1 : 0), 0);
+  const atLeastOneMapRuns = runCount - zeroMapRuns;
+  const zeroMapRunRate = zeroMapRuns / runCount;
+  const mapDropRunRate = 1 - zeroMapRunRate;
+  const expectedZeroMapRunsBeforeDrop = mapDropRunRate <= 0 ? Number.POSITIVE_INFINITY : zeroMapRunRate / mapDropRunRate;
 
   return {
     profileName,
@@ -111,6 +120,12 @@ export const buildSimulationSummary = (
     autoUseLifeFlaskThreshold,
     overrides,
     shop,
+    sustain: {
+      zeroMapRuns,
+      atLeastOneMapRuns,
+      zeroMapRunRate,
+      expectedZeroMapRunsBeforeDrop
+    },
     totals,
     itemRolls,
     averages: {
@@ -120,7 +135,9 @@ export const buildSimulationSummary = (
       durationSeconds: runs.reduce((total, run) => total + run.durationMs, 0) / runCount / 1000,
       goldGained: totals.goldGained / runCount,
       mapShardsGained: totals.mapShardsGained / runCount,
+      imbuingOrbsGained: totals.imbuingOrbsGained / runCount,
       mapsGained: totals.mapsGained / runCount,
+      bossKeysGained: totals.bossKeysGained / runCount,
       rareItemsDropped: totals.rareItemsDropped / runCount,
       exceptionalRareItemsDropped: totals.exceptionalRareItemsDropped / runCount,
       uniqueItemsDropped: totals.uniqueItemsDropped / runCount,
@@ -160,7 +177,15 @@ export const formatSimulationSummary = (summary: SimulationSummary): string => {
     `Average run time: ${formatNumber(summary.averages.durationSeconds)}s`,
     `Average gold: ${formatNumber(summary.averages.goldGained)}`,
     `Average map shards: ${formatNumber(summary.averages.mapShardsGained)}`,
+    `Average imbuing orbs: ${formatNumber(summary.averages.imbuingOrbsGained)}`,
     `Map sustain: ${formatNumber(summary.averages.mapsGained)} maps/run`,
+    `Boss keys: ${formatNumber(summary.averages.bossKeysGained)} keys/run`,
+    `Map drop run rate: ${formatPercent(1 - summary.sustain.zeroMapRunRate)} (0-map runs: ${formatPercent(summary.sustain.zeroMapRunRate)})`,
+    `Expected 0-map runs before a map drop: ${
+      Number.isFinite(summary.sustain.expectedZeroMapRunsBeforeDrop)
+        ? formatNumber(summary.sustain.expectedZeroMapRunsBeforeDrop)
+        : "never"
+    }`,
     `Average rares encountered: ${formatNumber(summary.averages.rareMonstersSpawned)}`,
     `Average rares killed: ${formatNumber(summary.averages.rareMonstersKilled)}`,
     "",

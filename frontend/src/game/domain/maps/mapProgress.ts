@@ -6,7 +6,7 @@ import {
 } from "./mapEnhancements";
 
 export const createInitialMapProgress = (): MapProgressState => ({
-  highestUnlockedTier: 0,
+  highestUnlockedTier: 1,
   lastCompletedTier: 0,
   consumableMaps: []
 });

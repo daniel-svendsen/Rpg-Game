@@ -95,6 +95,10 @@ Success criteria:
 
 ## “Sell all” UX
 
+Status:
+
+- Implemented May 8, 2026: the button shows total gold and prompts before selling.
+
 Idea:
 
 - The “Sell all” button should show the total gold gained before confirming.
@@ -136,6 +140,10 @@ Success criteria:
 
 - Cleaner map-run UI and better use of screen space (mobile-first).
 
+Note:
+
+- As of May 8, 2026, the hub now includes a dedicated Boss tab and the inventory view is treated as part of the Gear flow to reduce tab count.
+
 ## Roadmap phases, sub-tasks, and checklists
 
 Idea:
@@ -164,6 +172,10 @@ Success criteria:
 - Fewer “oops” refactors; more intentional changes with clearer verification.
 
 ## Rare spawns, boss keys, and boss drops
+
+Status:
+
+- Implemented (first pass) May 8, 2026: boss keys drop from rares, boss challenges unlock tiers, and boss-only drops exist.
 
 High-level concept:
 

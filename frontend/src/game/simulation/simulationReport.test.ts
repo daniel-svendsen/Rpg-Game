@@ -15,7 +15,9 @@ describe("simulationReport", () => {
         durationMs: 40_000,
         goldGained: 120,
         mapShardsGained: 1,
+        imbuingOrbsGained: 0,
         mapsGained: 0,
+        bossKeysGained: 0,
         rareItemsDropped: 1,
         exceptionalRareItemsDropped: 0,
         uniqueItemsDropped: 0,
@@ -44,7 +46,9 @@ describe("simulationReport", () => {
         durationMs: 20_000,
         goldGained: 60,
         mapShardsGained: 0,
+        imbuingOrbsGained: 1,
         mapsGained: 1,
+        bossKeysGained: 2,
         rareItemsDropped: 0,
         exceptionalRareItemsDropped: 1,
         uniqueItemsDropped: 1,
@@ -79,6 +83,8 @@ describe("simulationReport", () => {
     expect(summary.totals.completedRuns).toBe(1);
     expect(summary.totals.deaths).toBe(1);
     expect(summary.totals.goldGained).toBe(180);
+    expect(summary.totals.imbuingOrbsGained).toBe(1);
+    expect(summary.totals.bossKeysGained).toBe(2);
     expect(summary.totals.rareItemsDropped).toBe(1);
     expect(summary.totals.exceptionalRareItemsDropped).toBe(1);
     expect(summary.totals.uniqueItemsDropped).toBe(1);
@@ -87,7 +93,9 @@ describe("simulationReport", () => {
     expect(summary.totals.lootByKind.Map).toBe(1);
     expect(summary.averages.completionRate).toBe(0.5);
     expect(summary.averages.durationSeconds).toBe(30);
+    expect(summary.averages.bossKeysGained).toBe(1);
     expect(summary.averages.exceptionalRareItemsDropped).toBe(0.5);
+    expect(summary.averages.imbuingOrbsGained).toBe(0.5);
     expect(summary.averages.uniqueTier3ItemsDropped).toBe(0.5);
     expect(summary.averages.rareMonstersKilled).toBe(2.5);
   });

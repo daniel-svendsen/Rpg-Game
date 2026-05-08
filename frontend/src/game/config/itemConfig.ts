@@ -81,7 +81,8 @@ export const itemBases: ItemBaseDefinition[] = [
 export const itemRarities: ItemRarity[] = ["Normal", "Magic", "Rare", "Unique"];
 
 export const currencyDefinitions: CurrencyDefinition[] = [
-  { code: "mapShard", name: "Map Shard", tags: ["Currency", "MapModifier"] }
+  { code: "mapShard", name: "Map Shard", tags: ["Currency", "MapModifier"] },
+  { code: "imbuingOrb", name: "Imbuing Orb", tags: ["Currency"] }
 ];
 
 export const uniqueItemDefinitions: UniqueItemDefinition[] = [...itemBalance.uniqueItems];
