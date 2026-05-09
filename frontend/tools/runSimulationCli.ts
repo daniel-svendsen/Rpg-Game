@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { normalizeCharacterRecord } from "../src/game/domain/player/playerTypes";
 import { formatSimulationSummary, simulateMapRuns } from "../src/game/simulation";
 import type { SimulationBalanceOverrides } from "../src/game/simulation";
-import type { CharacterRecord, CharacterStats } from "../src/shared/types/saveTypes";
+import type { CharacterRecord, CharacterStats, InventoryItem, ItemRarity } from "../src/shared/types/saveTypes";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -242,9 +242,144 @@ const createBenchmarkStatsForTier = (tier: number): CharacterStats => {
   return { strength, agility, vitality, dexterity };
 };
 
+const benchmarkItem = (
+  id: string,
+  name: string,
+  slot: InventoryItem["slot"],
+  rarity: ItemRarity,
+  tier: number,
+  tags: InventoryItem["tags"],
+  statBonuses: InventoryItem["statBonuses"]
+): InventoryItem => ({ id, name, slot, rarity, tier, tags, statBonuses });
+
+// Per-tier lookup tables — index = tier (0 unused, 1-9 used)
+const benchmarkWeaponSpellPower =  [0,    0.03, 0.03, 0.06, 0.08, 0.11, 0.14, 0.18, 0.22, 0.26];
+const benchmarkWeaponCrit       =  [0,    0,    0,    0,    0,    0.01, 0.015,0.022,0.030,0.038];
+const benchmarkBootsColdRes     =  [0,    0,    0.06, 0.11, 0.15, 0.21, 0.28, 0.40, 0.50, 0.58];
+const benchmarkBootsMoveBonus   =  [0,    0,    0,    0,    0,    0.02, 0.03, 0.04, 0.05, 0.06];
+const benchmarkBodyFireRes      =  [0,    0,    0,    0,    0.07, 0.13, 0.20, 0.33, 0.43, 0.52];
+const benchmarkBodyMaxHealth    =  [0,    0,    0,    0,    0,    25,   55,   110,  160,  210];
+const benchmarkHelmLightRes     =  [0,    0,    0,    0,    0,    0,    0.14, 0.28, 0.38, 0.46];
+const benchmarkHelmVitality     =  [0,    0,    0,    0,    0,    0,    3,    4,    5,    6];
+const benchmarkAmuletSpellPower =  [0,    0,    0,    0,    0,    0.07, 0.10, 0.14, 0.18, 0.22];
+const benchmarkRing1LightRes    =  [0,    0,    0,    0,    0,    0,    0,    0.17, 0.23, 0.28];
+const benchmarkRing1ColdRes     =  [0,    0,    0,    0,    0,    0,    0,    0.07, 0.10, 0.12];
+const benchmarkRing2FireRes     =  [0,    0,    0,    0,    0,    0,    0,    0,    0.12, 0.18];
+const benchmarkBeltVitality     =  [0,    0,    0,    0,    0,    0,    0,    4,    5,    6];
+const benchmarkBeltMaxHealth    =  [0,    0,    0,    0,    0,    0,    0,    35,   60,   80];
+
+const createBenchmarkEquippedItemsForTier = (tier: number): CharacterRecord["equippedItems"] => {
+  const t = Math.max(1, Math.min(9, tier));
+  const items: CharacterRecord["equippedItems"] = {};
+
+  // Weapon: oak (T1-2) → yew (T3-4) → runic (T5+)
+  if (t <= 2) {
+    items.Weapon = benchmarkItem("bm-weapon", "Charged Oak Wand", "Weapon", "Magic", t, ["SpellDamage"], {
+      castSpeedMultiplier: 1.0,
+      spellPowerMultiplier: benchmarkWeaponSpellPower[t]
+    });
+  } else if (t <= 4) {
+    items.Weapon = benchmarkItem("bm-weapon", "Charged Yew Wand", "Weapon", "Magic", t, ["SpellDamage"], {
+      castSpeedMultiplier: 1.2,
+      spellPowerMultiplier: benchmarkWeaponSpellPower[t]
+    });
+  } else {
+    items.Weapon = benchmarkItem("bm-weapon", "Sovereign Runic Wand", "Weapon", "Rare", t, ["SpellDamage"], {
+      castSpeedMultiplier: 1.35,
+      spellPowerMultiplier: benchmarkWeaponSpellPower[t],
+      critChance: benchmarkWeaponCrit[t]
+    });
+  }
+
+  // Boots: from tier 2
+  if (t >= 2) {
+    const bootsRarity: ItemRarity = t >= 5 ? "Rare" : t >= 3 ? "Magic" : "Normal";
+    items.Boots = benchmarkItem("bm-boots", "Frostward Traveler Boots", "Boots", bootsRarity, t, ["CastSpeed"], {
+      evasion: 28,
+      coldResistance: benchmarkBootsColdRes[t],
+      ...(benchmarkBootsMoveBonus[t] > 0 ? { movementSpeedBonus: benchmarkBootsMoveBonus[t] } : {})
+    });
+  }
+
+  // Body armor: from tier 4
+  if (t >= 4) {
+    const armorRarity: ItemRarity = t >= 6 ? "Rare" : t >= 5 ? "Magic" : "Normal";
+    items.BodyArmor = benchmarkItem("bm-body", "Stalwart Leather Tunic", "BodyArmor", armorRarity, t, ["Physical"], {
+      evasion: 44,
+      ...(benchmarkBodyMaxHealth[t] > 0 ? { maxHealth: benchmarkBodyMaxHealth[t] } : {}),
+      ...(benchmarkBodyFireRes[t] > 0 ? { fireResistance: benchmarkBodyFireRes[t] } : {})
+    });
+  }
+
+  // Helmet: from tier 6
+  if (t >= 6) {
+    const helmRarity: ItemRarity = t >= 7 ? "Rare" : "Magic";
+    items.Helmet = benchmarkItem("bm-helmet", "Stormward Leather Cap", "Helmet", helmRarity, t, ["Physical"], {
+      evasion: 34,
+      vitality: benchmarkHelmVitality[t],
+      lightningResistance: benchmarkHelmLightRes[t]
+    });
+  }
+
+  // Gloves: from tier 7
+  if (t >= 7) {
+    const gloveCrit = t === 7 ? 0.012 : t === 8 ? 0.018 : 0.024;
+    items.Gloves = benchmarkItem("bm-gloves", "Precise Woven Gloves", "Gloves", "Rare", t, ["Critical"], {
+      evasion: 22,
+      critChance: gloveCrit
+    });
+  }
+
+  // Amulet: from tier 5
+  if (t >= 5) {
+    const amuletRarity: ItemRarity = t >= 6 ? "Rare" : "Magic";
+    items.Amulet = benchmarkItem("bm-amulet", "Arcanist Amber Amulet", "Amulet", amuletRarity, t, ["SpellDamage"], {
+      spellPowerMultiplier: benchmarkAmuletSpellPower[t]
+    });
+  }
+
+  // Ring1: from tier 7 (lightning + cold coverage)
+  if (t >= 7) {
+    const ringRarity: ItemRarity = t >= 8 ? "Rare" : "Magic";
+    items.Ring1 = benchmarkItem("bm-ring1", "Stormward Topaz Ring", "Ring1", ringRarity, t, ["Lightning", "Critical"], {
+      lightningResistance: benchmarkRing1LightRes[t],
+      coldResistance: benchmarkRing1ColdRes[t]
+    });
+  }
+
+  // Ring2: from tier 8 (fire coverage)
+  if (t >= 8) {
+    items.Ring2 = benchmarkItem("bm-ring2", "Emberward Ruby Ring", "Ring2", "Rare", t, ["Fire", "SpellDamage"], {
+      fireResistance: benchmarkRing2FireRes[t]
+    });
+  }
+
+  // Belt: from tier 7
+  if (t >= 7) {
+    items.Belt = benchmarkItem("bm-belt", "Stout Studded Belt", "Belt", "Magic", t, ["Physical"], {
+      vitality: benchmarkBeltVitality[t],
+      maxHealth: benchmarkBeltMaxHealth[t]
+    });
+  }
+
+  return items;
+};
+
+const createBenchmarkSpellLoadout = (tier: number): CharacterRecord["spellLoadout"] => {
+  const slot1 = { mainSpellId: "stormChain", supportSpellIds: ["fasterCasting", "moreDamage"] };
+
+  if (tier >= 5) {
+    return [slot1, { mainSpellId: "emberBurst", supportSpellIds: ["increasedCriticalChance", "fasterCasting"] }];
+  }
+
+  return [slot1];
+};
+
 const createTierBenchmarkCharacter = (base: CharacterRecord, tier: number): CharacterRecord => {
   const level = Math.max(1, tier * 2);
   const baseStats = createBenchmarkStatsForTier(tier);
+  const equippedItems = createBenchmarkEquippedItemsForTier(tier);
+  const spellLoadout = createBenchmarkSpellLoadout(tier);
 
   return normalizeCharacterRecord({
     ...base,
@@ -252,6 +387,8 @@ const createTierBenchmarkCharacter = (base: CharacterRecord, tier: number): Char
     level,
     baseStats,
     unspentStatPoints: 0,
+    equippedItems,
+    spellLoadout,
     mapProgress: {
       ...base.mapProgress,
       highestUnlockedTier: tier,

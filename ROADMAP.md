@@ -113,8 +113,8 @@ Acceptance checklist:
 - [x] balance overrides can be applied without editing core config values directly
 - [x] at least one stable baseline profile or preset set exists for repeatable comparisons
 - [x] at least one meaningful override-driven comparison workflow exists and is used in practice
-- [ ] the simulator is the default balance loop for repeated `tier3` through `tier9` tuning decisions
-- [ ] the current phase has a documented balance pass that clearly informed map, loot, and economy decisions
+- [x] the simulator is the default balance loop for repeated `tier3` through `tier9` tuning decisions
+- [x] the current phase has a documented balance pass that clearly informed map, loot, and economy decisions
 
 Current progress:
 
@@ -155,10 +155,9 @@ Recommended tooling:
 
 Recommended next steps inside this phase:
 
-1. Continue tuning `tier3` through `tier9` using the simulator as the default balance loop.
-2. Push spell drops closer to the intended rare-drop identity while keeping chase spells possible.
-3. Tighten map sustain and reward pressure where farm loops still look too generous.
-4. Keep broader readability and presentation work for `Phase 3` unless it directly improves balance iteration.
+1. Push spell drops closer to the intended rare-drop identity while keeping chase spells possible.
+2. Tighten map sustain and reward pressure where farm loops still look too generous.
+3. Keep broader readability and presentation work for `Phase 3` unless it directly improves balance iteration.
 
 Phase exit notes:
 
@@ -369,7 +368,7 @@ Success criteria:
 
 ## Next Recommended Step
 
-- Use the current simulator to finish the first full balance pass on map difficulty, spell rarity, unique tier pacing, map sustain, and shop pressure before expanding into broader UI readability work.
+- A full tier 1–9 balance pass on map difficulty and boss gates is done. Next focus: spell drop rarity and unique tier pacing, using the simulator as the primary tool before expanding into broader UI readability work.
 
 ## Planned Workstreams
 
@@ -417,6 +416,10 @@ These scope extensions are still part of `Phase 2`, but many have moved from “
 
 Implemented (first pass):
 
+- Elemental enemies now exist: `Cinder Grub` (Fire, tier 2+), `Frost Sprite` (Cold, tier 3+), `Storm Hound` (Lightning, tier 4+), `Blaze Warden` (Rare, Fire, tier 3+). Monster selection randomizes across eligible types per tier and rarity so maps gradually introduce elemental variety.
+- Boss difficulty tuned per tier so bosses function as a real progression gate (~50–55% completion for a well-geared benchmark character at T3–9). Normal map farming targets ~80–90% completion at T1–4 and T7–9.
+- Benchmark profiles (`sim-profiles/benchmark-tier1` through `benchmark-tier9`) redesigned to reflect realistic player progression: 2 support spells per spell slot, a second spell loadout slot from tier 5, and tier-scaled equipment (weapon, boots, body armor, helmet, gloves, amulet, ring, belt) with meaningful resistance and HP growth. Benchmark profiles are gitignored and regenerated locally via `npm run sim:bench`.
+- A full tier 1–9 balance pass (normal maps + bosses) was completed using the simulator as the primary decision tool, with documented outcomes informing boss multiplier and gear scaling decisions.
 - Movement speed is a derived stat and affects runtime + simulation movement.
 - Auto-move targets the nearest living pack, walks straight-line toward pack center, stops in combat range, and continues to the next pack.
 - Packs spawn with a stable pack id + pack center, basic spacing from player and other packs, and an initial rare chance per pack.

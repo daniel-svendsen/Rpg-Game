@@ -223,8 +223,11 @@ const createEnemy = (
   y: number
 ): InternalEnemyState => {
   const tierBalance = getMapBalanceByTier(map.tier);
+  const eligibleMonsters = monsterDefinitions.filter(
+    (monster) => monster.rarity === rarity && (monster.minTier === undefined || monster.minTier <= map.tier)
+  );
   const monsterDefinition =
-    monsterDefinitions.find((monster) => monster.rarity === rarity) ?? monsterDefinitions[0];
+    eligibleMonsters[Math.floor(Math.random() * eligibleMonsters.length)] ?? monsterDefinitions[0];
   const rarityHealthMultiplier =
     rarity === "Rare"
       ? monsterBalance.rareHealthMultiplier

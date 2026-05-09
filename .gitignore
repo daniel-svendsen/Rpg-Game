@@ -18,3 +18,4 @@ dev.local.properties
 *.tsbuildinfo
 frontend/vite.config.js
 frontend/vite.config.d.ts
+frontend/sim-profiles/benchmark-tier*.json

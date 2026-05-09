@@ -33,28 +33,28 @@ const createTierMapDefinition = (tier: number): MapDefinition => {
 const createBossMapDefinition = (tier: number): MapDefinition => {
   const tierBalance = getMapTierBalance(tier);
   const bossHealthMultiplierByTier: Record<number, number> = {
-    1: 2.1,
-    2: 2.1,
-    3: 2.1,
-    4: 2.18,
-    5: 2.55,
-    6: 3.2,
-    7: 2.2,
-    8: 2.25,
-    9: 2.3,
-    10: 2.35
+    1: 2.18,
+    2: 2.24,
+    3: 2.6,
+    4: 3.2,
+    5: 4.2,
+    6: 4.8,
+    7: 4.0,
+    8: 4.3,
+    9: 4.6,
+    10: 5.0
   };
   const bossDamageMultiplierByTier: Record<number, number> = {
-    1: 1.45,
-    2: 1.45,
-    3: 1.45,
-    4: 1.57,
-    5: 1.72,
-    6: 2.05,
-    7: 1.56,
-    8: 1.6,
-    9: 1.64,
-    10: 1.68
+    1: 1.62,
+    2: 1.71,
+    3: 1.80,
+    4: 2.30,
+    5: 2.60,
+    6: 2.90,
+    7: 2.70,
+    8: 2.90,
+    9: 3.10,
+    10: 3.30
   };
   const bossHealthMultiplier = bossHealthMultiplierByTier[tier] ?? 2.35;
   const bossDamageMultiplier = bossDamageMultiplierByTier[tier] ?? 1.68;
