@@ -10,6 +10,7 @@ import { mapConfig } from "../../config/mapConfig";
 import { monsterDefinitions } from "../../config/monsterConfig";
 import { generateItemDropForCharacter } from "../items/itemGenerator";
 import { getItemPowerScore, isUpgradeForCharacter } from "../items/itemPower";
+import { getItemStatEntries } from "../items/itemStats";
 import { getEquippedUniqueModifiers } from "../items/uniqueEffects";
 import { addOwnedMap } from "../maps/mapProgress";
 import { resolveMapInstance, type ResolvedMapInstance } from "../maps/mapEnhancements";
@@ -468,7 +469,7 @@ const applyGroundLootPickup = (
         details: [
           `Item Tier ${item.tier} ${item.slot ? getItemSlotLabel(item.slot) : "Item"}`,
           `Power ${getItemPowerScore(item).toFixed(0)}`,
-          ...Object.entries(item.statBonuses).map(([key, value]) => `${key} +${value}`)
+          ...getItemStatEntries(item).map((e) => `${e.label} ${e.formattedValue}`)
         ],
         isUpgrade: isUpgradeForCharacter(character, item),
         rarity: item.rarity,

@@ -33,20 +33,24 @@ export const GearTab = ({
     {topBar}
     <section className="panel stack">
       <h4>Equipment</h4>
-      {equipmentSlots.map((slot) => (
-        <div key={slot} className="inventory-row">
-          <span>{getEquipmentSlotLabel(slot)}</span>
-          <button
-            className="secondary-button"
-            onClick={() => {
-              onSelectEquipmentSlot(slot);
-              onOpenEquipmentPicker();
-            }}
-          >
-            {character?.equippedItems[slot]?.name ?? "Empty"}
-          </button>
-        </div>
-      ))}
+      {equipmentSlots.map((slot) => {
+        const equippedItem = character?.equippedItems[slot];
+        const rarityClass = equippedItem ? ` equipped-rarity-${equippedItem.rarity.toLowerCase()}` : "";
+        return (
+          <div key={slot} className="inventory-row">
+            <span className="slot-label">{getEquipmentSlotLabel(slot)}</span>
+            <button
+              className={`secondary-button${rarityClass}`}
+              onClick={() => {
+                onSelectEquipmentSlot(slot);
+                onOpenEquipmentPicker();
+              }}
+            >
+              {equippedItem?.name ?? "Empty"}
+            </button>
+          </div>
+        );
+      })}
     </section>
     <section className="panel stack">
       <div className="inventory-row">

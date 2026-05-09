@@ -66,21 +66,21 @@ export const getItemStatEntries = (item: InventoryItem): StatEntry[] => [
     ? [{ label: "Evasion", formattedValue: `${item.statBonuses.evasion}`, tier: null, isBase: true }]
     : []),
   ...(item.statBonuses.attackSpeedMultiplier !== undefined
-    ? [{ label: "Attack Speed", formattedValue: `x${Number(item.statBonuses.attackSpeedMultiplier).toFixed(2)}`, tier: null, isBase: true }]
+    ? [{ label: "Attack Speed", formattedValue: `+${Math.round((Number(item.statBonuses.attackSpeedMultiplier) - 1) * 100)}%`, tier: null, isBase: true }]
     : []),
   ...(item.statBonuses.castSpeedMultiplier !== undefined
-    ? [{ label: "Cast Speed", formattedValue: `x${Number(item.statBonuses.castSpeedMultiplier).toFixed(2)}`, tier: null, isBase: true }]
+    ? [{ label: "Cast Speed", formattedValue: `+${Math.round((Number(item.statBonuses.castSpeedMultiplier) - 1) * 100)}%`, tier: null, isBase: true }]
     : []),
   ...orderedStatKeys.flatMap((statKey): StatEntry[] => {
     const value = item.statBonuses[statKey];
     if (value === undefined) return [];
 
     const formattedValue = (() => {
-      if (statKey === "movementSpeedBonus") return `+${(Number(value) * 100).toFixed(1)}%`;
+      if (statKey === "movementSpeedBonus") return `+${Math.round(Number(value) * 100)}%`;
       if (statKey === "fireResistance" || statKey === "coldResistance" || statKey === "lightningResistance")
-        return `+${(Number(value) * 100).toFixed(1)}%`;
-      if (statKey === "critChance" || statKey === "spellPowerMultiplier")
-        return `+${Number(value).toFixed(2)}`;
+        return `+${Math.round(Number(value) * 100)}%`;
+      if (statKey === "critChance") return `+${Math.round(Number(value) * 100)}%`;
+      if (statKey === "spellPowerMultiplier") return `+${Math.round(Number(value) * 100)}%`;
       return `+${value}`;
     })();
 

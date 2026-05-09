@@ -205,6 +205,7 @@ button {
   display: flex;
   gap: 8px;
   grid-column: 1;
+  align-self: start;
 }
 
 .overlay-chip span {
@@ -488,6 +489,53 @@ button {
   text-transform: uppercase;
   letter-spacing: 0.03em;
   text-shadow: 0 1px 2px rgba(2, 6, 23, 0.8);
+}
+
+.materia-orb-icon {
+  font-size: 1.35rem;
+  line-height: 1;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+  user-select: none;
+}
+
+.main-materia .materia-orb-icon {
+  font-size: 1.6rem;
+}
+
+.spell-panel-header {
+  display: grid;
+  gap: 4px;
+}
+
+.spell-panel-header h4 {
+  margin-bottom: 0;
+}
+
+.spell-description {
+  margin: 0;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.slot-label {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  min-width: 80px;
+}
+
+.equipped-rarity-magic {
+  color: #9fd5ff;
+  border-color: rgba(108, 160, 255, 0.4);
+}
+
+.equipped-rarity-rare {
+  color: #ffd879;
+  border-color: rgba(240, 182, 79, 0.42);
+}
+
+.equipped-rarity-unique {
+  color: #ffb172;
+  border-color: rgba(245, 148, 88, 0.5);
 }
 
 .materia-node-caption {

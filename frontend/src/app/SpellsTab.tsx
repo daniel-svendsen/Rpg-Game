@@ -1,6 +1,23 @@
 import { Fragment, type ReactNode } from "react";
-import { getSpellName } from "../game/domain/spells/spellDrops";
-import { supportSpellConfig } from "../game/config/spellConfig";
+import { getSpellDescription, getSpellName } from "../game/domain/spells/spellDrops";
+import { spellConfig, supportSpellConfig } from "../game/config/spellConfig";
+
+const getSpellElementSymbol = (spellId: string): string => {
+  const tags = spellConfig[spellId]?.tags ?? [];
+  if (tags.includes("Lightning")) return "⚡";
+  if (tags.includes("Fire")) return "✦";
+  if (tags.includes("Cold")) return "❄";
+  return "◈";
+};
+
+const getSupportElementSymbol = (supportId: string): string => {
+  const tags = supportSpellConfig[supportId]?.tags ?? [];
+  if (tags.includes("CastSpeed")) return "⟳";
+  if (tags.includes("Critical")) return "◆";
+  if (tags.includes("Chain") || tags.includes("Projectile")) return "➤";
+  if (tags.includes("Area")) return "◉";
+  return "✦";
+};
 import type { CharacterRecord } from "../shared/types/saveTypes";
 
 interface SpellsTabProps {
@@ -27,28 +44,34 @@ export const SpellsTab = ({
   const activeMainSpellId = character?.spellLoadout[0]?.mainSpellId ?? "";
   const supportSlots = character?.spellLoadout[0]?.supportSpellIds ?? [];
   const activeSupportSpellIds = supportSlots.filter(Boolean) as string[];
-  const supportSlotLabels = ["Supp 1", "Supp 2"] as const;
+
 
   return (
     <div className="content stack mobile-content">
       {topBar}
       <section className="panel stack">
-        <h4>Linked Spell</h4>
+        <div className="spell-panel-header">
+          <h4>{getSpellName(activeMainSpellId) || "Linked Spell"}</h4>
+          {activeMainSpellId ? (
+            <p className="status-text spell-description">{getSpellDescription(activeMainSpellId)}</p>
+          ) : null}
+        </div>
         <div className="materia-strip">
           <div className="materia-node">
             <button
               className={`materia-orb main-materia ${getSpellAccentClassName(activeMainSpellId)}`}
               onClick={onOpenMainSpellPicker}
               type="button"
+              title={getSpellName(activeMainSpellId)}
             >
-              <span className="materia-orb-label">Main Spell</span>
-              <span className="sr-only">{getSpellName(activeMainSpellId)}</span>
+              <span className="materia-orb-icon">{getSpellElementSymbol(activeMainSpellId)}</span>
             </button>
-            <div className="materia-node-caption">{getSpellName(activeMainSpellId)}</div>
+            <div className="materia-node-caption">{getSpellName(activeMainSpellId) || "Choose spell"}</div>
           </div>
           <div className="materia-link" />
           {[0, 1].map((slotIndex) => {
             const supportId = supportSlots[slotIndex];
+            const supportName = supportId ? (supportSpellConfig[supportId]?.name ?? supportId) : null;
 
             return (
               <Fragment key={slotIndex}>
@@ -59,16 +82,14 @@ export const SpellsTab = ({
                     }`}
                     onClick={() => onOpenSupportPicker(slotIndex as 0 | 1)}
                     type="button"
+                    title={supportName ?? `Support slot ${slotIndex + 1}`}
                   >
-                    <span className="materia-orb-label">{supportSlotLabels[slotIndex]}</span>
-                    <span className="sr-only">
-                      {supportId
-                        ? supportSpellConfig[supportId]?.name ?? supportId
-                        : `Empty support slot ${slotIndex + 1}`}
+                    <span className="materia-orb-icon">
+                      {supportId ? getSupportElementSymbol(supportId) : "+"}
                     </span>
                   </button>
                   <div className="materia-node-caption">
-                    {supportId ? supportSpellConfig[supportId]?.name ?? supportId : "Tap to link"}
+                    {supportName ?? "Link support"}
                   </div>
                 </div>
                 {slotIndex === 0 ? <div className="materia-link" /> : null}
@@ -76,7 +97,6 @@ export const SpellsTab = ({
             );
           })}
         </div>
-        <p className="status-text">Tap any orb to choose your main spell or link supports.</p>
         <div className="fact-grid">
           {getSpellDetailLines(activeMainSpellId, activeSupportSpellIds).map((line) => (
             <span key={`${activeMainSpellId}-${line}`} className="fact-chip">
