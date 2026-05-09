@@ -301,7 +301,9 @@ Focus areas:
 
 Candidate tasks:
 
-- [ ] Show item rarity color in the equipment/gear view (not only inventory/loot/shop).
+- [x] Show item rarity color in the equipment/gear view (not only inventory/loot/shop).
+- [x] Unify stat display format across all surfaces: whole-number percentages, no raw decimals on resistances, crit, or spell power; consistent between item cards, character sheet, and spell detail chips.
+- [x] Equipment view redesigned as an RPG-style doll grid (Helmet / Amulet+Body+Weapon / Ring+Belt+Ring / Gloves+Boots) with weapon pixel art sprites and rarity-colored slot borders.
 - [ ] Simplify item comparison UI: remove "Compared to X" and rely on power delta (+/-).
 - [ ] Map pacing: maps currently feel short; brainstorm and tune levers (monster count, arena size, spawn cadence, movement speed, pack density).
 - [ ] Fix mobile horizontal scrolling/overflow where content extends beyond the viewport.
@@ -401,7 +403,7 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 
 ### Item readability and visuals
 
-- [ ] Centralize item rarity colors so equipped gear, inventory, loot, shop, and item cards use the same visual rules.
+- [x] Centralize item rarity colors so equipped gear, inventory, loot, shop, and item cards use the same visual rules.
 - [ ] Add more varied map backgrounds driven by config, with room for tier-specific and random variants.
 
 ### Longer-term chase systems
