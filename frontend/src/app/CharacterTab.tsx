@@ -38,24 +38,24 @@ export const CharacterTab = ({
       <div className="status-text">Armor: {character?.derivedStats.armor ?? 0}</div>
       <div className="status-text">Evasion: {character?.derivedStats.evasion ?? 0}</div>
       <div className="status-text">
-        Cast speed: x{(character?.derivedStats.castSpeedMultiplier ?? 1).toFixed(2)}
+        Cast speed: +{Math.round((character?.derivedStats.castSpeedMultiplier ?? 1) * 100 - 100)}%
       </div>
       <div className="status-text">
-        Attack speed: x{(character?.derivedStats.attackSpeedMultiplier ?? 1).toFixed(2)}
+        Attack speed: +{Math.round((character?.derivedStats.attackSpeedMultiplier ?? 1) * 100 - 100)}%
       </div>
       <div className="status-text">
-        Movement speed: {(((character?.derivedStats.movementSpeedMultiplier ?? 1) - 1) * 100).toFixed(1)}%
+        Movement speed: +{Math.round(((character?.derivedStats.movementSpeedMultiplier ?? 1) - 1) * 100)}%
       </div>
       <div className="status-text">
-        Crit chance: {((character?.derivedStats.critChance ?? 0) * 100).toFixed(1)}%
+        Crit chance: {Math.round((character?.derivedStats.critChance ?? 0) * 100)}%
       </div>
       <div className="status-text">
-        Spell power: {(((character?.derivedStats.spellPowerMultiplier ?? 1) - 1) * 100).toFixed(1)}%
+        Spell power: +{Math.round(((character?.derivedStats.spellPowerMultiplier ?? 1) - 1) * 100)}%
       </div>
       <div className="status-text">
         Resistances:{" "}
         {character
-          ? `Fire ${(character.derivedStats.resistances.Fire * 100).toFixed(1)}% | Cold ${(character.derivedStats.resistances.Cold * 100).toFixed(1)}% | Lightning ${(character.derivedStats.resistances.Lightning * 100).toFixed(1)}%`
+          ? `Fire ${Math.round(character.derivedStats.resistances.Fire * 100)}% | Cold ${Math.round(character.derivedStats.resistances.Cold * 100)}% | Lightning ${Math.round(character.derivedStats.resistances.Lightning * 100)}%`
           : "—"}
       </div>
     </section>

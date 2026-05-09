@@ -17,7 +17,7 @@ export const getSpellDetailLines = (
     `Level ${resolvedSpell.level}`,
     `Damage ${resolvedSpell.damage}`,
     `Cooldown ${(resolvedSpell.cooldownMs / 1000).toFixed(2)}s`,
-    `Critical chance ${(resolvedSpell.critChance * 100).toFixed(1)}%`
+    `Critical chance ${Math.round(resolvedSpell.critChance * 100)}%`
   ];
 
   if (resolvedSpell.chainCount > 0) {
