@@ -116,32 +116,50 @@ npm run sim -- --profile starter-caster --map trainingGrounds --runs 25 --shop-s
 
 The report is primarily useful for trends and comparisons, not single-run intuition.
 
+### Character snapshot
+
+Printed at the top of every report — shows the benchmark character's actual derived stats (HP, armor, evasion, resistances, crit, speeds). Use this to confirm the profile you intended is actually running, and to compare two runs where only the character differs.
+
 ### Economy and progression
 
 - `Completion rate` / `Death rate` / `Timeout rate`
+- `Avg health on completion` — how much HP remained on successful clears (proxy for safety margin)
 - `Average run time`
-- `Average gold` / `Average map shards` / `Average imbuing orbs`
-- `Map sustain` — same-tier maps gained per run (target ≈ 1.0 for normal maps)
-- `Boss keys` — keys per run from guardian kills
-- `Guardian spawn rate` / `killed` — what % of runs had a guardian and how often it died
+- `Economy` section — gold, shards, orbs, map sustain, boss keys, map drop rate
 
-### Combat profile
+### Kills and packs
 
-- `Time breakdown` — moving vs fighting seconds per average run
-- `Damage taken` — raw damage dealt to player, prevented by resistance, armor (0 until armor-mitigation is implemented), and evade count
-- These let you size new armor and evasion values against real intake numbers
+- `Total kills` / `Rares killed` — monsters per run
+- `Packs cleared` — packs cleared vs spawned (should be equal on completed runs)
+- `Guardian spawn rate / killed` — key guardian mechanic pressure
+
+### Time
+
+- `Moving` vs `Fighting` seconds per run — use to evaluate movement speed changes or pack density tuning
+
+### Offense
+
+- `Spells cast` / `Damage dealt` / `Avg/spell` — raw throughput
+- `Crits` — count and crit rate (spells that critted / total casts)
+
+### Defense
+
+- `Hits taken` / `Evades` / `Evade rate` — formula: `min(0.25, evasion / (evasion + 400))`
+- `Damage dealt to player` — raw damage after evasion
+- `Prevented by resistance` — elemental mitigation
+- `Prevented by armor` — physical mitigation via `min(0.50, armor / (armor + rawDmg × 5))`
 
 ### Item distribution
 
-- `Normal / Magic / Rare / Exceptional rare / Unique` — items per run by rarity
+- `Total items/run` with rarity % breakdown: Normal / Magic / Rare / Exceptional / Unique
 - `Spells` — spell drops per run (target ≈ 0.05–0.12 for normal maps)
 - `Maps` / `Currency pickups` — ground loot volume per run
 
 ### Item rolls
 
-- `By rarity` — totals across all runs
+- `By rarity` and `By slot` — cumulative totals across all runs
 - `Top stats` — most commonly rolled affixes (useful for spotting oversupply)
-- `Movement speed affixes` — visibility check for rare affix
+- `Stat tier distribution` — per-stat breakdown of T1–T5 rolls (use to verify tier weights and roll ranges)
 - Optional `Shop samples` — price range and roll distribution if `--shop-samples N` is passed
 
 Current sustain model notes:

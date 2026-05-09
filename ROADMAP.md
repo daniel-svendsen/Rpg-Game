@@ -453,6 +453,8 @@ Implemented (continued):
   - item distribution: Normal / Magic / Rare / Exceptional / Unique per run
   - guardian spawn rate and kill rate per run
   - full sweep documented in `docs/BALANCE_PASS_2026-05-09.md`
+- All-in-one simulator report: a single run now outputs all balance-relevant data — character snapshot (HP/armor/evasion/resistances/crit/speeds), offense (spells cast, damage dealt, crits), defense (hits taken, evade rate, damage prevented by type), kills (total, rares, packs cleared), economy, and full item distribution with rarity % breakdown and stat-tier histogram
+- Armor mitigation validated in benchmark: body armor uses `armor` stat (T4: 35 → T9: 235) so the `min(0.50, armor/(armor + rawDmg×5))` formula is exercised in every benchmark run; previously all benchmark defense was evasion-only
 
 - Phaser visuals (first pass, out-of-phase early delivery):
   - All monsters now render with real 0x72 DungeonTileset II idle sprite animations, each mapped to a named spriteName in `frontend/src/game/phaser/spriteConfig.ts`.
