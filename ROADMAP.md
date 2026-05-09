@@ -97,6 +97,10 @@ Accepted because:
 - opt-in real database integration coverage now verifies register, character creation, and current-character load against an isolated temporary PostgreSQL database
 - backend persistence contracts are more explicit in the highest-risk JSONB sections and no known progression-corruption issue is currently open
 
+Post-acceptance fixes:
+
+- `JwtAuthenticationFilter` was annotated with `@Component`, causing Spring Boot to register it globally for all requests including `/api/auth/**`. It now only runs in `applicationSecurityFilterChain`. Expired or invalid JWT tokens no longer crash the filter — `JwtException` is caught and authentication is skipped cleanly. Regression tests verify that registration succeeds even when a stale token is present in the header, and that expired tokens on protected endpoints return 403 rather than a server error.
+
 ## Phase 2 - Balance Infrastructure
 
 Status: `Current`

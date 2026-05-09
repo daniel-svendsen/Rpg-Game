@@ -73,6 +73,13 @@ Do not keep expanding the definition of "done" without a concrete product reason
   - payload size
   - idle infrastructure cost
 
+## Security Filter Guardrails
+
+- Do not annotate `OncePerRequestFilter` implementations with `@Component` when they are also registered manually inside a `SecurityFilterChain`. Spring Boot auto-registers `@Component` beans as global servlet filters, which runs them for every request — including endpoints they are not supposed to reach (such as `/api/auth/**`).
+- Always instantiate security filters manually inside the relevant `SecurityFilterChain` bean and leave `@Component` off the filter class.
+- JWT filters must catch `JwtException` (covers `ExpiredJwtException`, `MalformedJwtException`, `SignatureException`, etc.) and skip authentication silently. Uncaught JWT exceptions propagate as 500 errors and prevent otherwise-permitted endpoints from working.
+- After changing filter registration or exception handling, verify with tests that auth endpoints still accept requests without a token and that expired tokens on protected endpoints return 401/403, not 500.
+
 ## Dependency And Pattern Guidance
 
 - Question current backend approaches when a dependency or established pattern would clearly improve safety, clarity, or maintenance cost.
