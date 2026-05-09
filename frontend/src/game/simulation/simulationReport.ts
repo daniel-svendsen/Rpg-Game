@@ -1,5 +1,5 @@
 import { mapConfig } from "../config/mapConfig";
-import type { SimulationSummary, SingleRunSimulationMetrics, ShopSampleSummary } from "./simulationTypes";
+import type { CharacterSnapshot, SimulationSummary, SingleRunSimulationMetrics, ShopSampleSummary } from "./simulationTypes";
 
 const formatPercent = (value: number): string => `${(value * 100).toFixed(1)}%`;
 const formatNumber = (value: number): string => value.toFixed(2).replace(/\.00$/, "");
@@ -12,6 +12,7 @@ export const buildSimulationSummary = (
   maxRunDurationMs: number,
   autoUseLifeFlaskThreshold: number | null,
   overrides: SimulationSummary["overrides"],
+  characterSnapshot: CharacterSnapshot,
   shop: ShopSampleSummary | null
 ): SimulationSummary => {
   const itemRolls: SimulationSummary["itemRolls"] = {
@@ -72,12 +73,19 @@ export const buildSimulationSummary = (
       spellDrops: summary.spellDrops + run.spellDrops,
       rareMonstersSpawned: summary.rareMonstersSpawned + run.rareMonstersSpawned,
       rareMonstersKilled: summary.rareMonstersKilled + run.rareMonstersKilled,
+      totalMonstersKilled: summary.totalMonstersKilled + run.totalMonstersKilled,
+      packsSpawned: summary.packsSpawned + run.packsSpawned,
+      packsCleared: summary.packsCleared + run.packsCleared,
       guardianSpawns: summary.guardianSpawns + (run.guardianSpawned ? 1 : 0),
       guardianKills: summary.guardianKills + (run.guardianKilled ? 1 : 0),
+      hitsTaken: summary.hitsTaken + run.hitsTaken,
+      evades: summary.evades + run.evades,
       damageDealtToPlayer: summary.damageDealtToPlayer + run.damageDealtToPlayer,
       damagePreventedByResistance: summary.damagePreventedByResistance + run.damagePreventedByResistance,
       damagePreventedByArmor: summary.damagePreventedByArmor + run.damagePreventedByArmor,
-      evades: summary.evades + run.evades,
+      damageDealtByPlayer: summary.damageDealtByPlayer + run.damageDealtByPlayer,
+      critsLanded: summary.critsLanded + run.critsLanded,
+      spellsCast: summary.spellsCast + run.spellsCast,
       timeMovingMs: summary.timeMovingMs + run.timeMovingMs,
       timeFightingMs: summary.timeFightingMs + run.timeFightingMs,
       lootByKind: {
@@ -107,12 +115,19 @@ export const buildSimulationSummary = (
       spellDrops: 0,
       rareMonstersSpawned: 0,
       rareMonstersKilled: 0,
+      totalMonstersKilled: 0,
+      packsSpawned: 0,
+      packsCleared: 0,
       guardianSpawns: 0,
       guardianKills: 0,
+      hitsTaken: 0,
+      evades: 0,
       damageDealtToPlayer: 0,
       damagePreventedByResistance: 0,
       damagePreventedByArmor: 0,
-      evades: 0,
+      damageDealtByPlayer: 0,
+      critsLanded: 0,
+      spellsCast: 0,
       timeMovingMs: 0,
       timeFightingMs: 0,
       lootByKind: {
@@ -130,6 +145,11 @@ export const buildSimulationSummary = (
   const mapDropRunRate = 1 - zeroMapRunRate;
   const expectedZeroMapRunsBeforeDrop = mapDropRunRate <= 0 ? Number.POSITIVE_INFINITY : zeroMapRunRate / mapDropRunRate;
 
+  const completedRunsWithHealth = runs.filter((r) => r.completed);
+  const avgFinalHealthPercent = completedRunsWithHealth.length > 0
+    ? completedRunsWithHealth.reduce((sum, r) => sum + r.finalHealthPercent, 0) / completedRunsWithHealth.length
+    : 0;
+
   return {
     profileName,
     mapId,
@@ -139,6 +159,7 @@ export const buildSimulationSummary = (
     maxRunDurationMs,
     autoUseLifeFlaskThreshold,
     overrides,
+    characterSnapshot,
     shop,
     sustain: {
       zeroMapRuns,
@@ -169,14 +190,27 @@ export const buildSimulationSummary = (
       spellDrops: totals.spellDrops / runCount,
       rareMonstersSpawned: totals.rareMonstersSpawned / runCount,
       rareMonstersKilled: totals.rareMonstersKilled / runCount,
+      totalMonstersKilled: totals.totalMonstersKilled / runCount,
+      packsSpawned: totals.packsSpawned / runCount,
+      packsCleared: totals.packsCleared / runCount,
       guardianSpawnRate: totals.guardianSpawns / runCount,
       guardianKillRate: totals.guardianKills / runCount,
+      hitsTaken: totals.hitsTaken / runCount,
+      evades: totals.evades / runCount,
+      evadeRate: totals.hitsTaken + totals.evades > 0
+        ? totals.evades / (totals.hitsTaken + totals.evades)
+        : 0,
       damageDealtToPlayer: totals.damageDealtToPlayer / runCount,
       damagePreventedByResistance: totals.damagePreventedByResistance / runCount,
       damagePreventedByArmor: totals.damagePreventedByArmor / runCount,
-      evades: totals.evades / runCount,
+      damageDealtByPlayer: totals.damageDealtByPlayer / runCount,
+      critsLanded: totals.critsLanded / runCount,
+      spellsCast: totals.spellsCast / runCount,
+      critRate: totals.spellsCast > 0 ? totals.critsLanded / totals.spellsCast : 0,
+      avgDamagePerSpell: totals.spellsCast > 0 ? totals.damageDealtByPlayer / totals.spellsCast : 0,
       timeMovingSeconds: totals.timeMovingMs / runCount / 1000,
-      timeFightingSeconds: totals.timeFightingMs / runCount / 1000
+      timeFightingSeconds: totals.timeFightingMs / runCount / 1000,
+      finalHealthPercent: avgFinalHealthPercent
     },
     runsByOutcome: runs
   };
@@ -192,6 +226,27 @@ export const formatSimulationSummary = (summary: SimulationSummary): string => {
       ? "disabled"
       : `${formatPercent(summary.autoUseLifeFlaskThreshold)} health`;
 
+  const cs = summary.characterSnapshot;
+  const ir = summary.itemRolls;
+
+  const bySlotText = Object.entries(ir.bySlot)
+    .sort(([, a], [, b]) => (b ?? 0) - (a ?? 0))
+    .map(([slot, count]) => `${slot}=${count}`)
+    .join(", ") || "none";
+
+  const byStatTierLines = Object.entries(ir.byStatTier)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([stat, tiers]) => {
+      const tierText = [1, 2, 3, 4, 5]
+        .map((t) => {
+          const count = tiers?.[t as 1 | 2 | 3 | 4 | 5] ?? 0;
+          return count > 0 ? `T${t}:${count}` : null;
+        })
+        .filter(Boolean)
+        .join(" ");
+      return `  ${stat}: ${tierText || "–"}`;
+    });
+
   const lines = [
     `Profile: ${summary.profileName}`,
     `Map: ${summary.mapName} (${summary.mapId})`,
@@ -201,56 +256,58 @@ export const formatSimulationSummary = (summary: SimulationSummary): string => {
     `Auto life flask: ${flaskText}`,
     `Overrides: ${overridesText}`,
     "",
+    "Character stats:",
+    `- HP: ${cs.maxHealth}  Armor: ${cs.armor}  Evasion: ${cs.evasion}`,
+    `- Resistances: Fire ${formatPercent(cs.fireResistance)}  Cold ${formatPercent(cs.coldResistance)}  Lightning ${formatPercent(cs.lightningResistance)}`,
+    `- Crit: ${formatPercent(cs.critChance)} chance / ${cs.critMultiplier.toFixed(2)}x multiplier`,
+    `- Speed: move ${cs.movementSpeedMultiplier.toFixed(2)}x  cast ${cs.castSpeedMultiplier.toFixed(2)}x  spell power ${cs.spellPowerMultiplier.toFixed(2)}x`,
+    "",
     `Completion rate: ${formatPercent(summary.averages.completionRate)}`,
     `Death rate: ${formatPercent(summary.averages.deathRate)}`,
     `Timeout rate: ${formatPercent(summary.averages.timeoutRate)}`,
     `Average run time: ${formatNumber(summary.averages.durationSeconds)}s`,
-    `Average gold: ${formatNumber(summary.averages.goldGained)}`,
-    `Average map shards: ${formatNumber(summary.averages.mapShardsGained)}`,
-    `Average imbuing orbs: ${formatNumber(summary.averages.imbuingOrbsGained)}`,
-    `Map sustain: ${formatNumber(summary.averages.mapsGained)} maps/run`,
-    `Boss keys: ${formatNumber(summary.averages.bossKeysGained)} keys/run`,
-    `Map drop run rate: ${formatPercent(1 - summary.sustain.zeroMapRunRate)} (0-map runs: ${formatPercent(summary.sustain.zeroMapRunRate)})`,
-    `Expected 0-map runs before a map drop: ${
+    `Avg health on completion: ${formatPercent(summary.averages.finalHealthPercent)}`,
+    "",
+    "Economy (avg per run):",
+    `- Gold: ${formatNumber(summary.averages.goldGained)}`,
+    `- Map shards: ${formatNumber(summary.averages.mapShardsGained)}`,
+    `- Imbuing orbs: ${formatNumber(summary.averages.imbuingOrbsGained)}`,
+    `- Maps: ${formatNumber(summary.averages.mapsGained)} (sustain)  Boss keys: ${formatNumber(summary.averages.bossKeysGained)}`,
+    `- Map drop rate: ${formatPercent(1 - summary.sustain.zeroMapRunRate)} (0-map runs: ${formatPercent(summary.sustain.zeroMapRunRate)}, expected streak: ${
       Number.isFinite(summary.sustain.expectedZeroMapRunsBeforeDrop)
         ? formatNumber(summary.sustain.expectedZeroMapRunsBeforeDrop)
         : "never"
-    }`,
-    `Average rares encountered: ${formatNumber(summary.averages.rareMonstersSpawned)}`,
-    `Average rares killed: ${formatNumber(summary.averages.rareMonstersKilled)}`,
-    `Guardian spawn rate: ${formatPercent(summary.averages.guardianSpawnRate)} (killed: ${formatPercent(summary.averages.guardianKillRate)})`,
+    })`,
     "",
-    "Time breakdown (avg per run):",
-    `- Moving: ${formatNumber(summary.averages.timeMovingSeconds)}s`,
-    `- Fighting: ${formatNumber(summary.averages.timeFightingSeconds)}s`,
+    "Kills (avg per run):",
+    `- Total: ${formatNumber(summary.averages.totalMonstersKilled)}  Rares: ${formatNumber(summary.averages.rareMonstersKilled)}/${formatNumber(summary.averages.rareMonstersSpawned)}`,
+    `- Packs: ${formatNumber(summary.averages.packsCleared)}/${formatNumber(summary.averages.packsSpawned)} cleared`,
+    `- Guardian: ${formatPercent(summary.averages.guardianSpawnRate)} spawn  ${formatPercent(summary.averages.guardianKillRate)} killed`,
     "",
-    "Damage taken (avg per run):",
-    `- Dealt to player: ${formatNumber(summary.averages.damageDealtToPlayer)}`,
+    "Time (avg per run):",
+    `- Moving: ${formatNumber(summary.averages.timeMovingSeconds)}s  Fighting: ${formatNumber(summary.averages.timeFightingSeconds)}s`,
+    "",
+    "Offense (avg per run):",
+    `- Spells cast: ${formatNumber(summary.averages.spellsCast)}`,
+    `- Damage dealt: ${formatNumber(summary.averages.damageDealtByPlayer)}  Avg/spell: ${formatNumber(summary.averages.avgDamagePerSpell)}`,
+    `- Crits: ${formatNumber(summary.averages.critsLanded)} (${formatPercent(summary.averages.critRate)} of casts)`,
+    "",
+    "Defense (avg per run):",
+    `- Hits taken: ${formatNumber(summary.averages.hitsTaken)}  Evades: ${formatNumber(summary.averages.evades)} (${formatPercent(summary.averages.evadeRate)} evade rate)`,
+    `- Damage dealt to player: ${formatNumber(summary.averages.damageDealtToPlayer)}`,
     `- Prevented by resistance: ${formatNumber(summary.averages.damagePreventedByResistance)}`,
     `- Prevented by armor: ${formatNumber(summary.averages.damagePreventedByArmor)}`,
-    `- Evades: ${formatNumber(summary.averages.evades)}`,
     "",
     "Item drops (avg per run):",
-    `- Normal: ${formatNumber(summary.averages.normalItemsDropped)}`,
-    `- Magic: ${formatNumber(summary.averages.magicItemsDropped)}`,
-    `- Rare: ${formatNumber(summary.averages.rareItemsDropped)}`,
-    `- Exceptional rare: ${formatNumber(summary.averages.exceptionalRareItemsDropped)}`,
-    `- Unique: ${formatNumber(summary.averages.uniqueItemsDropped)} (T1: ${formatNumber(summary.averages.uniqueTier1ItemsDropped)}, T2: ${formatNumber(summary.averages.uniqueTier2ItemsDropped)}, T3: ${formatNumber(summary.averages.uniqueTier3ItemsDropped)})`,
-    `- Spells: ${formatNumber(summary.averages.spellDrops)}`,
-    `- Maps: ${formatNumber(summary.totals.lootByKind.Map / Math.max(1, summary.runs))}`,
-    `- Currency pickups: ${formatNumber(summary.totals.lootByKind.Currency / Math.max(1, summary.runs))}`,
+    `- Normal: ${formatNumber(summary.averages.normalItemsDropped)}  Magic: ${formatNumber(summary.averages.magicItemsDropped)}  Rare: ${formatNumber(summary.averages.rareItemsDropped)}`,
+    `- Exceptional rare: ${formatNumber(summary.averages.exceptionalRareItemsDropped)}  Unique: ${formatNumber(summary.averages.uniqueItemsDropped)} (T1: ${formatNumber(summary.averages.uniqueTier1ItemsDropped)}, T2: ${formatNumber(summary.averages.uniqueTier2ItemsDropped)}, T3: ${formatNumber(summary.averages.uniqueTier3ItemsDropped)})`,
+    `- Spells: ${formatNumber(summary.averages.spellDrops)}  Maps: ${formatNumber(summary.totals.lootByKind.Map / Math.max(1, summary.runs))}  Currency pickups: ${formatNumber(summary.totals.lootByKind.Currency / Math.max(1, summary.runs))}`,
     "",
-    "Item rolls (sampled):",
-    `- Items: ${summary.itemRolls.itemsDropped}`,
-    `- By rarity: ${Object.entries(summary.itemRolls.byRarity)
-      .map(([key, value]) => `${key}=${value}`)
-      .join(", ") || "none"}`,
-    `- Movement speed affixes: ${summary.itemRolls.byStatKey.movementSpeedBonus ?? 0}`,
-    `- Top stats: ${Object.entries(summary.itemRolls.byStatKey)
-      .sort(([, left], [, right]) => (right ?? 0) - (left ?? 0))
-      .slice(0, 10)
-      .map(([key, value]) => `${key}=${value}`)
-      .join(", ") || "none"}`
+    `Item rolls (${ir.itemsDropped} items total):`,
+    `- By rarity: ${Object.entries(ir.byRarity).map(([k, v]) => `${k}=${v}`).join(", ") || "none"}`,
+    `- By slot:   ${bySlotText}`,
+    `- Top stats: ${Object.entries(ir.byStatKey).sort(([, a], [, b]) => (b ?? 0) - (a ?? 0)).slice(0, 12).map(([k, v]) => `${k}=${v}`).join(", ") || "none"}`,
+    ...(byStatTierLines.length > 0 ? ["- Stat tier distribution:", ...byStatTierLines] : [])
   ];
 
   if (summary.shop) {

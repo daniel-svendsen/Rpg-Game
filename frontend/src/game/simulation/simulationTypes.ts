@@ -1,4 +1,4 @@
-import type { CharacterRecord, LootEntry, ItemSlot, InventoryItem } from "../../shared/types/saveTypes";
+import type { CharacterRecord, DerivedStats, LootEntry, ItemSlot, InventoryItem } from "../../shared/types/saveTypes";
 
 export interface SimulationBalanceOverrides {
   enemyBaseHealthMultiplier?: number;
@@ -37,12 +37,20 @@ export interface SingleRunSimulationMetrics {
   lootByKind: Record<LootEntry["kind"], number>;
   rareMonstersSpawned: number;
   rareMonstersKilled: number;
+  totalMonstersKilled: number;
+  packsSpawned: number;
+  packsCleared: number;
   guardianSpawned: boolean;
   guardianKilled: boolean;
+  hitsTaken: number;
+  evades: number;
   damageDealtToPlayer: number;
   damagePreventedByResistance: number;
   damagePreventedByArmor: number;
-  evades: number;
+  damageDealtByPlayer: number;
+  critsLanded: number;
+  spellsCast: number;
+  finalHealthPercent: number;
   timeMovingMs: number;
   timeFightingMs: number;
   itemRolls: ItemRollMetrics;
@@ -81,6 +89,20 @@ export interface ShopSampleSummary {
   itemRolls: ItemRollMetrics;
 }
 
+export interface CharacterSnapshot {
+  maxHealth: number;
+  armor: number;
+  evasion: number;
+  fireResistance: number;
+  coldResistance: number;
+  lightningResistance: number;
+  critChance: number;
+  critMultiplier: number;
+  movementSpeedMultiplier: number;
+  castSpeedMultiplier: number;
+  spellPowerMultiplier: number;
+}
+
 export interface SimulationSummary {
   profileName: string;
   mapId: string;
@@ -90,6 +112,7 @@ export interface SimulationSummary {
   maxRunDurationMs: number;
   autoUseLifeFlaskThreshold: number | null;
   overrides: SimulationBalanceOverrides | null;
+  characterSnapshot: CharacterSnapshot;
   shop: ShopSampleSummary | null;
   sustain: {
     zeroMapRuns: number;
@@ -117,12 +140,19 @@ export interface SimulationSummary {
     spellDrops: number;
     rareMonstersSpawned: number;
     rareMonstersKilled: number;
+    totalMonstersKilled: number;
+    packsSpawned: number;
+    packsCleared: number;
     guardianSpawns: number;
     guardianKills: number;
+    hitsTaken: number;
+    evades: number;
     damageDealtToPlayer: number;
     damagePreventedByResistance: number;
     damagePreventedByArmor: number;
-    evades: number;
+    damageDealtByPlayer: number;
+    critsLanded: number;
+    spellsCast: number;
     timeMovingMs: number;
     timeFightingMs: number;
     lootByKind: Record<LootEntry["kind"], number>;
@@ -149,14 +179,25 @@ export interface SimulationSummary {
     spellDrops: number;
     rareMonstersSpawned: number;
     rareMonstersKilled: number;
+    totalMonstersKilled: number;
+    packsSpawned: number;
+    packsCleared: number;
     guardianSpawnRate: number;
     guardianKillRate: number;
+    hitsTaken: number;
+    evades: number;
+    evadeRate: number;
     damageDealtToPlayer: number;
     damagePreventedByResistance: number;
     damagePreventedByArmor: number;
-    evades: number;
+    damageDealtByPlayer: number;
+    critsLanded: number;
+    spellsCast: number;
+    critRate: number;
+    avgDamagePerSpell: number;
     timeMovingSeconds: number;
     timeFightingSeconds: number;
+    finalHealthPercent: number;
   };
   runsByOutcome: SingleRunSimulationMetrics[];
 }

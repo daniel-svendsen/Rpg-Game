@@ -30,12 +30,20 @@ describe("simulationReport", () => {
         lootByKind: { Item: 2, Spell: 1, Currency: 1, Map: 0 },
         rareMonstersSpawned: 4,
         rareMonstersKilled: 4,
+        totalMonstersKilled: 12,
+        packsSpawned: 3,
+        packsCleared: 3,
         guardianSpawned: true,
         guardianKilled: true,
+        hitsTaken: 8,
+        evades: 2,
         damageDealtToPlayer: 200,
         damagePreventedByResistance: 50,
-        damagePreventedByArmor: 0,
-        evades: 0,
+        damagePreventedByArmor: 10,
+        damageDealtByPlayer: 1500,
+        critsLanded: 4,
+        spellsCast: 20,
+        finalHealthPercent: 0.8,
         timeMovingMs: 10_000,
         timeFightingMs: 25_000,
         itemRolls: {
@@ -71,12 +79,20 @@ describe("simulationReport", () => {
         lootByKind: { Item: 1, Spell: 0, Currency: 0, Map: 1 },
         rareMonstersSpawned: 2,
         rareMonstersKilled: 1,
+        totalMonstersKilled: 6,
+        packsSpawned: 2,
+        packsCleared: 1,
         guardianSpawned: false,
         guardianKilled: false,
+        hitsTaken: 15,
+        evades: 1,
         damageDealtToPlayer: 400,
         damagePreventedByResistance: 100,
         damagePreventedByArmor: 0,
-        evades: 2,
+        damageDealtByPlayer: 800,
+        critsLanded: 2,
+        spellsCast: 12,
+        finalHealthPercent: 0,
         timeMovingMs: 5_000,
         timeFightingMs: 12_000,
         itemRolls: {
@@ -89,6 +105,20 @@ describe("simulationReport", () => {
       }
     ];
 
+    const characterSnapshot = {
+      maxHealth: 300,
+      armor: 0,
+      evasion: 50,
+      fireResistance: 0.25,
+      coldResistance: 0,
+      lightningResistance: 0,
+      critChance: 0.05,
+      critMultiplier: 1.6,
+      movementSpeedMultiplier: 1.0,
+      castSpeedMultiplier: 1.0,
+      spellPowerMultiplier: 1.0
+    };
+
     const summary = buildSimulationSummary(
       "test-profile",
       "trainingGrounds",
@@ -97,6 +127,7 @@ describe("simulationReport", () => {
       240_000,
       0.45,
       null,
+      characterSnapshot,
       null
     );
 

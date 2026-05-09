@@ -12,7 +12,8 @@ import type {
   SimulationRunOptions,
   SimulationSummary,
   SingleRunSimulationMetrics,
-  ShopSampleSummary
+  ShopSampleSummary,
+  CharacterSnapshot
 } from "./simulationTypes";
 import { getAffixTierRangesForStat, type AffixTier } from "../config/itemAffixConfig";
 
@@ -121,6 +122,7 @@ const runSingleSimulation = (
     Currency: 0,
     Map: 0
   };
+  let flaskUses = 0;
 
   while (
     runtime.timeElapsedMs < maxRunDurationMs &&
@@ -145,11 +147,15 @@ const runSingleSimulation = (
         canUseLifeFlask(runtime.snapshot.player)
       ) {
         runtime = syncRuntimePlayer(runtime, useLifeFlask(runtime.snapshot.player));
+        flaskUses += 1;
       }
     }
   }
 
   const finalPlayer = runtime.snapshot.player;
+  const finalHealthPercent = baselineCharacter.derivedStats.maxHealth > 0
+    ? finalPlayer.currentHealth / finalPlayer.derivedStats.maxHealth
+    : 1;
   const newItems = getNewItems(baselineCharacter.inventory, finalPlayer.inventory);
   const normalItemsDropped = newItems.filter((item) => item.rarity === "Normal").length;
   const magicItemsDropped = newItems.filter((item) => item.rarity === "Magic").length;
@@ -205,12 +211,20 @@ const runSingleSimulation = (
     lootByKind: accumulatedLootByKind,
     rareMonstersSpawned: runtime.telemetry.rareMonstersSpawned,
     rareMonstersKilled: runtime.telemetry.rareMonstersKilled,
+    totalMonstersKilled: runtime.telemetry.totalMonstersKilled,
+    packsSpawned: runtime.telemetry.packsSpawned,
+    packsCleared: runtime.telemetry.packsCleared,
     guardianSpawned: runtime.telemetry.guardianSpawned,
     guardianKilled: runtime.telemetry.guardianKilled,
+    hitsTaken: runtime.telemetry.hitsTaken,
+    evades: runtime.telemetry.evades,
     damageDealtToPlayer: runtime.telemetry.damageDealtToPlayer,
     damagePreventedByResistance: runtime.telemetry.damagePreventedByResistance,
     damagePreventedByArmor: runtime.telemetry.damagePreventedByArmor,
-    evades: runtime.telemetry.evades,
+    damageDealtByPlayer: runtime.telemetry.damageDealtByPlayer,
+    critsLanded: runtime.telemetry.critsLanded,
+    spellsCast: runtime.telemetry.spellsCast,
+    finalHealthPercent,
     timeMovingMs: runtime.telemetry.timeMovingMs,
     timeFightingMs: runtime.telemetry.timeFightingMs,
     itemRolls
@@ -261,6 +275,20 @@ export const simulateMapRuns = (options: SimulationRunOptions): SimulationSummar
       };
     }
 
+    const characterSnapshot: CharacterSnapshot = {
+      maxHealth: baselineCharacter.derivedStats.maxHealth,
+      armor: baselineCharacter.derivedStats.armor,
+      evasion: baselineCharacter.derivedStats.evasion,
+      fireResistance: baselineCharacter.derivedStats.resistances.Fire,
+      coldResistance: baselineCharacter.derivedStats.resistances.Cold,
+      lightningResistance: baselineCharacter.derivedStats.resistances.Lightning,
+      critChance: baselineCharacter.derivedStats.critChance,
+      critMultiplier: baselineCharacter.derivedStats.critMultiplier,
+      movementSpeedMultiplier: baselineCharacter.derivedStats.movementSpeedMultiplier,
+      castSpeedMultiplier: baselineCharacter.derivedStats.castSpeedMultiplier,
+      spellPowerMultiplier: baselineCharacter.derivedStats.spellPowerMultiplier
+    };
+
     const runMetrics = Array.from({ length: options.runs }, (_, index) =>
       runSingleSimulation(
         baselineCharacter,
@@ -280,6 +308,7 @@ export const simulateMapRuns = (options: SimulationRunOptions): SimulationSummar
       maxRunDurationMs,
       autoUseLifeFlaskThreshold,
       options.overrides ?? null,
+      characterSnapshot,
       shop
     );
   } finally {

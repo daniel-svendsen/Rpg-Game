@@ -121,12 +121,18 @@ export interface ArenaRuntimeState {
     rareMonstersSpawned: number;
     rareMonstersKilled: number;
     totalMonstersKilled: number;
+    packsSpawned: number;
+    packsCleared: number;
     guardianSpawned: boolean;
     guardianKilled: boolean;
     damageDealtToPlayer: number;
     damagePreventedByResistance: number;
     damagePreventedByArmor: number;
+    hitsTaken: number;
     evades: number;
+    damageDealtByPlayer: number;
+    critsLanded: number;
+    spellsCast: number;
     timeMovingMs: number;
     timeFightingMs: number;
   };
@@ -774,12 +780,18 @@ export const createArenaRuntime = (
       rareMonstersSpawned: packsResult.rareMonstersSpawned,
       rareMonstersKilled: 0,
       totalMonstersKilled: 0,
+      packsSpawned: packsResult.packs.length,
+      packsCleared: 0,
       guardianSpawned: packsResult.enemies.some((e) => e.isKeyGuardian),
       guardianKilled: false,
       damageDealtToPlayer: 0,
       damagePreventedByResistance: 0,
       damagePreventedByArmor: 0,
+      hitsTaken: 0,
       evades: 0,
+      damageDealtByPlayer: 0,
+      critsLanded: 0,
+      spellsCast: 0,
       timeMovingMs: 0,
       timeFightingMs: 0
     },
@@ -976,6 +988,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
 
     telemetry = {
       ...telemetry,
+      hitsTaken: telemetry.hitsTaken + 1,
       damageDealtToPlayer: telemetry.damageDealtToPlayer + appliedDamage,
       damagePreventedByResistance: telemetry.damagePreventedByResistance + preventedByResistance,
       damagePreventedByArmor: telemetry.damagePreventedByArmor + preventedByArmor
@@ -1042,6 +1055,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
             : [];
 
       if (targetedEnemyIds.length > 0) {
+        telemetry = { ...telemetry, spellsCast: telemetry.spellsCast + 1 };
         const chainPositions = targetedEnemyIds
           .map((id) => sortedEnemies.find((e) => e.id === id))
           .filter((e): e is InternalEnemyState => e !== undefined)
@@ -1064,6 +1078,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
         }
 
         const didCrit = Math.random() < resolvedSpell.critChance;
+        if (didCrit) telemetry = { ...telemetry, critsLanded: telemetry.critsLanded + 1 };
         const baseDamage = didCrit ? Math.round(resolvedSpell.damage * nextPlayer.derivedStats.critMultiplier) : resolvedSpell.damage;
         const relevantResistances = (["Fire", "Cold", "Lightning"] as const)
           .filter((type) => resolvedSpell.tags.includes(type))
@@ -1071,6 +1086,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
         const appliedResistance =
           relevantResistances.length > 0 ? Math.max(...relevantResistances) : 0;
         const totalDamage = applyResistanceToDamage(baseDamage, appliedResistance);
+        telemetry = { ...telemetry, damageDealtByPlayer: telemetry.damageDealtByPlayer + totalDamage };
         const remainingHealth = enemy.health - totalDamage;
 
         floatingTexts.push({
@@ -1136,7 +1152,12 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   }
 
   const alivePackIdsAfter = getAlivePackIds(nextEnemies);
-  const clearedAnyPack = [...alivePackIdsBefore].some((packId) => !alivePackIdsAfter.has(packId));
+  const clearedPackCount = [...alivePackIdsBefore].filter((packId) => !alivePackIdsAfter.has(packId)).length;
+  const clearedAnyPack = clearedPackCount > 0;
+
+  if (clearedPackCount > 0) {
+    telemetry = { ...telemetry, packsCleared: telemetry.packsCleared + clearedPackCount };
+  }
 
   if (autoMove.enabled && clearedAnyPack) {
     autoMove = {
