@@ -10,6 +10,8 @@ import com.example.arpg.user.UserAccountEntity;
 import com.example.arpg.user.UserAccountRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -231,5 +236,38 @@ class AuthFlowIntegrationTest {
                 .andExpect(jsonPath("$.message").value("Please correct the highlighted fields."))
                 .andExpect(jsonPath("$.fieldErrors.email").value("Enter a valid email address."))
                 .andExpect(jsonPath("$.fieldErrors.password").value("Password must be between 8 and 100 characters."));
+    }
+
+    @Test
+    void registrationSucceedsEvenWhenExpiredTokenSentInHeader() throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + buildExpiredToken("stale@example.com"))
+                        .content("""
+                                {
+                                  "email": "new@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isString());
+    }
+
+    @Test
+    void expiredTokenOnProtectedEndpointReturnsForbiddenNotServerError() throws Exception {
+        mockMvc.perform(get("/api/characters/me")
+                        .header("Authorization", "Bearer " + buildExpiredToken("stale@example.com")))
+                .andExpect(status().isForbidden());
+    }
+
+    private String buildExpiredToken(String email) {
+        Instant past = Instant.now().minusSeconds(3600);
+        byte[] keyBytes = "change-this-secret-before-production".getBytes(StandardCharsets.UTF_8);
+        return Jwts.builder()
+                .subject(email)
+                .issuedAt(Date.from(past.minusSeconds(86400)))
+                .expiration(Date.from(past))
+                .signWith(Keys.hmacShaKeyFor(keyBytes))
+                .compact();
     }
 }
