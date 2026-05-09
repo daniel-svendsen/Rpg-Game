@@ -257,6 +257,7 @@ const benchmarkWeaponSpellPower =  [0,    0.03, 0.03, 0.06, 0.08, 0.11, 0.14, 0.
 const benchmarkWeaponCrit       =  [0,    0,    0,    0,    0,    0.01, 0.015,0.022,0.030,0.038];
 const benchmarkBootsColdRes     =  [0,    0,    0.06, 0.11, 0.15, 0.21, 0.28, 0.40, 0.50, 0.58];
 const benchmarkBootsMoveBonus   =  [0,    0,    0,    0,    0,    0.02, 0.03, 0.04, 0.05, 0.06];
+const benchmarkBodyArmor        =  [0,    0,    0,    0,    35,   60,   95,   140,  185,  235];
 const benchmarkBodyFireRes      =  [0,    0,    0,    0,    0.07, 0.13, 0.20, 0.33, 0.43, 0.52];
 const benchmarkBodyMaxHealth    =  [0,    0,    0,    0,    0,    25,   55,   110,  160,  210];
 const benchmarkHelmLightRes     =  [0,    0,    0,    0,    0,    0,    0.14, 0.28, 0.38, 0.46];
@@ -301,11 +302,11 @@ const createBenchmarkEquippedItemsForTier = (tier: number): CharacterRecord["equ
     });
   }
 
-  // Body armor: from tier 4
+  // Body armor: from tier 4 — uses armor (not evasion) to validate armor mitigation formula
   if (t >= 4) {
     const armorRarity: ItemRarity = t >= 6 ? "Rare" : t >= 5 ? "Magic" : "Normal";
-    items.BodyArmor = benchmarkItem("bm-body", "Stalwart Leather Tunic", "BodyArmor", armorRarity, t, ["Physical"], {
-      evasion: 44,
+    items.BodyArmor = benchmarkItem("bm-body", "Stalwart Iron Plate", "BodyArmor", armorRarity, t, ["Physical"], {
+      armor: benchmarkBodyArmor[t],
       ...(benchmarkBodyMaxHealth[t] > 0 ? { maxHealth: benchmarkBodyMaxHealth[t] } : {}),
       ...(benchmarkBodyFireRes[t] > 0 ? { fireResistance: benchmarkBodyFireRes[t] } : {})
     });

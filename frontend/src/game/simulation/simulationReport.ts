@@ -228,6 +228,16 @@ export const formatSimulationSummary = (summary: SimulationSummary): string => {
 
   const cs = summary.characterSnapshot;
   const ir = summary.itemRolls;
+  const avg = summary.averages;
+
+  const avgNormal = avg.normalItemsDropped;
+  const avgMagic = avg.magicItemsDropped;
+  const avgRare = avg.rareItemsDropped;
+  const avgExc = avg.exceptionalRareItemsDropped;
+  const avgUnique = avg.uniqueItemsDropped;
+  const avgTotalItems = avgNormal + avgMagic + avgRare + avgUnique;
+  const itemPct = (n: number): string =>
+    avgTotalItems > 0 ? ` (${((n / avgTotalItems) * 100).toFixed(1)}%)` : "";
 
   const bySlotText = Object.entries(ir.bySlot)
     .sort(([, a], [, b]) => (b ?? 0) - (a ?? 0))
@@ -262,17 +272,17 @@ export const formatSimulationSummary = (summary: SimulationSummary): string => {
     `- Crit: ${formatPercent(cs.critChance)} chance / ${cs.critMultiplier.toFixed(2)}x multiplier`,
     `- Speed: move ${cs.movementSpeedMultiplier.toFixed(2)}x  cast ${cs.castSpeedMultiplier.toFixed(2)}x  spell power ${cs.spellPowerMultiplier.toFixed(2)}x`,
     "",
-    `Completion rate: ${formatPercent(summary.averages.completionRate)}`,
-    `Death rate: ${formatPercent(summary.averages.deathRate)}`,
-    `Timeout rate: ${formatPercent(summary.averages.timeoutRate)}`,
-    `Average run time: ${formatNumber(summary.averages.durationSeconds)}s`,
-    `Avg health on completion: ${formatPercent(summary.averages.finalHealthPercent)}`,
+    `Completion rate: ${formatPercent(avg.completionRate)}`,
+    `Death rate: ${formatPercent(avg.deathRate)}`,
+    `Timeout rate: ${formatPercent(avg.timeoutRate)}`,
+    `Average run time: ${formatNumber(avg.durationSeconds)}s`,
+    `Avg health on completion: ${formatPercent(avg.finalHealthPercent)}`,
     "",
     "Economy (avg per run):",
-    `- Gold: ${formatNumber(summary.averages.goldGained)}`,
-    `- Map shards: ${formatNumber(summary.averages.mapShardsGained)}`,
-    `- Imbuing orbs: ${formatNumber(summary.averages.imbuingOrbsGained)}`,
-    `- Maps: ${formatNumber(summary.averages.mapsGained)} (sustain)  Boss keys: ${formatNumber(summary.averages.bossKeysGained)}`,
+    `- Gold: ${formatNumber(avg.goldGained)}`,
+    `- Map shards: ${formatNumber(avg.mapShardsGained)}`,
+    `- Imbuing orbs: ${formatNumber(avg.imbuingOrbsGained)}`,
+    `- Maps: ${formatNumber(avg.mapsGained)} (sustain)  Boss keys: ${formatNumber(avg.bossKeysGained)}`,
     `- Map drop rate: ${formatPercent(1 - summary.sustain.zeroMapRunRate)} (0-map runs: ${formatPercent(summary.sustain.zeroMapRunRate)}, expected streak: ${
       Number.isFinite(summary.sustain.expectedZeroMapRunsBeforeDrop)
         ? formatNumber(summary.sustain.expectedZeroMapRunsBeforeDrop)
@@ -280,30 +290,33 @@ export const formatSimulationSummary = (summary: SimulationSummary): string => {
     })`,
     "",
     "Kills (avg per run):",
-    `- Total: ${formatNumber(summary.averages.totalMonstersKilled)}  Rares: ${formatNumber(summary.averages.rareMonstersKilled)}/${formatNumber(summary.averages.rareMonstersSpawned)}`,
-    `- Packs: ${formatNumber(summary.averages.packsCleared)}/${formatNumber(summary.averages.packsSpawned)} cleared`,
-    `- Guardian: ${formatPercent(summary.averages.guardianSpawnRate)} spawn  ${formatPercent(summary.averages.guardianKillRate)} killed`,
+    `- Total: ${formatNumber(avg.totalMonstersKilled)}  Rares: ${formatNumber(avg.rareMonstersKilled)}/${formatNumber(avg.rareMonstersSpawned)}`,
+    `- Packs: ${formatNumber(avg.packsCleared)}/${formatNumber(avg.packsSpawned)} cleared`,
+    `- Guardian: ${formatPercent(avg.guardianSpawnRate)} spawn  ${formatPercent(avg.guardianKillRate)} killed`,
     "",
     "Time (avg per run):",
-    `- Moving: ${formatNumber(summary.averages.timeMovingSeconds)}s  Fighting: ${formatNumber(summary.averages.timeFightingSeconds)}s`,
+    `- Moving: ${formatNumber(avg.timeMovingSeconds)}s  Fighting: ${formatNumber(avg.timeFightingSeconds)}s`,
     "",
     "Offense (avg per run):",
-    `- Spells cast: ${formatNumber(summary.averages.spellsCast)}`,
-    `- Damage dealt: ${formatNumber(summary.averages.damageDealtByPlayer)}  Avg/spell: ${formatNumber(summary.averages.avgDamagePerSpell)}`,
-    `- Crits: ${formatNumber(summary.averages.critsLanded)} (${formatPercent(summary.averages.critRate)} of casts)`,
+    `- Spells cast: ${formatNumber(avg.spellsCast)}`,
+    `- Damage dealt: ${formatNumber(avg.damageDealtByPlayer)}  Avg/spell: ${formatNumber(avg.avgDamagePerSpell)}`,
+    `- Crits: ${formatNumber(avg.critsLanded)} (${formatPercent(avg.critRate)} of casts)`,
     "",
     "Defense (avg per run):",
-    `- Hits taken: ${formatNumber(summary.averages.hitsTaken)}  Evades: ${formatNumber(summary.averages.evades)} (${formatPercent(summary.averages.evadeRate)} evade rate)`,
-    `- Damage dealt to player: ${formatNumber(summary.averages.damageDealtToPlayer)}`,
-    `- Prevented by resistance: ${formatNumber(summary.averages.damagePreventedByResistance)}`,
-    `- Prevented by armor: ${formatNumber(summary.averages.damagePreventedByArmor)}`,
+    `- Hits taken: ${formatNumber(avg.hitsTaken)}  Evades: ${formatNumber(avg.evades)} (${formatPercent(avg.evadeRate)} evade rate)`,
+    `- Damage dealt to player: ${formatNumber(avg.damageDealtToPlayer)}`,
+    `- Prevented by resistance: ${formatNumber(avg.damagePreventedByResistance)}`,
+    `- Prevented by armor: ${formatNumber(avg.damagePreventedByArmor)}`,
     "",
-    "Item drops (avg per run):",
-    `- Normal: ${formatNumber(summary.averages.normalItemsDropped)}  Magic: ${formatNumber(summary.averages.magicItemsDropped)}  Rare: ${formatNumber(summary.averages.rareItemsDropped)}`,
-    `- Exceptional rare: ${formatNumber(summary.averages.exceptionalRareItemsDropped)}  Unique: ${formatNumber(summary.averages.uniqueItemsDropped)} (T1: ${formatNumber(summary.averages.uniqueTier1ItemsDropped)}, T2: ${formatNumber(summary.averages.uniqueTier2ItemsDropped)}, T3: ${formatNumber(summary.averages.uniqueTier3ItemsDropped)})`,
-    `- Spells: ${formatNumber(summary.averages.spellDrops)}  Maps: ${formatNumber(summary.totals.lootByKind.Map / Math.max(1, summary.runs))}  Currency pickups: ${formatNumber(summary.totals.lootByKind.Currency / Math.max(1, summary.runs))}`,
+    `Item drops (avg per run, ${formatNumber(avgTotalItems)} items/run):`,
+    `- Normal:      ${formatNumber(avgNormal)}${itemPct(avgNormal)}`,
+    `- Magic:       ${formatNumber(avgMagic)}${itemPct(avgMagic)}`,
+    `- Rare:        ${formatNumber(avgRare)}${itemPct(avgRare)}`,
+    `- Exceptional: ${formatNumber(avgExc)}${itemPct(avgExc)}`,
+    `- Unique:      ${formatNumber(avgUnique)}${itemPct(avgUnique)} (T1: ${formatNumber(avg.uniqueTier1ItemsDropped)}, T2: ${formatNumber(avg.uniqueTier2ItemsDropped)}, T3: ${formatNumber(avg.uniqueTier3ItemsDropped)})`,
+    `- Spells: ${formatNumber(avg.spellDrops)}  Maps: ${formatNumber(summary.totals.lootByKind.Map / Math.max(1, summary.runs))}  Currency pickups: ${formatNumber(summary.totals.lootByKind.Currency / Math.max(1, summary.runs))}`,
     "",
-    `Item rolls (${ir.itemsDropped} items total):`,
+    `Item rolls (${ir.itemsDropped} items total across all runs):`,
     `- By rarity: ${Object.entries(ir.byRarity).map(([k, v]) => `${k}=${v}`).join(", ") || "none"}`,
     `- By slot:   ${bySlotText}`,
     `- Top stats: ${Object.entries(ir.byStatKey).sort(([, a], [, b]) => (b ?? 0) - (a ?? 0)).slice(0, 12).map(([k, v]) => `${k}=${v}`).join(", ") || "none"}`,
