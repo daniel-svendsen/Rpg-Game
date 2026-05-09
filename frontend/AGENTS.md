@@ -40,6 +40,9 @@
 - When adding spell, support, or unique-item behavior, consider whether it will later need a visual signal.
 - Prefer semantic visual hooks over renderer-specific implementation details.
 - Keep balance values centralized.
+- When adding a new monster type, add a matching entry to `frontend/src/game/phaser/spriteConfig.ts` so it gets a sprite. The fallback renders goblin if the entry is missing.
+- When adding a new spell, its visual is driven by tags in `spellConfig.ts` — no ArenaScene changes are needed unless the spell requires a new visual style. See `docs/VISUALS.md`.
+- `frontend/src/game/phaser/spriteConfig.ts` is the single file to change for visual assignments (sprite names, frame sizes, FX animation mappings). Do not scatter visual configuration elsewhere.
 - Keep drop rates, map progression, item generation, spell behavior, and progression rules data-driven where practical.
 - Keep spell behavior modular and not tightly coupled to rendering.
 - Support spells should modify main spells through reusable rules, not custom per-spell hacks.

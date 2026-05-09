@@ -7,6 +7,7 @@ This folder collects longer-form project documentation that would otherwise bloa
 - [Command Reference](COMMANDS.md)
 - [Engineering Notes](ENGINEERING_NOTES.md)
 - [Ideas Backlog](IDEAS_BACKLOG.md)
+- [Visual System Guide](VISUALS.md)
 
 Notes:
 

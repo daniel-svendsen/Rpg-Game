@@ -74,7 +74,8 @@ export const useArenaSession = ({
         setRecentLoot((current) => [...runtime.snapshot.lootEvents, ...current].slice(0, 20));
       }
 
-      if (shouldSyncArenaSnapshot(timestamp, lastSnapshotUpdateAt) || runtime.snapshot.isComplete) {
+      const hasSpellEvents = runtime.snapshot.spellEvents.length > 0;
+      if (hasSpellEvents || shouldSyncArenaSnapshot(timestamp, lastSnapshotUpdateAt) || runtime.snapshot.isComplete) {
         setArenaSnapshot(runtime.snapshot);
         lastSnapshotUpdateAt = timestamp;
       }

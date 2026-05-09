@@ -384,6 +384,7 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 - [x] Break roadmap work into smaller phase checklists when that improves continuity and portfolio readability.
 - [x] Keep roadmap/checklist status updated when implementation changes project status.
 - [x] Start larger tasks with a short brainstorming / impact-check step before coding.
+- [x] Add a visual system guide documenting how to add new monster sprites and spell effects (`docs/VISUALS.md`).
 
 ### UX and feedback
 
@@ -442,7 +443,14 @@ Partially implemented (needs follow-through):
   - equipment and affixes can now grant armor, evasion, and elemental resistances
   - character UI now exposes the new defense stats for visibility during tuning
   - physical mitigation via armor/evasion and a derived crit multiplier still need fuller combat-math follow-through
-- Phaser map readability: a simple moving grid background exists to make movement obvious, but world/loot visuals are still intentionally minimal.
+- Phaser visuals (first pass, out-of-phase early delivery):
+  - All monsters now render with real 0x72 DungeonTileset II idle sprite animations, each mapped to a named spriteName in `frontend/src/game/phaser/spriteConfig.ts`.
+  - Player character renders as an animated wizard sprite (wizzard_m) with camera follow.
+  - Spell effects use the Gizmo Effect pack spritesheet (32×32): fire, electric, and ice animations routed per spell tags.
+  - Three visual animation types: `animateLightningChain` (jagged bolt hopping between enemies), `animateProjectileLance` (straight beam), `animateAreaExplosion` (ring + impact sprite at radius).
+  - `SpellVisualEvent` added to `ArenaSnapshot`; domain emits one event per cast; Phaser processes each event exactly once via `processedSpellEventIds`.
+  - Snapshot throttle in `useArenaSession` bypassed when spell events are present so no cast is silently dropped.
+  - `docs/VISUALS.md` documents the full process for adding new monster sprites and spell visual types.
 
 Still planned (next major domain work):
 

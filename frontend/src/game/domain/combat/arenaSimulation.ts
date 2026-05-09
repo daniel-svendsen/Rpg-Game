@@ -32,7 +32,8 @@ import type {
   LootEntry,
   MapEnhancementInstance,
   MonsterRarity,
-  DamageType
+  DamageType,
+  SpellVisualEvent
 } from "../../../shared/types/saveTypes";
 
 const bossUniqueIds = {
@@ -88,6 +89,7 @@ interface MonsterPackState {
 
 interface InternalEnemyState extends ArenaEnemyState {
   packId: PackId;
+  monsterTypeId: string;
   damage: number;
   damageType: DamageType;
   movementSpeed: number;
@@ -254,6 +256,7 @@ const createEnemy = (
   return {
     id: `${monsterDefinition.id}-${createClientId()}`,
     packId,
+    monsterTypeId: monsterDefinition.id,
     x,
     y,
     health: maxHealth,
@@ -732,10 +735,13 @@ export const createArenaRuntime = (
         y: enemy.y,
         health: enemy.health,
         maxHealth: enemy.maxHealth,
-        rarity: enemy.rarity
+        rarity: enemy.rarity,
+        monsterTypeId: enemy.monsterTypeId,
+        damageType: enemy.damageType
       })),
       floatingTexts: [],
       lootEvents: [],
+      spellEvents: [],
       groundLoot: [],
       isComplete: packsResult.enemies.length === 0
     },
@@ -765,6 +771,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   let nextGroundLoot = [...state.groundLoot];
   const floatingTexts: FloatingTextState[] = [];
   const lootEvents: LootEntry[] = [];
+  const spellEvents: SpellVisualEvent[] = [];
   let lastCastAtMs = state.lastCastAtMs;
   let lastPlayerDamageAtMs = state.lastPlayerDamageAtMs;
   const mapTier = state.mapTier;
@@ -976,6 +983,23 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
               )
             : [];
 
+      if (targetedEnemyIds.length > 0) {
+        const chainPositions = targetedEnemyIds
+          .map((id) => sortedEnemies.find((e) => e.id === id))
+          .filter((e): e is InternalEnemyState => e !== undefined)
+          .map((e) => ({ x: e.x, y: e.y }));
+
+        spellEvents.push({
+          id: `spell-${resolvedSpell.id}-${nextTime}`,
+          spellId: resolvedSpell.id,
+          tags: resolvedSpell.tags,
+          originX: playerX,
+          originY: playerY,
+          chainPositions,
+          areaRadius: resolvedSpell.areaRadius
+        });
+      }
+
       nextEnemies = nextEnemies.flatMap((enemy) => {
         if (!targetedEnemyIds.includes(enemy.id)) {
           return [enemy];
@@ -1122,10 +1146,13 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
       y: enemy.y,
       health: enemy.health,
       maxHealth: enemy.maxHealth,
-      rarity: enemy.rarity
+      rarity: enemy.rarity,
+      monsterTypeId: enemy.monsterTypeId,
+      damageType: enemy.damageType
     })),
     floatingTexts,
     lootEvents,
+    spellEvents,
     groundLoot: nextGroundLoot.map((entry) => {
       const kind = entry.payload.kind;
       const name =

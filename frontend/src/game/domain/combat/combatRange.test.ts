@@ -69,7 +69,9 @@ describe("arenaSimulation combat ranges", () => {
             y: rangedEnemy.y,
             health: rangedEnemy.health,
             maxHealth: rangedEnemy.maxHealth,
-            rarity: rangedEnemy.rarity
+            rarity: rangedEnemy.rarity,
+            monsterTypeId: rangedEnemy.monsterTypeId,
+            damageType: rangedEnemy.damageType
           }
         ]
       }
@@ -110,7 +112,9 @@ describe("arenaSimulation combat ranges", () => {
             y: edgeEnemy.y,
             health: edgeEnemy.health,
             maxHealth: edgeEnemy.maxHealth,
-            rarity: edgeEnemy.rarity
+            rarity: edgeEnemy.rarity,
+            monsterTypeId: edgeEnemy.monsterTypeId,
+            damageType: edgeEnemy.damageType
           }
         ]
       }

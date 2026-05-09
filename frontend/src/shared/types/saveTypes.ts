@@ -176,6 +176,18 @@ export interface ArenaEnemyState {
   health: number;
   maxHealth: number;
   rarity: MonsterRarity;
+  monsterTypeId: string;
+  damageType: DamageType;
+}
+
+export interface SpellVisualEvent {
+  id: string;
+  spellId: string;
+  tags: string[];
+  originX: number;
+  originY: number;
+  chainPositions: Array<{ x: number; y: number }>;
+  areaRadius: number;
 }
 
 export interface FloatingTextState {
@@ -202,5 +214,6 @@ export interface ArenaSnapshot {
     y: number;
     name: string;
   }>;
+  spellEvents: SpellVisualEvent[];
   isComplete: boolean;
 }
