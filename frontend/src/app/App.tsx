@@ -94,6 +94,7 @@ export const App = () => {
   const selectedMapEnhancements = selectedMapEntry?.enhancements ?? [];
   const {
     handleConvertShardsToMaps,
+    handleCraftMapAtTier,
     handleEnhanceSelectedMap,
     handleRunAllMaps,
     handleStartBossTier,
@@ -390,6 +391,7 @@ export const App = () => {
         onBuyShopItem={handleBuyShopItem}
         onCloseOverlay={() => setOverlayPanel(null)}
         onConvertShardsToMaps={handleConvertShardsToMaps}
+        onCraftMapAtTier={handleCraftMapAtTier}
         onEnhanceSelectedMap={handleEnhanceSelectedMap}
         onEquipItem={handleEquipItem}
         onLogout={handleLogout}

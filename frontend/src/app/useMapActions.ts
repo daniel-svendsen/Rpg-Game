@@ -223,6 +223,32 @@ export const useMapActions = ({
     );
   };
 
+  const handleCraftMapAtTier = (tier: number): void => {
+    if (!character) {
+      return;
+    }
+
+    const shardCost = balanceConfig.mapCrafting.shardCraftCostPerTier * tier;
+    const currentShards = getCurrencyAmount(character, "mapShard");
+
+    if (tier > character.mapProgress.highestUnlockedTier) {
+      setErrorMessage(`Tier ${tier} maps are locked. Defeat the Tier ${tier} boss first.`);
+      return;
+    }
+
+    if (currentShards < shardCost) {
+      setErrorMessage(`You need ${shardCost} Map Shards to craft a Tier ${tier} map.`);
+      return;
+    }
+
+    let nextCharacter = updateCurrency(character, "mapShard", -shardCost);
+    nextCharacter = addOwnedMap(nextCharacter, `tier${tier}Map`, tier);
+
+    commitCharacter(nextCharacter);
+    void persistCharacterNow(nextCharacter, "Map crafting save failed. Try saving manually before refreshing.");
+    setStatusMessage(`Crafted 1 Tier ${tier} map.`);
+  };
+
   const handleConvertShardsToMaps = (): void => {
     if (!character) {
       return;
@@ -259,6 +285,7 @@ export const useMapActions = ({
     handleRunAllMaps,
     handleStartBossTier,
     handleEnhanceSelectedMap,
+    handleCraftMapAtTier,
     handleConvertShardsToMaps
   };
 };

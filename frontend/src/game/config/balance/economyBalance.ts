@@ -17,6 +17,7 @@ export const economyBalance = {
   },
   mapCrafting: {
     combineShardsCost: 5,
+    shardCraftCostPerTier: 5,
     maxEnhancementsPerMap: 3,
     enhancementShardCosts: [3, 5, 7] as const
   }

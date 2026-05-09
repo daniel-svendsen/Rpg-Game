@@ -370,7 +370,7 @@ Success criteria:
 
 ## Next Recommended Step
 
-- Combat math follow-through is complete (armor/evasion mitigation active in sim, crit multiplier is a derived stat). Balance pass T1–T9 documented. Next candidates: shard tier upgrade feature (hub UX — spend more shards to stay at the same map tier), or Phase 3 UI readability work (item comparison simplification, mobile overflow fixes).
+- Shard tier upgrade implemented: selecting a Tier N map now shows a "Craft 1 Tier N map (N×5 shards)" button in Map Crafting. Next candidates: Phase 3 UI readability work (item comparison simplification, mobile overflow fixes) or declaring Phase 2 accepted and beginning Phase 3.
 
 ## Planned Workstreams
 
@@ -466,7 +466,5 @@ Implemented (continued):
   - `docs/VISUALS.md` documents the full process for adding new monster sprites and spell visual types.
 
 Still planned (next major domain work):
-
-- Shard tier upgrade: when a Tier N map is selected in the hub, allow spending extra shards to get a same-tier map at higher cost than downgrading to Tier N-1.
 - Item stat roll UI: expose roll distributions to players (min/max per stat, tier label on item card).
 - Expand boss rewards into tier-specific unique pools, stronger crafting materials, and a fuller long-term chase structure.

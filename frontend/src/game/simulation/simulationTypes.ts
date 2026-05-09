@@ -1,4 +1,4 @@
-import type { CharacterRecord, DerivedStats, LootEntry, ItemSlot, InventoryItem } from "../../shared/types/saveTypes";
+import type { CharacterRecord, LootEntry, ItemSlot, InventoryItem } from "../../shared/types/saveTypes";
 
 export interface SimulationBalanceOverrides {
   enemyBaseHealthMultiplier?: number;

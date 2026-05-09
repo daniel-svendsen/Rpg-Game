@@ -28,6 +28,7 @@ interface MapsTabProps {
   onEnhanceSelectedMap: () => void;
   onSelectMap: (target: SelectedMapTarget) => void;
   onConvertShardsToMaps: () => void;
+  onCraftMapAtTier: (tier: number) => void;
 }
 
 export const MapsTab = ({
@@ -47,13 +48,17 @@ export const MapsTab = ({
   onRunAllMaps,
   onEnhanceSelectedMap,
   onSelectMap,
-  onConvertShardsToMaps
+  onConvertShardsToMaps,
+  onCraftMapAtTier
 }: MapsTabProps) => {
   const selectedMap = mapConfig[selectedMapId];
   const consumableMapEntries = character?.mapProgress.consumableMaps ?? [];
   const highestUnlockedTier = character?.mapProgress.highestUnlockedTier ?? 1;
   const selectedTier = selectedMap?.tier ?? 0;
   const isSelectedMapLocked = selectedMapTarget !== "trainingGrounds" && selectedTier > highestUnlockedTier;
+  const craftTier = selectedMapTarget !== "trainingGrounds" ? selectedTier : 0;
+  const craftCost = craftTier > 0 ? balanceConfig.mapCrafting.shardCraftCostPerTier * craftTier : 0;
+  const canAffordCraft = craftTier > 0 && mapShardAmount >= craftCost;
   const selectedResolvedMap = resolveMapInstance(selectedMap, selectedMapEnhancements);
   const nextEnhancementCost =
     selectedMapTarget !== "trainingGrounds" && selectedMapEntry
@@ -149,6 +154,15 @@ export const MapsTab = ({
         <button className="secondary-button" onClick={onConvertShardsToMaps}>
           Combine {balanceConfig.mapCrafting.combineShardsCost} shards into maps
         </button>
+        {craftTier > 0 ? (
+          <button
+            className="secondary-button"
+            disabled={!canAffordCraft || isSelectedMapLocked}
+            onClick={() => onCraftMapAtTier(craftTier)}
+          >
+            Craft 1 Tier {craftTier} map ({craftCost} shards)
+          </button>
+        ) : null}
       </section>
     </div>
   );

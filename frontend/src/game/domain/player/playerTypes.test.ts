@@ -71,6 +71,7 @@ describe("playerTypes", () => {
           Lightning: 0
         },
         critChance: 0,
+        critMultiplier: 1.6,
         spellPowerMultiplier: 1
       },
       equippedItems: {

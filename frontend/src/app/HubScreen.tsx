@@ -61,6 +61,7 @@ interface HubScreenProps {
   onBuyShopItem: (itemId: string) => void;
   onCloseOverlay: () => void;
   onConvertShardsToMaps: () => void;
+  onCraftMapAtTier: (tier: number) => void;
   onEnhanceSelectedMap: () => void;
   onEquipItem: (itemId: string, targetSlotOverride?: EquipmentSlot) => void;
   onLogout: () => void;
@@ -101,6 +102,7 @@ export const HubScreen = ({
   onBuyShopItem,
   onCloseOverlay,
   onConvertShardsToMaps,
+  onCraftMapAtTier,
   onEnhanceSelectedMap,
   onEquipItem,
   onLogout,
@@ -196,6 +198,7 @@ export const HubScreen = ({
           onEnhanceSelectedMap={onEnhanceSelectedMap}
           onSelectMap={onSelectMap}
           onConvertShardsToMaps={onConvertShardsToMaps}
+          onCraftMapAtTier={onCraftMapAtTier}
         />
       ) : null}
       {hubTab === "boss" ? (
