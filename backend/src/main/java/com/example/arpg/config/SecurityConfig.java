@@ -1,6 +1,7 @@
 package com.example.arpg.config;
 
 import com.example.arpg.security.JwtAuthenticationFilter;
+import com.example.arpg.security.JwtService;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -52,9 +53,12 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain applicationSecurityFilterChain(
             HttpSecurity httpSecurity,
-            JwtAuthenticationFilter jwtAuthenticationFilter,
+            JwtService jwtService,
+            UserDetailsService userDetailsService,
             AuthenticationProvider authenticationProvider
     ) throws Exception {
+        JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtService, userDetailsService);
+
         httpSecurity
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
