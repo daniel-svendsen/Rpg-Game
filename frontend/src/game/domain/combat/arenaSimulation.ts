@@ -121,6 +121,14 @@ export interface ArenaRuntimeState {
     rareMonstersSpawned: number;
     rareMonstersKilled: number;
     totalMonstersKilled: number;
+    guardianSpawned: boolean;
+    guardianKilled: boolean;
+    damageDealtToPlayer: number;
+    damagePreventedByResistance: number;
+    damagePreventedByArmor: number;
+    evades: number;
+    timeMovingMs: number;
+    timeFightingMs: number;
   };
   lastCastAtMs: number;
   lastPlayerDamageAtMs: number;
@@ -765,7 +773,15 @@ export const createArenaRuntime = (
     telemetry: {
       rareMonstersSpawned: packsResult.rareMonstersSpawned,
       rareMonstersKilled: 0,
-      totalMonstersKilled: 0
+      totalMonstersKilled: 0,
+      guardianSpawned: packsResult.enemies.some((e) => e.isKeyGuardian),
+      guardianKilled: false,
+      damageDealtToPlayer: 0,
+      damagePreventedByResistance: 0,
+      damagePreventedByArmor: 0,
+      evades: 0,
+      timeMovingMs: 0,
+      timeFightingMs: 0
     },
     lastCastAtMs: -999_999,
     lastPlayerDamageAtMs: -999_999,
@@ -861,11 +877,20 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
               const length = Math.max(1, Math.hypot(directionX, directionY));
               playerX = clamp(playerX + (directionX / length) * movement, 40, ARENA_WIDTH - 40);
               playerY = clamp(playerY + (directionY / length) * movement, 40, ARENA_HEIGHT - 40);
+              telemetry = { ...telemetry, timeMovingMs: telemetry.timeMovingMs + deltaMs };
             }
           }
         }
       }
     }
+  }
+
+  // Track combat time: any tick where at least one enemy is within aggro range.
+  const anyEnemyInRange = nextEnemies.some(
+    (e) => distance(e.x, e.y, playerX, playerY) <= balanceConfig.combat.enemyContactRange * 3
+  );
+  if (anyEnemyInRange) {
+    telemetry = { ...telemetry, timeFightingMs: telemetry.timeFightingMs + deltaMs };
   }
 
   // Ground loot pickup (domain-validated).
@@ -932,10 +957,18 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
       enemy.damageType === "Physical"
         ? 0
         : clampPlayerResistance(nextPlayer.derivedStats.resistances[enemy.damageType]);
-    const appliedDamage =
+    const afterResistance =
       enemy.damageType === "Physical"
         ? baseContactDamage
         : applyResistanceToDamage(baseContactDamage, resistance);
+    const appliedDamage = afterResistance;
+    const preventedByResistance = baseContactDamage - afterResistance;
+
+    telemetry = {
+      ...telemetry,
+      damageDealtToPlayer: telemetry.damageDealtToPlayer + appliedDamage,
+      damagePreventedByResistance: telemetry.damagePreventedByResistance + preventedByResistance
+    };
 
     nextPlayer = {
       ...nextPlayer,
@@ -1059,8 +1092,8 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
         telemetry = {
           ...telemetry,
           totalMonstersKilled: telemetry.totalMonstersKilled + 1,
-          rareMonstersKilled:
-            telemetry.rareMonstersKilled + (enemy.rarity === "Rare" ? 1 : 0)
+          rareMonstersKilled: telemetry.rareMonstersKilled + (enemy.rarity === "Rare" ? 1 : 0),
+          guardianKilled: telemetry.guardianKilled || enemy.isKeyGuardian
         };
 
         if (enemy.isKeyGuardian) {

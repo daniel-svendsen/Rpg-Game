@@ -151,6 +151,8 @@ const runSingleSimulation = (
 
   const finalPlayer = runtime.snapshot.player;
   const newItems = getNewItems(baselineCharacter.inventory, finalPlayer.inventory);
+  const normalItemsDropped = newItems.filter((item) => item.rarity === "Normal").length;
+  const magicItemsDropped = newItems.filter((item) => item.rarity === "Magic").length;
   const rareItemsDropped = newItems.filter((item) => item.rarity === "Rare").length;
   const exceptionalRareItemsDropped = newItems.filter((item) => isExceptionalRare(item)).length;
   const uniqueItemsDropped = newItems.filter((item) => item.rarity === "Unique").length;
@@ -191,6 +193,8 @@ const runSingleSimulation = (
     imbuingOrbsGained,
     mapsGained,
     bossKeysGained,
+    normalItemsDropped,
+    magicItemsDropped,
     rareItemsDropped,
     exceptionalRareItemsDropped,
     uniqueItemsDropped,
@@ -201,6 +205,14 @@ const runSingleSimulation = (
     lootByKind: accumulatedLootByKind,
     rareMonstersSpawned: runtime.telemetry.rareMonstersSpawned,
     rareMonstersKilled: runtime.telemetry.rareMonstersKilled,
+    guardianSpawned: runtime.telemetry.guardianSpawned,
+    guardianKilled: runtime.telemetry.guardianKilled,
+    damageDealtToPlayer: runtime.telemetry.damageDealtToPlayer,
+    damagePreventedByResistance: runtime.telemetry.damagePreventedByResistance,
+    damagePreventedByArmor: runtime.telemetry.damagePreventedByArmor,
+    evades: runtime.telemetry.evades,
+    timeMovingMs: runtime.telemetry.timeMovingMs,
+    timeFightingMs: runtime.telemetry.timeFightingMs,
     itemRolls
   };
 };

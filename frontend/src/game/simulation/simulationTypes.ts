@@ -25,6 +25,8 @@ export interface SingleRunSimulationMetrics {
   imbuingOrbsGained: number;
   mapsGained: number;
   bossKeysGained: number;
+  normalItemsDropped: number;
+  magicItemsDropped: number;
   rareItemsDropped: number;
   exceptionalRareItemsDropped: number;
   uniqueItemsDropped: number;
@@ -35,6 +37,14 @@ export interface SingleRunSimulationMetrics {
   lootByKind: Record<LootEntry["kind"], number>;
   rareMonstersSpawned: number;
   rareMonstersKilled: number;
+  guardianSpawned: boolean;
+  guardianKilled: boolean;
+  damageDealtToPlayer: number;
+  damagePreventedByResistance: number;
+  damagePreventedByArmor: number;
+  evades: number;
+  timeMovingMs: number;
+  timeFightingMs: number;
   itemRolls: ItemRollMetrics;
 }
 
@@ -96,6 +106,8 @@ export interface SimulationSummary {
     imbuingOrbsGained: number;
     mapsGained: number;
     bossKeysGained: number;
+    normalItemsDropped: number;
+    magicItemsDropped: number;
     rareItemsDropped: number;
     exceptionalRareItemsDropped: number;
     uniqueItemsDropped: number;
@@ -105,6 +117,14 @@ export interface SimulationSummary {
     spellDrops: number;
     rareMonstersSpawned: number;
     rareMonstersKilled: number;
+    guardianSpawns: number;
+    guardianKills: number;
+    damageDealtToPlayer: number;
+    damagePreventedByResistance: number;
+    damagePreventedByArmor: number;
+    evades: number;
+    timeMovingMs: number;
+    timeFightingMs: number;
     lootByKind: Record<LootEntry["kind"], number>;
   };
   itemRolls: ItemRollMetrics;
@@ -118,6 +138,8 @@ export interface SimulationSummary {
     imbuingOrbsGained: number;
     mapsGained: number;
     bossKeysGained: number;
+    normalItemsDropped: number;
+    magicItemsDropped: number;
     rareItemsDropped: number;
     exceptionalRareItemsDropped: number;
     uniqueItemsDropped: number;
@@ -127,6 +149,14 @@ export interface SimulationSummary {
     spellDrops: number;
     rareMonstersSpawned: number;
     rareMonstersKilled: number;
+    guardianSpawnRate: number;
+    guardianKillRate: number;
+    damageDealtToPlayer: number;
+    damagePreventedByResistance: number;
+    damagePreventedByArmor: number;
+    evades: number;
+    timeMovingSeconds: number;
+    timeFightingSeconds: number;
   };
   runsByOutcome: SingleRunSimulationMetrics[];
 }
