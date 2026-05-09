@@ -186,19 +186,25 @@ button {
 }
 
 .overlay-chip {
-  display: grid;
-  gap: 2px;
-  min-width: 132px;
-  padding: 8px 10px;
-  border-radius: 12px;
+  padding: 5px 12px;
+  border-radius: 999px;
   background: rgba(8, 11, 18, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  white-space: nowrap;
 }
 
-.overlay-chip strong {
-  font-size: 0.88rem;
-  line-height: 1.1;
+.overlay-chip--complete {
+  border-color: rgba(182, 247, 160, 0.4);
+  color: #b6f7a0;
+}
+
+.arena-action-bar {
+  display: flex;
+  gap: 8px;
+  grid-column: 1;
 }
 
 .overlay-chip span {
@@ -360,6 +366,52 @@ button {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
+.item-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(246, 197, 111, 0.35), transparent);
+  margin: 2px 0;
+}
+
+.stat-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.84rem;
+  color: #a89880;
+}
+
+.stat-tier-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  background: #555;
+}
+
+.stat-label {
+  flex: 1;
+}
+
+.stat-value {
+  color: #c8b89a;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-tier-1 .stat-tier-dot { background: #444; }
+.stat-tier-1 .stat-value { color: #777; }
+
+.stat-tier-2 .stat-tier-dot { background: #666; }
+.stat-tier-2 .stat-value { color: #999; }
+
+.stat-tier-3 .stat-tier-dot { background: #6ca0ff; }
+.stat-tier-3 .stat-value { color: #b8ccff; }
+
+.stat-tier-4 .stat-tier-dot { background: #ffd879; }
+.stat-tier-4 .stat-value { color: #ffd879; }
+
+.stat-tier-5 .stat-tier-dot { background: #ff9966; }
+.stat-tier-5 .stat-value { color: #ffaa77; }
 
 .materia-strip {
   display: flex;
@@ -568,6 +620,79 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: #cbd5e1;
   font-size: 0.8rem;
+}
+
+.summary-chip--gold {
+  background: rgba(246, 197, 111, 0.12);
+  border-color: rgba(246, 197, 111, 0.22);
+  color: #f6c56f;
+}
+
+/* ── Slot icons ─────────────────────────────── */
+
+.slot-icon {
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.item-name-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.rarity-normal .slot-icon { color: #bba990; }
+.rarity-magic  .slot-icon { color: #9fd5ff; }
+.rarity-rare   .slot-icon { color: #ffd879; }
+.rarity-unique .slot-icon { color: #ffb172; }
+
+/* ── Loot entry animations ───────────────────── */
+
+@keyframes loot-appear {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes glow-magic {
+  0%   { box-shadow: inset 0 1px 0 rgba(227,241,255,0.08), 0 0 0 1px rgba(108,160,255,0.08), 0 12px 26px rgba(11,34,74,0.18); }
+  35%  { box-shadow: inset 0 1px 0 rgba(227,241,255,0.12), 0 0 0 1px rgba(108,160,255,0.2), 0 0 28px 6px rgba(108,160,255,0.28); }
+  100% { box-shadow: inset 0 1px 0 rgba(227,241,255,0.08), 0 0 0 1px rgba(108,160,255,0.08), 0 12px 26px rgba(11,34,74,0.18); }
+}
+
+@keyframes glow-rare {
+  0%   { box-shadow: inset 0 1px 0 rgba(255,242,204,0.08), 0 0 0 1px rgba(240,182,79,0.08), 0 12px 26px rgba(87,46,11,0.2); }
+  35%  { box-shadow: inset 0 1px 0 rgba(255,242,204,0.14), 0 0 0 1px rgba(240,182,79,0.22), 0 0 28px 6px rgba(240,182,79,0.3); }
+  100% { box-shadow: inset 0 1px 0 rgba(255,242,204,0.08), 0 0 0 1px rgba(240,182,79,0.08), 0 12px 26px rgba(87,46,11,0.2); }
+}
+
+@keyframes glow-unique {
+  0%   { box-shadow: inset 0 1px 0 rgba(255,230,204,0.08), 0 0 0 1px rgba(245,148,88,0.1), 0 14px 28px rgba(95,33,16,0.24); }
+  35%  { box-shadow: inset 0 1px 0 rgba(255,230,204,0.16), 0 0 0 1px rgba(245,148,88,0.3), 0 0 32px 8px rgba(245,148,88,0.35); }
+  100% { box-shadow: inset 0 1px 0 rgba(255,230,204,0.08), 0 0 0 1px rgba(245,148,88,0.1), 0 14px 28px rgba(95,33,16,0.24); }
+}
+
+.loot-recent .loot-entry {
+  animation: loot-appear 0.28s ease-out;
+}
+
+.loot-recent .loot-entry.rarity-magic {
+  animation: loot-appear 0.28s ease-out, glow-magic 1.8s ease-out 0.1s;
+}
+
+.loot-recent .loot-entry.rarity-rare {
+  animation: loot-appear 0.28s ease-out, glow-rare 1.8s ease-out 0.1s;
+}
+
+.loot-recent .loot-entry.rarity-unique {
+  animation: loot-appear 0.28s ease-out, glow-unique 2s ease-out 0.1s;
+}
+
+/* ── Button press feedback ───────────────────── */
+
+.primary-button:active,
+.secondary-button:active {
+  transform: scale(0.96);
+  transition: transform 0.08s ease;
 }
 
 .auth-panel {

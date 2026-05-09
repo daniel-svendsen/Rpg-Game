@@ -81,6 +81,8 @@ export interface LootEntry {
   name: string;
   details: string[];
   isUpgrade: boolean;
+  rarity?: ItemRarity;
+  slot?: ItemSlot;
 }
 
 export type GroundLootKind = LootEntry["kind"];

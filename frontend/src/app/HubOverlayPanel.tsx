@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import { getEquipmentSlotLabel } from "../game/config/itemConfig";
+import { ItemSlotIcon } from "./ItemSlotIcon";
 import { supportSpellConfig } from "../game/config/spellConfig";
 import { getItemPowerScore, getPowerChangeForCharacterItem } from "../game/domain/items/itemPower";
-import { getItemStatLines } from "../game/domain/items/itemStats";
+import { getItemStatEntries } from "../game/domain/items/itemStats";
 import { getSpellDescription, getSpellName } from "../game/domain/spells/spellDrops";
 import type { CharacterRecord, EquipmentSlot } from "../shared/types/saveTypes";
 import type { OverlayPanel } from "./appTypes";
@@ -62,17 +63,32 @@ export const HubOverlayPanel = ({
           </div>
           {selectedSlotItems.length === 0 ? <p className="status-text">No items for this slot yet.</p> : null}
           {selectedSlotItems.map((item) => (
-            <div key={item.id} className="loot-entry">
+            <div key={item.id} className={`loot-entry rarity-card rarity-${item.rarity.toLowerCase()}`}>
               <div className="inventory-row">
-                <strong>{item.name}</strong>
+                <div className="item-name-row">
+                  {item.slot ? <ItemSlotIcon slot={item.slot} /> : null}
+                  <strong>{item.name}</strong>
+                </div>
                 <span>Power {getItemPowerScore(item).toFixed(0)}</span>
               </div>
               <div className="status-text">
                 {formatPowerChange(character && item.slot ? getPowerChangeForCharacterItem(character, item) : null)}
               </div>
-              {getItemStatLines(item).map((line) => (
-                <div key={`${item.id}-${line}`} className="status-text">
-                  {line}
+              {getItemStatEntries(item).filter((e) => e.isBase).map((entry) => (
+                <div key={`${item.id}-${entry.label}`} className="stat-line">
+                  <span className="stat-label">{entry.label}</span>
+                  <span className="stat-value">{entry.formattedValue}</span>
+                </div>
+              ))}
+              <div className="item-divider" />
+              {getItemStatEntries(item).filter((e) => !e.isBase).map((entry) => (
+                <div
+                  key={`${item.id}-${entry.label}`}
+                  className={`stat-line${entry.tier !== null ? ` stat-tier-${entry.tier}` : ""}`}
+                >
+                  {entry.tier !== null && <span className="stat-tier-dot" />}
+                  <span className="stat-label">{entry.label}</span>
+                  <span className="stat-value">{entry.formattedValue}</span>
                 </div>
               ))}
               <button className="primary-button" onClick={() => onEquipItem(item.id, selectedEquipmentSlot)}>

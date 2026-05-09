@@ -464,7 +464,9 @@ const applyGroundLootPickup = (
           `Power ${getItemPowerScore(item).toFixed(0)}`,
           ...Object.entries(item.statBonuses).map(([key, value]) => `${key} +${value}`)
         ],
-        isUpgrade: isUpgradeForCharacter(character, item)
+        isUpgrade: isUpgradeForCharacter(character, item),
+        rarity: item.rarity,
+        slot: item.slot ?? undefined
       }
     };
   }

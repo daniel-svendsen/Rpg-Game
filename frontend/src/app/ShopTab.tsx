@@ -1,14 +1,12 @@
 import type { ReactNode } from "react";
 import {
-  getComparisonEquippedItem,
   getItemPowerScore,
-  getPowerChangeForCharacterItem,
-  isUpgradeForCharacter
+  getPowerChangeForCharacterItem
 } from "../game/domain/items/itemPower";
-import { getItemStatLines } from "../game/domain/items/itemStats";
-import { getItemSlotLabel } from "../game/config/itemConfig";
+import { getItemStatEntries } from "../game/domain/items/itemStats";
 import { balanceConfig } from "../game/config/balanceConfig";
 import type { CharacterRecord, InventoryItem } from "../shared/types/saveTypes";
+import { ItemSlotIcon } from "./ItemSlotIcon";
 
 type ShopItemState = InventoryItem & { price: number };
 
@@ -43,36 +41,44 @@ export const ShopTab = ({
         </button>
       </div>
       {shopItems.map((item) => {
-        const comparisonItem = character ? getComparisonEquippedItem(character, item) : null;
         const powerChange = character ? getPowerChangeForCharacterItem(character, item) : null;
 
         return (
           <div key={item.id} className={`loot-entry rarity-card rarity-${item.rarity.toLowerCase()}`}>
             <div className="inventory-row">
-              <strong>{item.name}</strong>
-              <span>{item.price} gold</span>
-            </div>
-            <div className="status-text">Power {getItemPowerScore(item).toFixed(0)}</div>
-            {character ? <div className="status-text">{formatPowerChange(powerChange)}</div> : null}
-            {comparisonItem ? (
-              <div className="status-text">
-                Compared to equipped {getItemSlotLabel(comparisonItem.slot ?? item.slot ?? "Weapon").toLowerCase()}:{" "}
-                {comparisonItem.name}
+              <div className="item-name-row">
+                {item.slot ? <ItemSlotIcon slot={item.slot} /> : null}
+                <strong>{item.name}</strong>
               </div>
-            ) : item.slot ? (
-              <div className="status-text">No equipped {getItemSlotLabel(item.slot).toLowerCase()} yet.</div>
-            ) : null}
-            {getItemStatLines(item).map((line) => (
-              <div key={`${item.id}-${line}`} className="status-text">
-                {line}
+              <span>{item.price}g</span>
+            </div>
+            <div className="inventory-row">
+              <div className="status-text">Power {getItemPowerScore(item).toFixed(0)}</div>
+              {character ? <div className="status-text">{formatPowerChange(powerChange)}</div> : null}
+            </div>
+            {getItemStatEntries(item).filter((e) => e.isBase).map((entry) => (
+              <div key={`${item.id}-${entry.label}`} className="stat-line">
+                <span className="stat-label">{entry.label}</span>
+                <span className="stat-value">{entry.formattedValue}</span>
               </div>
             ))}
+            <div className="item-divider" />
+            {getItemStatEntries(item).filter((e) => !e.isBase).map((entry) => (
+              <div
+                key={`${item.id}-${entry.label}`}
+                className={`stat-line${entry.tier !== null ? ` stat-tier-${entry.tier}` : ""}`}
+              >
+                {entry.tier !== null && <span className="stat-tier-dot" />}
+                <span className="stat-label">{entry.label}</span>
+                <span className="stat-value">{entry.formattedValue}</span>
+              </div>
+            ))}
+            {powerChange !== null && powerChange > 0 ? (
+              <div className="upgrade-text">Possible upgrade</div>
+            ) : null}
             <button className="secondary-button" onClick={() => onBuyShopItem(item.id)}>
               Buy
             </button>
-            {character && isUpgradeForCharacter(character, item) ? (
-              <div className="upgrade-text">Possible upgrade</div>
-            ) : null}
           </div>
         );
       })}

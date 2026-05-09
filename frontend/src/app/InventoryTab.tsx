@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
-import { getItemPowerScore, isUpgradeForCharacter } from "../game/domain/items/itemPower";
-import { getItemStatLines } from "../game/domain/items/itemStats";
+import { getItemPowerScore, getPowerChangeForCharacterItem } from "../game/domain/items/itemPower";
+import { getItemStatEntries } from "../game/domain/items/itemStats";
 import { getItemSlotLabel } from "../game/config/itemConfig";
+import { ItemSlotIcon } from "./ItemSlotIcon";
 import type { CharacterRecord, EquipmentSlot } from "../shared/types/saveTypes";
 import { LootPanel } from "./LootPanel";
 
@@ -33,16 +34,31 @@ export const InventoryTab = ({
       {(character?.inventory ?? []).map((item) => (
         <div key={item.id} className={`loot-entry rarity-card rarity-${item.rarity.toLowerCase()}`}>
           <div className="inventory-row">
-            <strong>{item.name}</strong>
+            <div className="item-name-row">
+              {item.slot ? <ItemSlotIcon slot={item.slot} /> : null}
+              <strong>{item.name}</strong>
+            </div>
             <span>{item.slot ? getItemSlotLabel(item.slot) : "Stored"}</span>
           </div>
           <div className="inventory-row">
             <div className="status-text">Power {getItemPowerScore(item).toFixed(0)}</div>
             <div className="status-text">Sell price {getItemSellPrice(item)} gold</div>
           </div>
-          {getItemStatLines(item).map((line) => (
-            <div key={`${item.id}-${line}`} className="status-text">
-              {line}
+          {getItemStatEntries(item).filter((e) => e.isBase).map((entry) => (
+            <div key={`${item.id}-${entry.label}`} className="stat-line">
+              <span className="stat-label">{entry.label}</span>
+              <span className="stat-value">{entry.formattedValue}</span>
+            </div>
+          ))}
+          <div className="item-divider" />
+          {getItemStatEntries(item).filter((e) => !e.isBase).map((entry) => (
+            <div
+              key={`${item.id}-${entry.label}`}
+              className={`stat-line${entry.tier !== null ? ` stat-tier-${entry.tier}` : ""}`}
+            >
+              {entry.tier !== null && <span className="stat-tier-dot" />}
+              <span className="stat-label">{entry.label}</span>
+              <span className="stat-value">{entry.formattedValue}</span>
             </div>
           ))}
           <div className="actions">
@@ -73,9 +89,10 @@ export const InventoryTab = ({
               Sell for {getItemSellPrice(item)} gold
             </button>
           </div>
-          {character && isUpgradeForCharacter(character, item) ? (
-            <div className="upgrade-text">Possible upgrade</div>
-          ) : null}
+          {(() => {
+            const pc = character ? getPowerChangeForCharacterItem(character, item) : null;
+            return pc !== null && pc > 0 ? <div className="upgrade-text">Possible upgrade</div> : null;
+          })()}
         </div>
       ))}
     </section>

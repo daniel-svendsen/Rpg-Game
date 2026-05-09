@@ -18,6 +18,22 @@ const orderedStatKeys = [
 
 type ItemStatKey = (typeof orderedStatKeys)[number];
 
+const statKeyLabels: Record<ItemStatKey, string> = {
+  strength: "Strength",
+  agility: "Agility",
+  vitality: "Vitality",
+  dexterity: "Dexterity",
+  maxHealth: "Max Health",
+  movementSpeedBonus: "Movement Speed",
+  fireResistance: "Fire Resistance",
+  coldResistance: "Cold Resistance",
+  lightningResistance: "Lightning Resistance",
+  critChance: "Crit Chance",
+  spellPowerMultiplier: "Spell Power"
+};
+
+export type StatEntry = { label: string; formattedValue: string; tier: number | null; isBase: boolean };
+
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
 export const getStatTier = (statKey: ItemStatKey, value: number, itemTier: number): number => {
@@ -42,40 +58,38 @@ export const getStatTier = (statKey: ItemStatKey, value: number, itemTier: numbe
   return clamp(bucket, 1, 5);
 };
 
+export const getItemStatEntries = (item: InventoryItem): StatEntry[] => [
+  ...(item.statBonuses.armor !== undefined
+    ? [{ label: "Armor", formattedValue: `${item.statBonuses.armor}`, tier: null, isBase: true }]
+    : []),
+  ...(item.statBonuses.evasion !== undefined
+    ? [{ label: "Evasion", formattedValue: `${item.statBonuses.evasion}`, tier: null, isBase: true }]
+    : []),
+  ...(item.statBonuses.attackSpeedMultiplier !== undefined
+    ? [{ label: "Attack Speed", formattedValue: `x${Number(item.statBonuses.attackSpeedMultiplier).toFixed(2)}`, tier: null, isBase: true }]
+    : []),
+  ...(item.statBonuses.castSpeedMultiplier !== undefined
+    ? [{ label: "Cast Speed", formattedValue: `x${Number(item.statBonuses.castSpeedMultiplier).toFixed(2)}`, tier: null, isBase: true }]
+    : []),
+  ...orderedStatKeys.flatMap((statKey): StatEntry[] => {
+    const value = item.statBonuses[statKey];
+    if (value === undefined) return [];
+
+    const formattedValue = (() => {
+      if (statKey === "movementSpeedBonus") return `+${(Number(value) * 100).toFixed(1)}%`;
+      if (statKey === "fireResistance" || statKey === "coldResistance" || statKey === "lightningResistance")
+        return `+${(Number(value) * 100).toFixed(1)}%`;
+      if (statKey === "critChance" || statKey === "spellPowerMultiplier")
+        return `+${Number(value).toFixed(2)}`;
+      return `+${value}`;
+    })();
+
+    return [{ label: statKeyLabels[statKey], formattedValue, tier: getStatTier(statKey, Number(value), item.tier), isBase: false }];
+  }),
+  ...(item.uniqueEffectDescription ? [{ label: "Unique", formattedValue: item.uniqueEffectDescription, tier: null, isBase: false }] : [])
+];
+
 export const getItemStatLines = (item: InventoryItem): string[] =>
-  [
-    ...(item.statBonuses.armor !== undefined ? [`Armor ${item.statBonuses.armor}`] : []),
-    ...(item.statBonuses.evasion !== undefined ? [`Evasion ${item.statBonuses.evasion}`] : []),
-    ...(item.statBonuses.attackSpeedMultiplier !== undefined
-      ? [`Attack Speed x${Number(item.statBonuses.attackSpeedMultiplier).toFixed(2)}`]
-      : []),
-    ...(item.statBonuses.castSpeedMultiplier !== undefined
-      ? [`Cast Speed x${Number(item.statBonuses.castSpeedMultiplier).toFixed(2)}`]
-      : []),
-    ...orderedStatKeys.flatMap((statKey) => {
-      const value = item.statBonuses[statKey];
-
-      if (value === undefined) {
-        return [];
-      }
-
-      const formattedValue = (() => {
-        if (statKey === "movementSpeedBonus") {
-          return `+${(Number(value) * 100).toFixed(1)}%`;
-        }
-
-        if (statKey === "fireResistance" || statKey === "coldResistance" || statKey === "lightningResistance") {
-          return `+${(Number(value) * 100).toFixed(1)}%`;
-        }
-
-        if (statKey === "critChance" || statKey === "spellPowerMultiplier") {
-          return `+${Number(value).toFixed(2)}`;
-        }
-
-        return `+${value}`;
-      })();
-
-      return [`${statKey} ${formattedValue} (Tier ${getStatTier(statKey, Number(value), item.tier)})`];
-    }),
-    ...(item.uniqueEffectDescription ? [`Unique: ${item.uniqueEffectDescription}`] : [])
-  ];
+  getItemStatEntries(item).map((e) =>
+    e.tier !== null ? `${e.label} ${e.formattedValue} (Tier ${e.tier})` : `${e.label} ${e.formattedValue}`
+  );

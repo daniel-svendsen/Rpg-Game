@@ -158,7 +158,7 @@ export const HubScreen = ({
 
   const topBar = (
     <HubTopBar
-      characterName={character?.name}
+      activeTab={hubTab}
       level={character?.level}
       gold={character?.gold}
       totalPower={character ? getEquippedPowerTotal(character) : undefined}
