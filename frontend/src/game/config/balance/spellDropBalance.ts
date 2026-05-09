@@ -11,19 +11,19 @@ export interface DroppableSpellEntry {
 
 export const spellDropBalance = {
   baseDropChanceByTier: {
-    0: percent(0.6),
-    1: percent(0.7),
-    2: percent(0.8),
-    3: percent(0.9),
-    4: percent(1),
-    5: percent(0.45),
-    6: percent(0.5),
-    7: percent(0.55),
-    8: percent(0.6),
-    9: percent(0.65),
-    10: percent(0.7)
+    0: percent(0.10),
+    1: percent(0.12),
+    2: percent(0.14),
+    3: percent(0.16),
+    4: percent(0.18),
+    5: percent(0.08),
+    6: percent(0.09),
+    7: percent(0.10),
+    8: percent(0.11),
+    9: percent(0.12),
+    10: percent(0.13)
   } as const,
-  rareMonsterDropChanceMultiplier: 1.05,
+  rareMonsterDropChanceMultiplier: 8,
   pool: [
     { spellId: "glacierNova", minTier: 1, weight: 55, dropCategory: "common" },
     { spellId: "arcLance", minTier: 3, weight: 18, dropCategory: "common" },

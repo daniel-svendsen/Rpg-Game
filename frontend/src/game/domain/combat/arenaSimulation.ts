@@ -102,6 +102,7 @@ interface InternalEnemyState extends ArenaEnemyState {
     Lightning: number;
   };
   lastContactDamageAt: number;
+  isKeyGuardian: boolean;
 }
 
 export interface ArenaRuntimeState {
@@ -121,7 +122,6 @@ export interface ArenaRuntimeState {
     rareMonstersKilled: number;
     totalMonstersKilled: number;
   };
-  bossKeyDropRolled: boolean;
   lastCastAtMs: number;
   lastPlayerDamageAtMs: number;
   playerX: number;
@@ -285,7 +285,8 @@ const createEnemy = (
       Cold: resolveResistance("Cold"),
       Lightning: resolveResistance("Lightning")
     },
-    lastContactDamageAt: 0
+    lastContactDamageAt: 0,
+    isKeyGuardian: false
   };
 };
 
@@ -323,7 +324,8 @@ const samplePackCenter = (
 const createMonsterPacks = (
   map: ResolvedMapInstance,
   playerStartX: number,
-  playerStartY: number
+  playerStartY: number,
+  highestUnlockedTier: number
 ): { packs: MonsterPackState[]; enemies: InternalEnemyState[]; rareMonstersSpawned: number } => {
   const packs: MonsterPackState[] = [];
   const enemies: InternalEnemyState[] = [];
@@ -375,6 +377,20 @@ const createMonsterPacks = (
       }
 
       enemies.push(createEnemy(map, rarity, packId, x, y));
+    }
+  }
+
+  // Key guardian: a rare enemy that always drops a boss key when killed.
+  // Spawns at 10% chance if the boss for the next tier hasn't been cleared, 5% otherwise.
+  const nextTier = map.tier + 1;
+  const bossNotCleared = highestUnlockedTier < nextTier;
+  const guardianSpawnChance = bossNotCleared ? 0.1 : 0.05;
+  const isEligibleForGuardian = !isBossMap && map.tier >= 1 && map.tier < mapBalance.maxTier;
+  if (isEligibleForGuardian && Math.random() < guardianSpawnChance) {
+    const rareEnemies = enemies.filter((e) => e.rarity === "Rare");
+    if (rareEnemies.length > 0) {
+      const guardian = rareEnemies[Math.floor(Math.random() * rareEnemies.length)];
+      guardian.isKeyGuardian = true;
     }
   }
 
@@ -709,7 +725,7 @@ export const createArenaRuntime = (
   const map = resolveMapInstance(mapConfig[mapId], enhancements);
   const initialPlayerX = ARENA_WIDTH / 2;
   const initialPlayerY = ARENA_HEIGHT / 2;
-  const packsResult = createMonsterPacks(map, initialPlayerX, initialPlayerY);
+  const packsResult = createMonsterPacks(map, initialPlayerX, initialPlayerY, character.mapProgress.highestUnlockedTier);
 
   return {
     mapId,
@@ -751,7 +767,6 @@ export const createArenaRuntime = (
       rareMonstersKilled: 0,
       totalMonstersKilled: 0
     },
-    bossKeyDropRolled: false,
     lastCastAtMs: -999_999,
     lastPlayerDamageAtMs: -999_999,
     playerX: initialPlayerX,
@@ -782,8 +797,6 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   let playerY = state.playerY;
   const alivePackIdsBefore = getAlivePackIds(nextEnemies);
   let autoMove = state.autoMove;
-  let bossKeyDropRolled = state.bossKeyDropRolled;
-
   if (autoMove.enabled) {
     if (nextTime < autoMove.lootPauseUntilMs) {
       // paused for loot pickup / post-pack downtime
@@ -1050,21 +1063,10 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
             telemetry.rareMonstersKilled + (enemy.rarity === "Rare" ? 1 : 0)
         };
 
-        if (
-          !bossKeyDropRolled &&
-          enemy.rarity === "Rare" &&
-          !state.mapId.startsWith("bossTier") &&
-          mapTier >= 1 &&
-          mapTier < mapBalance.maxTier
-        ) {
-          bossKeyDropRolled = true;
-
+        if (enemy.isKeyGuardian) {
           const nextTier = mapTier + 1;
           const unlockedTier = nextPlayer.mapProgress.highestUnlockedTier;
-
-          const shouldDropNextTierKey = unlockedTier < nextTier ? Math.random() < 0.1 : false;
-          const shouldDropCurrentTierKey = !shouldDropNextTierKey && mapTier > 1 ? Math.random() < 0.05 : false;
-          const keyDropTier = shouldDropNextTierKey ? nextTier : shouldDropCurrentTierKey ? mapTier : null;
+          const keyDropTier = unlockedTier < nextTier ? nextTier : mapTier > 1 ? mapTier : null;
 
           if (keyDropTier !== null) {
             nextGroundLoot = [
@@ -1190,7 +1192,6 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
     timeElapsedMs: nextTime,
     completionDelayUntilMs,
     telemetry,
-    bossKeyDropRolled,
     lastCastAtMs,
     lastPlayerDamageAtMs,
     playerX,

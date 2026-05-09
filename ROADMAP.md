@@ -1,4 +1,4 @@
-# ROADMAP
+﻿# ROADMAP
 
 ## Purpose
 
@@ -217,7 +217,7 @@ Simulator reporting (minimum):
 
 Goal:
 
-- move from “loot directly into inventory” to ground loot with world position, validated by domain rules
+- move from â€œloot directly into inventoryâ€ to ground loot with world position, validated by domain rules
 
 Acceptance targets:
 
@@ -243,14 +243,14 @@ Acceptance targets:
 - item stats are generated from slot-based stat pools (boots/weapon/armor/etc)
 - not all stats exist on all items; items roll a limited set based on rarity
 - some item bases influence what can roll (e.g. armor base can roll armor OR evasion focus)
-- weapons can roll cast/attack speed in a range (example: `1.0`–`1.5` multiplier)
+- weapons can roll cast/attack speed in a range (example: `1.0`â€“`1.5` multiplier)
 - rarity influences number of stats and roll quality
 - unique items keep fixed stats/effects
 
 Tiering + roll ranges:
 
 - each stat tier has an explicit numeric range, and a roll is sampled inside that range
-- ranges should have meaningful separation (example: Tier 1 = `1`–`10`, Tier 2 = `11`–`15`, etc)
+- ranges should have meaningful separation (example: Tier 1 = `1`â€“`10`, Tier 2 = `11`â€“`15`, etc)
 - tier ranges and weights are config-driven and overrideable
 
 Simulator reporting (minimum):
@@ -370,7 +370,7 @@ Success criteria:
 
 ## Next Recommended Step
 
-- A full tier 1–9 balance pass on map difficulty and boss gates is done. Next focus: spell drop rarity and unique tier pacing, using the simulator as the primary tool before expanding into broader UI readability work.
+- Spell drop rarity is tuned (0.05â€”0.10/run vs 0.23â€”0.55/run before; rares now account for ~47% of all spell drops via 8Ã— multiplier). Boss key guardian mechanic is in place. Next candidates: combat math follow-through (armor/evasion mitigation, derived crit multiplier), richer simulator telemetry (damage prevented by type, time moving vs fighting), or Phase 3 UI readability work.
 
 ## Planned Workstreams
 
@@ -408,21 +408,21 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 
 ### Longer-term chase systems
 
-- [x] Add a first-pass rare-spawn boss key loop for progression and farming.
+- [x] Add a first-pass rare-spawn boss key loop for progression and farming (guardian mechanic: 10%/5% per-map spawn chance, always drops key on kill).
 - [x] Add a first-pass boss key structure with tier-linked unlocks and reusable farming keys.
 - [x] Add a first-pass boss reward structure with a separate boss drop pool and simulator-visible expected value.
 - [ ] Expand boss rewards into tier-specific unique pools, stronger crafting materials, and a fuller long-term chase structure.
 
 ## Phase 2 Scope Extensions Status Snapshot
 
-These scope extensions are still part of `Phase 2`, but many have moved from “planned” to “implemented (first pass)”. The goal remains simulator-first correctness, not polish.
+These scope extensions are still part of `Phase 2`, but many have moved from â€œplannedâ€ to â€œimplemented (first pass)â€. The goal remains simulator-first correctness, not polish.
 
 Implemented (first pass):
 
 - Elemental enemies now exist: `Cinder Grub` (Fire, tier 2+), `Frost Sprite` (Cold, tier 3+), `Storm Hound` (Lightning, tier 4+), `Blaze Warden` (Rare, Fire, tier 3+). Monster selection randomizes across eligible types per tier and rarity so maps gradually introduce elemental variety.
-- Boss difficulty tuned per tier so bosses function as a real progression gate (~50–55% completion for a well-geared benchmark character at T3–9). Normal map farming targets ~80–90% completion at T1–4 and T7–9.
+- Boss difficulty tuned per tier so bosses function as a real progression gate (~50â€“55% completion for a well-geared benchmark character at T3â€“9). Normal map farming targets ~80â€“90% completion at T1â€“4 and T7â€“9.
 - Benchmark profiles (`sim-profiles/benchmark-tier1` through `benchmark-tier9`) redesigned to reflect realistic player progression: 2 support spells per spell slot, a second spell loadout slot from tier 5, and tier-scaled equipment (weapon, boots, body armor, helmet, gloves, amulet, ring, belt) with meaningful resistance and HP growth. Benchmark profiles are gitignored and regenerated locally via `npm run sim:bench`.
-- A full tier 1–9 balance pass (normal maps + bosses) was completed using the simulator as the primary decision tool, with documented outcomes informing boss multiplier and gear scaling decisions.
+- A full tier 1â€“9 balance pass (normal maps + bosses) was completed using the simulator as the primary decision tool, with documented outcomes informing boss multiplier and gear scaling decisions.
 - Movement speed is a derived stat and affects runtime + simulation movement.
 - Auto-move targets the nearest living pack, walks straight-line toward pack center, stops in combat range, and continues to the next pack.
 - Packs spawn with a stable pack id + pack center, basic spacing from player and other packs, and an initial rare chance per pack.
@@ -434,7 +434,7 @@ Implemented (first pass):
   - slot-scoped prefix/suffix pools
   - rarity controls affix count with `max 3 prefixes` + `max 3 suffixes`
   - base items provide inherent armor/evasion (defense bases) and inherent weapon speed multipliers (weapon bases), gated by map tier
-- Boss keys now drop from the first rare kill per non-boss run, support repeated same-tier farming, and unlock higher map tiers by defeating the matching boss tier.
+- Boss key guardian mechanic: at map creation a single rare is designated the "key guardian" (10% chance if the boss for the next tier is not yet cleared, 5% otherwise). When that specific enemy is killed it always drops a key — no roll. Replaces the old first-rare-kill 10%/5% roll model.
 - Boss lairs now exist as challengeable tier bosses with a separate boss drop pool, first-pass boss uniques, and imbuing orb rewards.
 - Simulator reporting includes item roll distributions (tier buckets), movement-speed affix visibility, boss key gain rate, imbuing orb output, and clearer map-sustain stall signals.
 
@@ -448,7 +448,7 @@ Partially implemented (needs follow-through):
 - Phaser visuals (first pass, out-of-phase early delivery):
   - All monsters now render with real 0x72 DungeonTileset II idle sprite animations, each mapped to a named spriteName in `frontend/src/game/phaser/spriteConfig.ts`.
   - Player character renders as an animated wizard sprite (wizzard_m) with camera follow.
-  - Spell effects use the Gizmo Effect pack spritesheet (32×32): fire, electric, and ice animations routed per spell tags.
+  - Spell effects use the Gizmo Effect pack spritesheet (32Ã—32): fire, electric, and ice animations routed per spell tags.
   - Three visual animation types: `animateLightningChain` (jagged bolt hopping between enemies), `animateProjectileLance` (straight beam), `animateAreaExplosion` (ring + impact sprite at radius).
   - `SpellVisualEvent` added to `ArenaSnapshot`; domain emits one event per cast; Phaser processes each event exactly once via `processedSpellEventIds`.
   - Snapshot throttle in `useArenaSession` bypassed when spell events are present so no cast is silently dropped.
