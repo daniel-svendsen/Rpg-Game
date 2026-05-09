@@ -8,13 +8,14 @@ import { getSpellName } from "../game/domain/spells/spellDrops";
 import { getSpellLevel, upgradeSpell } from "../game/domain/spells/spellProgression";
 import type { ArenaRuntimeState } from "../game/domain/combat/arenaSimulation";
 import type { ArenaSnapshot, CharacterRecord, CharacterStats, EquipmentSlot, InventoryItem } from "../shared/types/saveTypes";
+import type { ScreenMode } from "./appTypes";
 
 type ShopItemState = InventoryItem & { price: number };
 
 interface UseHubActionsParams {
   character: CharacterRecord | null;
   selectedSupportSlot: 0 | 1;
-  screenMode: "auth" | "character" | "hub" | "arena";
+  screenMode: ScreenMode;
   arenaRuntimeRef: MutableRefObject<ArenaRuntimeState | null>;
   latestCharacterRef: MutableRefObject<CharacterRecord | null>;
   commitCharacter: (nextCharacter: CharacterRecord | null) => void;

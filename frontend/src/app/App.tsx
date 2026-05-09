@@ -5,8 +5,9 @@ import { login, register } from "../api/authApi";
 import type { AuthFieldErrors, AuthFormState } from "../auth/authTypes";
 import { resolveAuthErrorMessage } from "./authFeedback";
 import { AuthScreen } from "./AuthScreen";
-import type { HubTab, OverlayPanel, ScreenMode, SelectedMapTarget } from "./appTypes";
+import type { HubTab, OverlayPanel, RunSummaryData, ScreenMode, SelectedMapTarget } from "./appTypes";
 import { HubScreen } from "./HubScreen";
+import { RunSummaryScreen } from "./RunSummaryScreen";
 import { InlineFeedbackPanel } from "./InlineFeedbackPanel";
 import {
   accountEmailStorageKey,
@@ -68,6 +69,7 @@ export const App = () => {
   const [queuedMapIds, setQueuedMapIds] = useState<string[]>([]);
   const [selectedEquipmentSlot, setSelectedEquipmentSlot] = useState<EquipmentSlot>("Weapon");
   const [selectedSupportSlot, setSelectedSupportSlot] = useState<0 | 1>(0);
+  const [runSummaryData, setRunSummaryData] = useState<RunSummaryData | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const arenaRuntimeRef = useRef<ArenaRuntimeState | null>(null);
@@ -194,6 +196,7 @@ export const App = () => {
     setActiveMapEnhancements,
     setActiveMapRunId,
     setScreenMode,
+    setRunSummaryData,
     setStatusMessage,
     setErrorMessage
   });
@@ -329,8 +332,22 @@ export const App = () => {
     setShopItems([]);
     setOverlayPanel(null);
     setHubTab("maps");
+    setRunSummaryData(null);
     setStatusMessage("");
     setErrorMessage(null);
+  };
+
+  const handleSummaryKeepFarming = (): void => {
+    setRunSummaryData(null);
+    setHubTab("maps");
+    setScreenMode("hub");
+    setStatusMessage("");
+  };
+
+  const handleSummaryReturnToHub = (): void => {
+    setRunSummaryData(null);
+    setScreenMode("hub");
+    setStatusMessage("");
   };
 
   const renderInlineFeedback = (showStatusMessage = true) => {
@@ -463,6 +480,13 @@ export const App = () => {
       {screenMode === "character" ? renderCharacterCreation() : null}
       {screenMode === "hub" ? renderHub() : null}
       {screenMode === "arena" ? renderArena() : null}
+      {screenMode === "runSummary" && runSummaryData ? (
+        <RunSummaryScreen
+          summaryData={runSummaryData}
+          onKeepFarming={handleSummaryKeepFarming}
+          onReturnToHub={handleSummaryReturnToHub}
+        />
+      ) : null}
     </div>
   );
 };

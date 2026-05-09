@@ -1,8 +1,8 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { PhaserGame } from "../game/phaser/PhaserGame";
 import { canUseLifeFlask } from "../game/domain/player/lifeFlask";
+import { balanceConfig } from "../game/config/balanceConfig";
 import type { ArenaSnapshot, CharacterRecord, LootEntry } from "../shared/types/saveTypes";
-import { HealthHud } from "./HealthHud";
 import { LootPanel } from "./LootPanel";
 
 interface ArenaScreenProps {
@@ -49,22 +49,52 @@ const ArenaScreen = ({
   }, [arenaSnapshot]);
 
   const currentCharacter = arenaSnapshot?.player ?? character;
+  const currentHealth = currentCharacter?.currentHealth ?? 0;
+  const maxHealth = currentCharacter?.derivedStats?.maxHealth ?? 1;
+  const healthPct = Math.max(0, Math.min(100, (currentHealth / maxHealth) * 100));
+  const flaskCharges = currentCharacter?.lifeFlask?.currentCharges ?? 0;
+  const maxFlaskCharges = balanceConfig.healing.lifeFlask.maxCharges;
+  const canFlask = currentCharacter ? canUseLifeFlask(currentCharacter) : false;
+
+  const hpFillClass =
+    healthPct > 66 ? "arena-hp-fill--high" : healthPct > 33 ? "arena-hp-fill--mid" : "arena-hp-fill--low";
 
   const enemyCount = arenaSnapshot?.enemies.length ?? 0;
   const isComplete = arenaSnapshot?.isComplete ?? false;
+  const mapName = arenaSnapshot?.mapName ?? "";
 
   return (
     <div className="content arena-layout">
       <div className="mobile-only-feedback">{feedback}</div>
       <section className="panel arena-host">
-        <div className="arena-overlay">
+        <div className="arena-top-hud">
+          {mapName ? <span className="arena-hud-map-name">{mapName}</span> : null}
           {isComplete ? (
-            <div className="overlay-chip overlay-chip--complete">Map complete!</div>
+            <div className="overlay-chip overlay-chip--complete">Map Complete!</div>
           ) : (
-            <div className="overlay-chip">{enemyCount} enemies</div>
+            <div className="overlay-chip">{enemyCount} enemies remaining</div>
           )}
         </div>
         <div ref={phaserContainerRef} />
+        <div className="arena-bottom-hud">
+          <div className="arena-hp-section">
+            <div className="arena-hp-label">
+              {currentHealth} / {maxHealth} HP
+            </div>
+            <div className="arena-hp-track">
+              <div className={`arena-hp-fill ${hpFillClass}`} style={{ width: `${healthPct}%` }} />
+            </div>
+          </div>
+          <button
+            className="arena-flask-btn"
+            disabled={!canFlask}
+            onClick={onUseLifeFlask}
+            title="Use Life Flask"
+            type="button"
+          >
+            Flask {flaskCharges}/{maxFlaskCharges}
+          </button>
+        </div>
       </section>
       <div className="arena-action-bar">
         <button className="primary-button" onClick={() => void onManualSave()}>
@@ -75,11 +105,6 @@ const ArenaScreen = ({
         </button>
       </div>
       <aside className="stack">
-        <HealthHud
-          character={currentCharacter}
-          canUseLifeFlask={currentCharacter ? canUseLifeFlask(currentCharacter) : false}
-          onUseLifeFlask={onUseLifeFlask}
-        />
         <LootPanel recentLoot={recentLoot} />
       </aside>
     </div>

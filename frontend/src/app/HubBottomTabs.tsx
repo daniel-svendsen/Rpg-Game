@@ -5,13 +5,13 @@ interface HubBottomTabsProps {
   onSelectTab: (tab: HubTab) => void;
 }
 
-const tabs: Array<{ id: HubTab; label: string }> = [
-  { id: "maps", label: "Maps" },
-  { id: "boss", label: "Boss" },
-  { id: "equipment", label: "Gear" },
-  { id: "spells", label: "Spells" },
-  { id: "shop", label: "Shop" },
-  { id: "character", label: "Account" }
+const tabs: Array<{ id: HubTab; label: string; icon: string }> = [
+  { id: "maps", label: "Maps", icon: "◈" },
+  { id: "boss", label: "Boss", icon: "☠" },
+  { id: "equipment", label: "Gear", icon: "⚔" },
+  { id: "spells", label: "Spells", icon: "✦" },
+  { id: "shop", label: "Shop", icon: "◎" },
+  { id: "character", label: "Account", icon: "⊙" }
 ];
 
 export const HubBottomTabs = ({ activeTab, onSelectTab }: HubBottomTabsProps) => (
@@ -22,7 +22,8 @@ export const HubBottomTabs = ({ activeTab, onSelectTab }: HubBottomTabsProps) =>
         className={activeTab === tab.id ? "bottom-tab active-tab" : "bottom-tab"}
         onClick={() => onSelectTab(tab.id)}
       >
-        {tab.label}
+        <span className="tab-icon">{tab.icon}</span>
+        <span className="tab-label">{tab.label}</span>
       </button>
     ))}
   </nav>

@@ -886,6 +886,10 @@ button {
   letter-spacing: 0.04em;
   font-size: 0.72rem;
   font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 
 .active-tab {
@@ -1034,4 +1038,343 @@ button {
   .materia-orb-label {
     font-size: 0.55rem;
   }
+}
+
+/* ── Auth logo ────────────────────────────────────────────────────────────── */
+
+.auth-logo-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 36px 0 8px;
+  text-align: center;
+}
+
+.auth-logo-emblem {
+  font-size: 2.8rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 20px rgba(246, 197, 111, 0.7));
+  animation: emblem-pulse 3.5s ease-in-out infinite;
+}
+
+@keyframes emblem-pulse {
+  0%, 100% { filter: drop-shadow(0 0 14px rgba(246, 197, 111, 0.55)); }
+  50%       { filter: drop-shadow(0 0 32px rgba(246, 197, 111, 0.9)); }
+}
+
+.auth-logo-title {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2.4rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fff8e8 0%, #f6c56f 50%, #c98931 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6));
+}
+
+.auth-logo-tagline {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.auth-logo-divider {
+  width: 200px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(246, 197, 111, 0.45), transparent);
+  margin-top: 6px;
+}
+
+/* ── Tab icon + label ─────────────────────────────────────────────────────── */
+
+.tab-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.tab-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+}
+
+/* ── Currency top bar chips ───────────────────────────────────────────────── */
+
+.summary-chip--shards {
+  background: rgba(96, 165, 250, 0.12);
+  border-color: rgba(96, 165, 250, 0.22);
+  color: #93c5fd;
+}
+
+.summary-chip--keys {
+  background: rgba(251, 146, 60, 0.12);
+  border-color: rgba(251, 146, 60, 0.24);
+  color: #fb923c;
+}
+
+/* ── Arena combat HUD overlays ────────────────────────────────────────────── */
+
+.arena-top-hud {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.arena-top-hud > * {
+  pointer-events: auto;
+}
+
+.arena-hud-map-name {
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: rgba(8, 11, 18, 0.76);
+  border: 1px solid rgba(246, 197, 111, 0.22);
+  backdrop-filter: blur(10px);
+  font-size: 0.8rem;
+  color: #f6c56f;
+  font-family: Georgia, serif;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 54%;
+}
+
+.arena-bottom-hud {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: linear-gradient(0deg, rgba(4, 8, 16, 0.92) 0%, rgba(4, 8, 16, 0.5) 70%, transparent 100%);
+  z-index: 2;
+}
+
+.arena-hp-section {
+  flex: 1;
+  display: grid;
+  gap: 6px;
+}
+
+.arena-hp-label {
+  font-size: 0.8rem;
+  color: #f7eddc;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.arena-hp-track {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(50, 20, 20, 0.6);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.arena-hp-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.18s ease, background-color 0.4s ease;
+}
+
+.arena-hp-fill--high {
+  background: linear-gradient(90deg, #16a34a, #22c55e);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.45);
+}
+
+.arena-hp-fill--mid {
+  background: linear-gradient(90deg, #b45309, #f59e0b);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.45);
+}
+
+.arena-hp-fill--low {
+  background: linear-gradient(90deg, #9f2d22, #ef4444);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.55);
+  animation: hp-pulse 0.85s ease-in-out infinite;
+}
+
+@keyframes hp-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
+}
+
+.arena-flask-btn {
+  padding: 7px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(201, 154, 92, 0.38);
+  background: rgba(20, 15, 14, 0.86);
+  color: #f6c56f;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  backdrop-filter: blur(8px);
+  white-space: nowrap;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.arena-flask-btn:hover:not(:disabled) {
+  border-color: rgba(246, 197, 111, 0.58);
+  background: rgba(36, 26, 20, 0.9);
+}
+
+.arena-flask-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ── Run summary screen ───────────────────────────────────────────────────── */
+
+.run-summary-screen {
+  padding: 16px 16px max(24px, env(safe-area-inset-bottom));
+  display: grid;
+  gap: 16px;
+  max-width: 640px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.run-summary-outcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 16px 20px;
+  text-align: center;
+}
+
+.run-summary-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 20px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.run-summary-badge--victory {
+  background: rgba(22, 163, 74, 0.18);
+  border: 1px solid rgba(34, 197, 94, 0.38);
+  color: #86efac;
+}
+
+.run-summary-badge--defeat {
+  background: rgba(159, 45, 34, 0.18);
+  border: 1px solid rgba(239, 68, 68, 0.32);
+  color: #fca5a5;
+}
+
+.run-summary-map-name {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.75rem;
+  letter-spacing: 0.07em;
+  color: #fff3d6;
+  text-transform: uppercase;
+}
+
+.run-summary-loot-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.summary-loot-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.summary-loot-chip--unique {
+  background: rgba(245, 148, 88, 0.16);
+  border: 1px solid rgba(245, 148, 88, 0.38);
+  color: #ffb172;
+}
+
+.summary-loot-chip--rare {
+  background: rgba(240, 182, 79, 0.14);
+  border: 1px solid rgba(240, 182, 79, 0.32);
+  color: #ffd879;
+}
+
+.summary-loot-chip--magic {
+  background: rgba(108, 160, 255, 0.12);
+  border: 1px solid rgba(108, 160, 255, 0.28);
+  color: #9fd5ff;
+}
+
+.run-summary-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 8px 0 16px;
+}
+
+.run-summary-actions .primary-button {
+  min-width: 150px;
+}
+
+.run-summary-actions .secondary-button {
+  min-width: 140px;
+}
+
+/* ── Map card tier colors ─────────────────────────────────────────────────── */
+
+.map-card--tier-1 { border-color: rgba(148, 163, 184, 0.22); }
+.map-card--tier-2 { border-color: rgba(134, 239, 172, 0.26); }
+.map-card--tier-3 { border-color: rgba(110, 231, 183, 0.28); }
+.map-card--tier-4 { border-color: rgba(96, 165, 250, 0.3); }
+.map-card--tier-5 { border-color: rgba(167, 139, 250, 0.32); }
+.map-card--tier-6 { border-color: rgba(240, 182, 79, 0.34); }
+.map-card--tier-7 { border-color: rgba(251, 146, 60, 0.36); }
+.map-card--tier-8 { border-color: rgba(239, 68, 68, 0.38); }
+.map-card--tier-9 {
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: inset 0 0 14px rgba(239, 68, 68, 0.08), 0 0 0 1px rgba(239, 68, 68, 0.08);
+}
+
+.map-tier-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+
+.map-tier-badge--1 { background: rgba(148, 163, 184, 0.14); color: #94a3b8; }
+.map-tier-badge--2 { background: rgba(134, 239, 172, 0.12); color: #86efac; }
+.map-tier-badge--3 { background: rgba(110, 231, 183, 0.12); color: #6ee7b7; }
+.map-tier-badge--4 { background: rgba(96, 165, 250, 0.12); color: #60a5fa; }
+.map-tier-badge--5 { background: rgba(167, 139, 250, 0.12); color: #a78bfa; }
+.map-tier-badge--6 { background: rgba(240, 182, 79, 0.12); color: #fbbf24; }
+.map-tier-badge--7 { background: rgba(251, 146, 60, 0.12); color: #fb923c; }
+.map-tier-badge--8 { background: rgba(239, 68, 68, 0.12); color: #f87171; }
+.map-tier-badge--9 {
+  background: rgba(239, 68, 68, 0.16);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.28);
 }

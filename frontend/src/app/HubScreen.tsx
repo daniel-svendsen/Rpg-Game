@@ -21,7 +21,6 @@ import { getSpellDetailLines } from "./spellDetails";
 import {
   getCurrencyAmount,
   getMapDisplayName,
-  getMapEnhancementDetailLines,
   getMapVariantLabel
 } from "./mapFlow";
 import { balanceConfig } from "../game/config/balanceConfig";
@@ -158,11 +157,19 @@ export const HubScreen = ({
     );
   };
 
+  const totalBossKeys = character
+    ? character.mapProgress.consumableMaps
+        .filter((e) => e.mapId.startsWith("bossTier"))
+        .reduce((sum, e) => sum + e.quantity, 0)
+    : undefined;
+
   const topBar = (
     <HubTopBar
       activeTab={hubTab}
       level={character?.level}
       gold={character?.gold}
+      mapShards={character ? getCurrencyAmount(character, "mapShard") : undefined}
+      bossKeys={totalBossKeys}
       totalPower={character ? getEquippedPowerTotal(character) : undefined}
       onSave={onSave}
     />
@@ -192,7 +199,6 @@ export const HubScreen = ({
           mapShardAmount={character ? getCurrencyAmount(character, "mapShard") : 0}
           getMapDisplayName={getMapDisplayName}
           getMapVariantLabel={getMapVariantLabel}
-          getMapEnhancementDetailLines={getMapEnhancementDetailLines}
           onStartMap={onStartMap}
           onRunAllMaps={onRunAllMaps}
           onEnhanceSelectedMap={onEnhanceSelectedMap}

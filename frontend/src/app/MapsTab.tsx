@@ -22,7 +22,6 @@ interface MapsTabProps {
   mapShardAmount: number;
   getMapDisplayName: (mapId: string, enhancementCount: number) => string;
   getMapVariantLabel: (enhancementCount: number) => string;
-  getMapEnhancementDetailLines: (enhancements: MapEnhancementInstance[]) => string[];
   onStartMap: () => void;
   onRunAllMaps: () => void;
   onEnhanceSelectedMap: () => void;
@@ -43,7 +42,6 @@ export const MapsTab = ({
   mapShardAmount,
   getMapDisplayName,
   getMapVariantLabel,
-  getMapEnhancementDetailLines,
   onStartMap,
   onRunAllMaps,
   onEnhanceSelectedMap,
@@ -112,41 +110,39 @@ export const MapsTab = ({
             </button>
           </div>
         </div>
-        {consumableMapEntries.map((entry) => (
-          <div
-            key={entry.stackId}
-            className={selectedMapTarget === entry.stackId ? "map-card selected-map-card" : "map-card"}
-          >
-            <div className="inventory-row">
-              <div>
-                <strong>{getMapDisplayName(entry.mapId, entry.enhancements.length)}</strong>
-                <div className="status-text">
-                  Tier {entry.tier} • Quantity {entry.quantity}
+        {consumableMapEntries.map((entry) => {
+          const tierClass = `map-card--tier-${entry.tier}`;
+          const isSelected = selectedMapTarget === entry.stackId;
+          const cardClass = `map-card ${tierClass}${isSelected ? " selected-map-card" : ""}`;
+          return (
+            <div key={entry.stackId} className={cardClass}>
+              <div className="inventory-row">
+                <div>
+                  <div className="item-name-row">
+                    <strong>{getMapDisplayName(entry.mapId, entry.enhancements.length)}</strong>
+                    <span className={`map-tier-badge map-tier-badge--${entry.tier}`}>T{entry.tier}</span>
+                  </div>
+                  <div className="status-text">
+                    Qty {entry.quantity} • {getMapVariantLabel(entry.enhancements.length)}
+                  </div>
+                  {entry.tier > highestUnlockedTier ? (
+                    <div className="error-text">Unlocked by defeating the Tier {entry.tier} boss.</div>
+                  ) : null}
                 </div>
-                {entry.tier > highestUnlockedTier ? (
-                  <div className="error-text">Unlocked by defeating the Tier {entry.tier} boss.</div>
-                ) : null}
+                <div>
+                  {getMapEnhancementSummary(entry.enhancements).map((line) => (
+                    <div key={`${entry.stackId}-${line}`} className="status-text">
+                      +{line}
+                    </div>
+                  ))}
+                  <button className="secondary-button" onClick={() => onSelectMap(entry.stackId)}>
+                    {isSelected ? "Selected" : "Select"}
+                  </button>
+                </div>
               </div>
-              <div className="status-text">
-                {getMapVariantLabel(entry.enhancements.length)} | Enhancements {entry.enhancements.length}/
-                {balanceConfig.mapCrafting.maxEnhancementsPerMap}
-              </div>
-              {getMapEnhancementSummary(entry.enhancements).map((line) => (
-                <div key={`${entry.stackId}-${line}`} className="status-text">
-                  Mod: {line}
-                </div>
-              ))}
-              {getMapEnhancementDetailLines(entry.enhancements).map((line) => (
-                <div key={`${entry.stackId}-detail-${line}`} className="status-text">
-                  {line}
-                </div>
-              ))}
-              <button className="secondary-button" onClick={() => onSelectMap(entry.stackId)}>
-                {selectedMapTarget === entry.stackId ? "Selected" : "Select"}
-              </button>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </section>
       <section className="panel stack">
         <h4>Map Crafting</h4>

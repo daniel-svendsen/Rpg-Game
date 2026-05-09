@@ -30,10 +30,12 @@ export const AuthScreen = ({
   return (
     <div className="content">
       {feedback}
-      <section className="panel stack">
-        <h2>Shardborne</h2>
-        <p>Build a character, run maps, collect loot, and shape your main spell with support links.</p>
-      </section>
+      <div className="auth-logo-section">
+        <div className="auth-logo-emblem">⚔</div>
+        <h1 className="auth-logo-title">SHARDBORNE</h1>
+        <p className="auth-logo-tagline">Path of Exile — Minigame</p>
+        <div className="auth-logo-divider" />
+      </div>
       <section className="panel stack auth-panel">
         <div className="auth-mode-toggle" role="tablist" aria-label="Authentication mode">
           <button

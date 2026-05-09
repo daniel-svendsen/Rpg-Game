@@ -5,7 +5,7 @@ import { createArenaRuntime, stepArenaRuntime, type ArenaRuntimeState } from "..
 import { consumeOwnedMap, getOwnedMapStack } from "../game/domain/maps/mapProgress";
 import { normalizeCharacterRecord } from "../game/domain/player/playerTypes";
 import type { ArenaSnapshot, CharacterRecord, LootEntry, MapEnhancementInstance } from "../shared/types/saveTypes";
-import type { ScreenMode } from "./appTypes";
+import type { RunSummaryData, ScreenMode } from "./appTypes";
 import {
   shouldSyncArenaCharacter,
   shouldSyncArenaSnapshot
@@ -27,6 +27,7 @@ interface UseArenaSessionParams {
   setActiveMapEnhancements: Dispatch<SetStateAction<MapEnhancementInstance[]>>;
   setActiveMapRunId: Dispatch<SetStateAction<number>>;
   setScreenMode: Dispatch<SetStateAction<ScreenMode>>;
+  setRunSummaryData: Dispatch<SetStateAction<RunSummaryData | null>>;
   setStatusMessage: Dispatch<SetStateAction<string>>;
   setErrorMessage: Dispatch<SetStateAction<string | null>>;
 }
@@ -47,6 +48,7 @@ export const useArenaSession = ({
   setActiveMapEnhancements,
   setActiveMapRunId,
   setScreenMode,
+  setRunSummaryData,
   setStatusMessage,
   setErrorMessage
 }: UseArenaSessionParams): void => {
@@ -63,6 +65,7 @@ export const useArenaSession = ({
     let lastTimestamp = performance.now();
     let lastSnapshotUpdateAt = 0;
     let lastCharacterSyncAt = 0;
+    const lootThisRun: LootEntry[] = [];
 
     const loop = (timestamp: number) => {
       const deltaMs = Math.min(50, timestamp - lastTimestamp);
@@ -71,6 +74,7 @@ export const useArenaSession = ({
       arenaRuntimeRef.current = runtime;
 
       if (runtime.snapshot.lootEvents.length > 0) {
+        lootThisRun.push(...runtime.snapshot.lootEvents);
         setRecentLoot((current) => [...runtime.snapshot.lootEvents, ...current].slice(0, 20));
       }
 
@@ -127,14 +131,14 @@ export const useArenaSession = ({
         }
 
         setQueuedMapIds([]);
-        setScreenMode("hub");
+        setRunSummaryData({
+          mapName: runtime.snapshot.mapName,
+          wasDefeated,
+          loot: lootThisRun,
+        });
+        setScreenMode("runSummary");
         setActiveMapId(null);
         setActiveMapEnhancements([]);
-        setStatusMessage(
-          wasDefeated
-            ? `You were defeated in ${runtime.snapshot.mapName}, but your collected rewards remain saved.`
-            : `${runtime.snapshot.mapName} complete. You kept everything you found.`
-        );
         return;
       }
 
@@ -160,6 +164,7 @@ export const useArenaSession = ({
     setActiveMapEnhancements,
     setActiveMapRunId,
     setScreenMode,
+    setRunSummaryData,
     setStatusMessage,
     setErrorMessage
   ]);
