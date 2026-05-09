@@ -16,5 +16,6 @@ export const deriveStats = (baseStats: CharacterStats): DerivedStats => ({
     Lightning: 0
   },
   critChance: baseStats.dexterity * balanceConfig.statScaling.dexterityCritChanceMultiplier,
+  critMultiplier: 1.6,
   spellPowerMultiplier: 1 + baseStats.strength * balanceConfig.statScaling.strengthSpellPowerMultiplier
 });

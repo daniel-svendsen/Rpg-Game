@@ -13,6 +13,22 @@ export const clampEnemyResistance = (resistance: number): number =>
 export const applyResistanceToDamage = (baseDamage: number, resistance: number): number =>
   Math.max(1, Math.round(baseDamage * (1 - resistance)));
 
+// Armor reduces physical damage with diminishing returns.
+// Formula: reduction = armor / (armor + rawDamage * 5), capped at 50%.
+export const applyArmorMitigation = (damage: number, armor: number): number => {
+  if (armor <= 0 || damage <= 0) return damage;
+  const reductionFraction = Math.min(0.5, armor / (armor + damage * 5));
+  return Math.max(1, Math.round(damage * (1 - reductionFraction)));
+};
+
+// Evasion gives a chance to completely avoid a hit.
+// Formula: evadeChance = evasion / (evasion + 400), capped at 25%.
+export const rollEvasion = (evasion: number): boolean => {
+  if (evasion <= 0) return false;
+  const evadeChance = Math.min(0.25, evasion / (evasion + 400));
+  return Math.random() < evadeChance;
+};
+
 export const resolveEnemyDamageType = (tags: readonly string[]): DamageType => {
   if (tags.includes("Fire")) {
     return "Fire";

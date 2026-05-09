@@ -85,6 +85,7 @@ export const applyEquipmentState = (character: CharacterRecord): CharacterRecord
       critChance:
         derivedStats.critChance +
         Object.values(character.equippedItems).reduce((total, item) => total + (item?.statBonuses.critChance ?? 0), 0),
+      critMultiplier: derivedStats.critMultiplier,
       spellPowerMultiplier:
         derivedStats.spellPowerMultiplier +
         Object.values(character.equippedItems).reduce(

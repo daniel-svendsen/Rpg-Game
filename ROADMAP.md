@@ -370,7 +370,7 @@ Success criteria:
 
 ## Next Recommended Step
 
-- Spell drop rarity is tuned (0.05â€”0.10/run vs 0.23â€”0.55/run before; rares now account for ~47% of all spell drops via 8Ã— multiplier). Boss key guardian mechanic is in place. Next candidates: combat math follow-through (armor/evasion mitigation, derived crit multiplier), richer simulator telemetry (damage prevented by type, time moving vs fighting), or Phase 3 UI readability work.
+- Combat math follow-through is complete (armor/evasion mitigation active in sim, crit multiplier is a derived stat). Balance pass T1–T9 documented. Next candidates: shard tier upgrade feature (hub UX — spend more shards to stay at the same map tier), or Phase 3 UI readability work (item comparison simplification, mobile overflow fixes).
 
 ## Planned Workstreams
 
@@ -438,13 +438,22 @@ Implemented (first pass):
 - Boss lairs now exist as challengeable tier bosses with a separate boss drop pool, first-pass boss uniques, and imbuing orb rewards.
 - Simulator reporting includes item roll distributions (tier buckets), movement-speed affix visibility, boss key gain rate, imbuing orb output, and clearer map-sustain stall signals.
 
-Partially implemented (needs follow-through):
+Implemented (continued):
 
-- Combat foundation follow-through is underway:
-  - elemental resistances, enemy damage types, resistance penetration, and resistance caps now exist in shared domain combat logic
-  - equipment and affixes can now grant armor, evasion, and elemental resistances
-  - character UI now exposes the new defense stats for visibility during tuning
-  - physical mitigation via armor/evasion and a derived crit multiplier still need fuller combat-math follow-through
+- Combat foundation follow-through complete:
+  - elemental resistances, enemy damage types, resistance penetration, and resistance caps in shared domain combat logic
+  - equipment and affixes can grant armor, evasion, and elemental resistances
+  - character UI exposes defense stats for visibility during tuning
+  - armor mitigation: `min(0.50, armor / (armor + rawDamage × 5))` — PoE-inspired diminishing returns, physical damage only
+  - evasion dodge: `min(0.25, evasion / (evasion + 400))` — caps at 25% per-hit dodge chance
+  - crit multiplier is now a derived stat (default 1.6, ready for item and support bonuses)
+- Richer simulator telemetry (full T1–T9 balance pass completed 2026-05-09):
+  - time moving vs fighting per run
+  - damage dealt, prevented by resistance, prevented by armor, evades per run
+  - item distribution: Normal / Magic / Rare / Exceptional / Unique per run
+  - guardian spawn rate and kill rate per run
+  - full sweep documented in `docs/BALANCE_PASS_2026-05-09.md`
+
 - Phaser visuals (first pass, out-of-phase early delivery):
   - All monsters now render with real 0x72 DungeonTileset II idle sprite animations, each mapped to a named spriteName in `frontend/src/game/phaser/spriteConfig.ts`.
   - Player character renders as an animated wizard sprite (wizzard_m) with camera follow.
@@ -456,4 +465,6 @@ Partially implemented (needs follow-through):
 
 Still planned (next major domain work):
 
-- Richer simulator telemetry for damage prevention by type, time moving vs fighting, pack/aggro stats, and loot pickup time.
+- Shard tier upgrade: when a Tier N map is selected in the hub, allow spending extra shards to get a same-tier map at higher cost than downgrading to Tier N-1.
+- Item stat roll UI: expose roll distributions to players (min/max per stat, tier label on item card).
+- Expand boss rewards into tier-specific unique pools, stronger crafting materials, and a fuller long-term chase structure.

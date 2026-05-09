@@ -116,27 +116,38 @@ npm run sim -- --profile starter-caster --map trainingGrounds --runs 25 --shop-s
 
 The report is primarily useful for trends and comparisons, not single-run intuition.
 
-Key metrics:
+### Economy and progression
 
-- completion rate
-- death rate
-- timeout rate
-- average run time
-- average gold
-- average map shards
-- average imbuing orbs
-- map sustain
-- boss keys per run
-- rare monsters encountered and killed
-- item / spell / currency / map loot totals
-- unique tier breakdown
-- item roll summaries
-- optional shop sample price and roll summaries
+- `Completion rate` / `Death rate` / `Timeout rate`
+- `Average run time`
+- `Average gold` / `Average map shards` / `Average imbuing orbs`
+- `Map sustain` — same-tier maps gained per run (target ≈ 1.0 for normal maps)
+- `Boss keys` — keys per run from guardian kills
+- `Guardian spawn rate` / `killed` — what % of runs had a guardian and how often it died
+
+### Combat profile
+
+- `Time breakdown` — moving vs fighting seconds per average run
+- `Damage taken` — raw damage dealt to player, prevented by resistance, armor (0 until armor-mitigation is implemented), and evade count
+- These let you size new armor and evasion values against real intake numbers
+
+### Item distribution
+
+- `Normal / Magic / Rare / Exceptional rare / Unique` — items per run by rarity
+- `Spells` — spell drops per run (target ≈ 0.05–0.12 for normal maps)
+- `Maps` / `Currency pickups` — ground loot volume per run
+
+### Item rolls
+
+- `By rarity` — totals across all runs
+- `Top stats` — most commonly rolled affixes (useful for spotting oversupply)
+- `Movement speed affixes` — visibility check for rare affix
+- Optional `Shop samples` — price range and roll distribution if `--shop-samples N` is passed
 
 Current sustain model notes:
 
-- Normal maps currently target about `1.0` same-tier map and `0.25` next-tier maps per full clear.
-- Boss lairs do not use the normal map-sustain target; they are measured mainly through completion rate, guaranteed boss reward output, and optional extra `Imbuing Orb` drops.
+- Normal maps target about `1.0` same-tier map per full clear.
+- Boss lairs are measured by completion rate, guaranteed boss reward output, and imbuing orb drops — not map sustain.
 
 ## How To Use It Well
 

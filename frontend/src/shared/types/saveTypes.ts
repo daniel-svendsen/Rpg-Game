@@ -48,6 +48,7 @@ export interface DerivedStats {
   evasion: number;
   resistances: Record<Exclude<DamageType, "Physical">, number>;
   critChance: number;
+  critMultiplier: number;
   spellPowerMultiplier: number;
 }
 

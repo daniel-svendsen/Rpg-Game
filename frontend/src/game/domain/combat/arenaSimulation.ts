@@ -21,7 +21,7 @@ import { resolveSpell } from "../spells/spellEngine";
 import { getItemSlotLabel } from "../../config/itemConfig";
 import { uniqueItemDefinitions } from "../../config/itemConfig";
 import { createClientId } from "../../../shared/utils/id";
-import { applyResistanceToDamage, clampEnemyResistance, clampPlayerResistance, resolveEnemyDamageType } from "./combatMath";
+import { applyArmorMitigation, applyResistanceToDamage, clampEnemyResistance, clampPlayerResistance, resolveEnemyDamageType, rollEvasion } from "./combatMath";
 import type {
   ArenaEnemyState,
   ArenaSnapshot,
@@ -949,6 +949,11 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
       return enemy;
     }
 
+    if (rollEvasion(nextPlayer.derivedStats.evasion)) {
+      telemetry = { ...telemetry, evades: telemetry.evades + 1 };
+      return { ...enemy, lastContactDamageAt: nextTime };
+    }
+
     const baseContactDamage = Math.max(
       1,
       Math.round(enemy.damage * getEquippedUniqueModifiers(nextPlayer).enemyContactDamageTakenMultiplier)
@@ -961,13 +966,19 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
       enemy.damageType === "Physical"
         ? baseContactDamage
         : applyResistanceToDamage(baseContactDamage, resistance);
-    const appliedDamage = afterResistance;
+    const afterArmor =
+      enemy.damageType === "Physical"
+        ? applyArmorMitigation(afterResistance, nextPlayer.derivedStats.armor)
+        : afterResistance;
+    const appliedDamage = afterArmor;
     const preventedByResistance = baseContactDamage - afterResistance;
+    const preventedByArmor = afterResistance - afterArmor;
 
     telemetry = {
       ...telemetry,
       damageDealtToPlayer: telemetry.damageDealtToPlayer + appliedDamage,
-      damagePreventedByResistance: telemetry.damagePreventedByResistance + preventedByResistance
+      damagePreventedByResistance: telemetry.damagePreventedByResistance + preventedByResistance,
+      damagePreventedByArmor: telemetry.damagePreventedByArmor + preventedByArmor
     };
 
     nextPlayer = {
@@ -1053,7 +1064,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
         }
 
         const didCrit = Math.random() < resolvedSpell.critChance;
-        const baseDamage = didCrit ? Math.round(resolvedSpell.damage * 1.6) : resolvedSpell.damage;
+        const baseDamage = didCrit ? Math.round(resolvedSpell.damage * nextPlayer.derivedStats.critMultiplier) : resolvedSpell.damage;
         const relevantResistances = (["Fire", "Cold", "Lightning"] as const)
           .filter((type) => resolvedSpell.tags.includes(type))
           .map((type) => clampEnemyResistance(enemy.resistances[type] - resolvedSpell.resistancePenetration[type]));
