@@ -4,7 +4,6 @@ import { ItemSlotIcon } from "./ItemSlotIcon";
 import { getItemPowerScore, getPowerChangeForCharacterItem } from "../game/domain/items/itemPower";
 import { getItemStatEntries } from "../game/domain/items/itemStats";
 import type { CharacterRecord, EquipmentSlot, InventoryItem } from "../shared/types/saveTypes";
-import { LootPanel } from "./LootPanel";
 
 // ── Weapon sprite mapping ─────────────────────────────────────────────────────
 
@@ -80,7 +79,6 @@ interface GearTabProps {
   topBar: ReactNode;
   character: CharacterRecord | null;
   equipmentSlots: EquipmentSlot[];
-  recentLoot: Parameters<typeof LootPanel>[0]["recentLoot"];
   getItemSellPrice: (item: CharacterRecord["inventory"][number]) => number;
   onSellItem: (itemId: string) => void;
   onEquipItem: (itemId: string, targetSlotOverride?: EquipmentSlot) => void;
@@ -92,68 +90,82 @@ export const GearTab = ({
   topBar,
   character,
   equipmentSlots,
-  recentLoot,
   getItemSellPrice,
   onSellItem,
   onEquipItem,
   onSelectEquipmentSlot,
   onOpenEquipmentPicker
-}: GearTabProps) => (
-  <div className="content stack mobile-content">
-    {topBar}
-    <section className="panel stack">
-      <h4>Equipment</h4>
-      <div className="equipment-doll">
-        {DOLL_ROWS.map((row, rowIdx) => (
-          <div key={rowIdx} className="doll-row">
-            {row.map((slot, colIdx) =>
-              slot === null ? (
-                <div key={colIdx} className="doll-slot doll-slot--placeholder" />
-              ) : (
-                <SlotCell
-                  key={slot}
-                  slot={slot}
-                  equippedItem={character?.equippedItems[slot]}
+}: GearTabProps) => {
+  const sortedInventory = [...(character?.inventory ?? [])].sort((left, right) => {
+    const powerDelta = getItemPowerScore(right) - getItemPowerScore(left);
+    if (powerDelta !== 0) {
+      return powerDelta;
+    }
+
+    const rarityRank = { Unique: 3, Rare: 2, Magic: 1, Normal: 0 } as const;
+    const rarityDelta = rarityRank[right.rarity] - rarityRank[left.rarity];
+    if (rarityDelta !== 0) {
+      return rarityDelta;
+    }
+
+    return left.name.localeCompare(right.name);
+  });
+
+  return (
+    <div className="content stack mobile-content">
+      {topBar}
+      <section className="panel stack">
+        <h4>Equipment</h4>
+        <div className="equipment-doll">
+          {DOLL_ROWS.map((row, rowIdx) => (
+            <div key={rowIdx} className="doll-row">
+              {row.map((slot, colIdx) =>
+                slot === null ? (
+                  <div key={colIdx} className="doll-slot doll-slot--placeholder" />
+                ) : (
+                  <SlotCell
+                    key={slot}
+                    slot={slot}
+                    equippedItem={character?.equippedItems[slot]}
+                    onClick={() => {
+                      onSelectEquipmentSlot(slot);
+                      onOpenEquipmentPicker();
+                    }}
+                  />
+                )
+              )}
+            </div>
+          ))}
+        </div>
+        {equipmentSlots
+          .filter((s) => !DOLL_ROWS.flat().includes(s))
+          .map((slot) => {
+            const equippedItem = character?.equippedItems[slot];
+            const rarityClass = equippedItem ? ` equipped-rarity-${equippedItem.rarity.toLowerCase()}` : "";
+            return (
+              <div key={slot} className="inventory-row">
+                <span className="slot-label">{getEquipmentSlotLabel(slot)}</span>
+                <button
+                  className={`secondary-button${rarityClass}`}
                   onClick={() => {
                     onSelectEquipmentSlot(slot);
                     onOpenEquipmentPicker();
                   }}
-                />
-              )
-            )}
-          </div>
-        ))}
-      </div>
-      {/* Fallback list for any slots not in the doll layout */}
-      {equipmentSlots
-        .filter((s) => !DOLL_ROWS.flat().includes(s))
-        .map((slot) => {
-          const equippedItem = character?.equippedItems[slot];
-          const rarityClass = equippedItem ? ` equipped-rarity-${equippedItem.rarity.toLowerCase()}` : "";
-          return (
-            <div key={slot} className="inventory-row">
-              <span className="slot-label">{getEquipmentSlotLabel(slot)}</span>
-              <button
-                className={`secondary-button${rarityClass}`}
-                onClick={() => {
-                  onSelectEquipmentSlot(slot);
-                  onOpenEquipmentPicker();
-                }}
-              >
-                {equippedItem?.name ?? "Empty"}
-              </button>
-            </div>
-          );
-        })}
-    </section>
-    <section className="panel stack">
-      <div className="inventory-row">
-        <h4>Inventory</h4>
-      </div>
-      {(character?.inventory ?? []).length === 0 ? (
-        <p className="status-text">Your inventory is empty. Run a map to collect loot.</p>
-      ) : null}
-      {(character?.inventory ?? []).map((item) => (
+                >
+                  {equippedItem?.name ?? "Empty"}
+                </button>
+              </div>
+            );
+          })}
+      </section>
+      <section className="panel stack">
+        <div className="inventory-row">
+          <h4>Inventory</h4>
+        </div>
+        {sortedInventory.length === 0 ? (
+          <p className="status-text">Your inventory is empty. Run a map to collect loot.</p>
+        ) : null}
+        {sortedInventory.map((item) => (
         <div key={item.id} className={`loot-entry rarity-card rarity-${item.rarity.toLowerCase()}`}>
           <div className="inventory-row">
             <div className="item-name-row">
@@ -204,8 +216,8 @@ export const GearTab = ({
             return pc !== null && pc > 0 ? <div className="upgrade-text">Possible upgrade</div> : null;
           })()}
         </div>
-      ))}
-    </section>
-    <LootPanel recentLoot={recentLoot} />
-  </div>
-);
+        ))}
+      </section>
+    </div>
+  );
+};

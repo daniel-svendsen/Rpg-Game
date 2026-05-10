@@ -404,7 +404,6 @@ export const App = () => {
         hubTab={hubTab}
         overlayPanel={overlayPanel}
         queuedMapCount={queuedMapIds.length}
-        recentLoot={recentLoot}
         selectedEquipmentSlot={selectedEquipmentSlot}
         selectedMapEntry={selectedMapEntry}
         selectedMapEnhancements={selectedMapEnhancements}

@@ -35,7 +35,6 @@ import {
 import type {
   CharacterRecord,
   EquipmentSlot,
-  LootEntry,
   MapEnhancementInstance,
   OwnedMapStack
 } from "../shared/types/saveTypes";
@@ -48,7 +47,6 @@ interface HubScreenProps {
   hubTab: HubTab;
   overlayPanel: OverlayPanel;
   queuedMapCount: number;
-  recentLoot: LootEntry[];
   selectedEquipmentSlot: EquipmentSlot;
   selectedMapEntry: OwnedMapStack | null;
   selectedMapEnhancements: MapEnhancementInstance[];
@@ -90,7 +88,6 @@ export const HubScreen = ({
   hubTab,
   overlayPanel,
   queuedMapCount,
-  recentLoot,
   selectedEquipmentSlot,
   selectedMapEntry,
   selectedMapEnhancements,
@@ -215,7 +212,6 @@ export const HubScreen = ({
           topBar={topBar}
           character={character}
           equipmentSlots={equipmentSlots}
-          recentLoot={recentLoot}
           getItemSellPrice={getItemSellPrice}
           onSellItem={onSellItem}
           onEquipItem={onEquipItem}

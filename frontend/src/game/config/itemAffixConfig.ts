@@ -31,7 +31,7 @@ export const getAffixCountByRarity = (
 ): { min: number; max: number; maxPrefixes: number; maxSuffixes: number } => {
   switch (rarity) {
     case "Normal":
-      return { min: 0, max: 1, maxPrefixes: 1, maxSuffixes: 1 };
+      return { min: 0, max: 0, maxPrefixes: 0, maxSuffixes: 0 };
     case "Magic":
       return { min: 1, max: 2, maxPrefixes: 1, maxSuffixes: 1 };
     case "Rare":
