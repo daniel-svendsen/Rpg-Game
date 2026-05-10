@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from "react";
 import { HealthHud } from "./HealthHud";
 import { HubBottomTabs } from "./HubBottomTabs";
 import { HubOverlayPanel } from "./HubOverlayPanel";
@@ -33,6 +34,8 @@ import {
   getSpellUpgradeTierRequirement
 } from "../game/domain/spells/spellProgression";
 import type {
+  AutoSellRarity,
+  AutoSellSettings,
   CharacterRecord,
   EquipmentSlot,
   MapEnhancementInstance,
@@ -47,6 +50,7 @@ interface HubScreenProps {
   hubTab: HubTab;
   overlayPanel: OverlayPanel;
   queuedMapCount: number;
+  autoSellSettings: AutoSellSettings;
   selectedEquipmentSlot: EquipmentSlot;
   selectedMapEntry: OwnedMapStack | null;
   selectedMapEnhancements: MapEnhancementInstance[];
@@ -66,6 +70,7 @@ interface HubScreenProps {
   onOpenMainSpellPicker: () => void;
   onOpenSupportPicker: (slotIndex: 0 | 1) => void;
   onRefreshShop: () => void;
+  onSetAutoSellSettings: Dispatch<SetStateAction<AutoSellSettings>>;
   onRunAllMaps: () => void;
   onSave: () => void;
   onSelectEquipmentSlot: (slot: EquipmentSlot) => void;
@@ -74,6 +79,7 @@ interface HubScreenProps {
   onSelectMap: (target: SelectedMapTarget) => void;
   onSelectSupportSpell: (supportSpellId: string) => void;
   onSellAllItems: () => void;
+  onSellItemsByRarity: (rarity: AutoSellRarity) => void;
   onSellItem: (itemId: string) => void;
   onSpendStatPoint: (statKey: keyof CharacterRecord["baseStats"]) => void;
   onStartMap: () => void;
@@ -88,6 +94,7 @@ export const HubScreen = ({
   hubTab,
   overlayPanel,
   queuedMapCount,
+  autoSellSettings,
   selectedEquipmentSlot,
   selectedMapEntry,
   selectedMapEnhancements,
@@ -106,6 +113,7 @@ export const HubScreen = ({
   onOpenMainSpellPicker,
   onOpenSupportPicker,
   onRefreshShop,
+  onSetAutoSellSettings,
   onRunAllMaps,
   onSave,
   onSelectEquipmentSlot,
@@ -115,6 +123,7 @@ export const HubScreen = ({
   onSelectSupportSpell,
   onStartBossTier,
   onSellAllItems,
+  onSellItemsByRarity,
   onSellItem,
   onSpendStatPoint,
   onStartMap,
@@ -180,6 +189,11 @@ export const HubScreen = ({
     />
   );
   const sellAllValue = character ? character.inventory.reduce((total, item) => total + getItemSellPrice(item), 0) : 0;
+  const sellValueByRarity = {
+    Normal: character ? character.inventory.filter((item) => item.rarity === "Normal").reduce((total, item) => total + getItemSellPrice(item), 0) : 0,
+    Magic: character ? character.inventory.filter((item) => item.rarity === "Magic").reduce((total, item) => total + getItemSellPrice(item), 0) : 0,
+    Rare: character ? character.inventory.filter((item) => item.rarity === "Rare").reduce((total, item) => total + getItemSellPrice(item), 0) : 0
+  };
 
   return (
     <div className="hub-shell">
@@ -236,10 +250,14 @@ export const HubScreen = ({
           topBar={topBar}
           character={character}
           shopItems={shopItems}
+          autoSellSettings={autoSellSettings}
           sellAllValue={sellAllValue}
+          sellValueByRarity={sellValueByRarity}
           formatPowerChange={formatPowerChange}
           onBuyShopItem={onBuyShopItem}
           onSellAllItems={onSellAllItems}
+          onSellItemsByRarity={onSellItemsByRarity}
+          onSetAutoSellSettings={onSetAutoSellSettings}
           onRefreshShop={onRefreshShop}
         />
       ) : null}

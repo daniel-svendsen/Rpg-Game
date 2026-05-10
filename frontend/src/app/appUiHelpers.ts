@@ -2,7 +2,7 @@ import { balanceConfig } from "../game/config/balanceConfig";
 import { spellConfig, supportSpellConfig } from "../game/config/spellConfig";
 import { getItemPowerScore } from "../game/domain/items/itemPower";
 import { createShopStock, getShopItemPrice } from "../game/domain/items/shopStock";
-import type { CharacterRecord, EquipmentSlot, InventoryItem } from "../shared/types/saveTypes";
+import type { AutoSellRarity, AutoSellSettings, CharacterRecord, EquipmentSlot, InventoryItem } from "../shared/types/saveTypes";
 
 export type ShopItemState = InventoryItem & { price: number };
 
@@ -21,6 +21,12 @@ export const equipmentSlots: EquipmentSlot[] = [
 ];
 
 export const accountEmailStorageKey = "arpg-account-email";
+export const autoSellSettingsStorageKey = "arpg-auto-sell-settings";
+export const defaultAutoSellSettings: AutoSellSettings = {
+  Normal: false,
+  Magic: false,
+  Rare: false
+};
 
 export const toShopItemState = (item: InventoryItem): ShopItemState => ({
   ...item,
@@ -72,6 +78,14 @@ export const getItemSellPrice = (item: InventoryItem): number =>
     balanceConfig.economy.itemSellPriceFloor,
     Math.round(getItemPowerScore(item) * balanceConfig.economy.itemSellPriceMultiplier)
   );
+
+export const getInventoryItemsByRarity = (
+  inventory: InventoryItem[],
+  rarity: AutoSellRarity
+): InventoryItem[] => inventory.filter((item) => item.rarity === rarity);
+
+export const getSellValueForRarity = (inventory: InventoryItem[], rarity: AutoSellRarity): number =>
+  getInventoryItemsByRarity(inventory, rarity).reduce((total, item) => total + getItemSellPrice(item), 0);
 
 export const getEquippedPowerTotal = (character: CharacterRecord): number =>
   Math.round(

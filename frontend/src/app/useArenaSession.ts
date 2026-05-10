@@ -4,7 +4,7 @@ import { mapConfig } from "../game/config/mapConfig";
 import { createArenaRuntime, stepArenaRuntime, type ArenaRuntimeState } from "../game/domain/combat/arenaSimulation";
 import { consumeOwnedMap, getOwnedMapStack } from "../game/domain/maps/mapProgress";
 import { normalizeCharacterRecord } from "../game/domain/player/playerTypes";
-import type { ArenaSnapshot, CharacterRecord, LootEntry, MapEnhancementInstance } from "../shared/types/saveTypes";
+import type { ArenaSnapshot, AutoSellSettings, CharacterRecord, LootEntry, MapEnhancementInstance } from "../shared/types/saveTypes";
 import type { RunSummaryData, ScreenMode } from "./appTypes";
 import {
   shouldSyncArenaCharacter,
@@ -17,6 +17,7 @@ interface UseArenaSessionParams {
   activeMapId: string | null;
   activeMapEnhancements: MapEnhancementInstance[];
   activeMapRunId: number;
+  autoSellSettings: AutoSellSettings;
   arenaRuntimeRef: MutableRefObject<ArenaRuntimeState | null>;
   queuedMapIdsRef: MutableRefObject<string[]>;
   commitCharacter: (nextCharacter: CharacterRecord | null) => void;
@@ -38,6 +39,7 @@ export const useArenaSession = ({
   activeMapId,
   activeMapEnhancements,
   activeMapRunId,
+  autoSellSettings,
   arenaRuntimeRef,
   queuedMapIdsRef,
   commitCharacter,
@@ -60,7 +62,7 @@ export const useArenaSession = ({
     let animationFrame = 0;
     // Anchor the run to the character state at map start. During combat we keep
     // mutating player state, so this effect must not restart on each character update.
-    let runtime = createArenaRuntime(character, activeMapId, activeMapEnhancements);
+    let runtime = createArenaRuntime(character, activeMapId, activeMapEnhancements, autoSellSettings);
     arenaRuntimeRef.current = runtime;
     let lastTimestamp = performance.now();
     let lastSnapshotUpdateAt = 0;
@@ -154,6 +156,7 @@ export const useArenaSession = ({
     activeMapId,
     activeMapEnhancements,
     activeMapRunId,
+    autoSellSettings,
     arenaRuntimeRef,
     queuedMapIdsRef,
     commitCharacter,

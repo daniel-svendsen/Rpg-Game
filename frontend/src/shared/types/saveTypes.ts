@@ -17,6 +17,7 @@ export type Tag =
   | "MapModifier";
 
 export type ItemRarity = "Normal" | "Magic" | "Rare" | "Unique";
+export type AutoSellRarity = Exclude<ItemRarity, "Unique">;
 export type MonsterRarity = "Normal" | "Rare";
 export type DamageType = "Physical" | "Fire" | "Cold" | "Lightning";
 export type EquipmentSlot =
@@ -147,6 +148,12 @@ export interface MapProgressState {
   consumableMaps: OwnedMapStack[];
   bossRetryUnlockedTiers?: number[];
   clearedBossTiers?: number[];
+}
+
+export interface AutoSellSettings {
+  Normal: boolean;
+  Magic: boolean;
+  Rare: boolean;
 }
 
 export interface CharacterRecord {

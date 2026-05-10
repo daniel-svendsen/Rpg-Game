@@ -29,6 +29,7 @@ import { uniqueItemDefinitions } from "../../config/itemConfig";
 import { createClientId } from "../../../shared/utils/id";
 import { applyArmorMitigation, applyResistanceToDamage, clampEnemyResistance, clampPlayerResistance, resolveEnemyDamageType, rollEvasion } from "./combatMath";
 import type {
+  AutoSellSettings,
   ArenaEnemyState,
   ArenaSnapshot,
   CharacterRecord,
@@ -42,6 +43,11 @@ import type {
   DamageType,
   SpellVisualEvent
 } from "../../../shared/types/saveTypes";
+const defaultAutoSellSettings: AutoSellSettings = {
+  Normal: false,
+  Magic: false,
+  Rare: false
+};
 
 const createBossUniqueDrop = (tier: number): InventoryItem | null => {
   const bossUniqueIds = itemBalance.bossUniquePools[tier as keyof typeof itemBalance.bossUniquePools];
@@ -152,6 +158,7 @@ export interface ArenaRuntimeState {
     targetLootId: string | null;
     lootPauseUntilMs: number;
   };
+  autoSellSettings: AutoSellSettings;
 }
 
 const distance = (aX: number, aY: number, bX: number, bY: number): number =>
@@ -483,12 +490,39 @@ const selectNearestLoot = (
 
 const applyGroundLootPickup = (
   character: CharacterRecord,
-  entry: GroundLootState
+  entry: GroundLootState,
+  autoSellSettings: AutoSellSettings
 ): { character: CharacterRecord; lootEvent: LootEntry } => {
   const payload = entry.payload;
 
   if (payload.kind === "Item") {
     const item = payload.item;
+    const shouldAutoSell = item.rarity !== "Unique" && autoSellSettings[item.rarity as keyof AutoSellSettings];
+
+    if (shouldAutoSell) {
+      const sellPrice = Math.max(
+        balanceConfig.economy.itemSellPriceFloor,
+        Math.round(getItemPowerScore(item) * balanceConfig.economy.itemSellPriceMultiplier)
+      );
+      const nextCharacter = {
+        ...character,
+        gold: character.gold + sellPrice
+      };
+
+      return {
+        character: nextCharacter,
+        lootEvent: {
+          id: `${entry.id}-picked`,
+          kind: "Item",
+          name: item.name,
+          details: [`Auto-sold for ${sellPrice} gold`],
+          isUpgrade: false,
+          rarity: item.rarity,
+          slot: item.slot ?? undefined
+        }
+      };
+    }
+
     const nextCharacter = {
       ...character,
       inventory: [...character.inventory, item]
@@ -754,7 +788,8 @@ const rollGroundDrops = (
 export const createArenaRuntime = (
   character: CharacterRecord,
   mapId: string,
-  enhancements: MapEnhancementInstance[] = []
+  enhancements: MapEnhancementInstance[] = [],
+  autoSellSettings: AutoSellSettings = defaultAutoSellSettings
 ): ArenaRuntimeState => {
   const map = resolveMapInstance(mapConfig[mapId], enhancements);
   const initialPlayerX = ARENA_WIDTH / 2;
@@ -824,7 +859,8 @@ export const createArenaRuntime = (
       targetPackId: selectNearestPack(packsResult.packs, packsResult.enemies, initialPlayerX, initialPlayerY),
       targetLootId: null,
       lootPauseUntilMs: 0
-    }
+    },
+    autoSellSettings
   };
 };
 
@@ -934,7 +970,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
       return;
     }
 
-    const pickup = applyGroundLootPickup(nextPlayer, entry);
+    const pickup = applyGroundLootPickup(nextPlayer, entry, state.autoSellSettings);
     nextPlayer = pickup.character;
     lootEvents.push(pickup.lootEvent);
     pickedLootIds.add(entry.id);
@@ -1285,6 +1321,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
     playerX,
     playerY,
     autoMove,
+    autoSellSettings: state.autoSellSettings,
     snapshot
   };
 };

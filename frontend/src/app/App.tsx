@@ -11,7 +11,9 @@ import { RunSummaryScreen } from "./RunSummaryScreen";
 import { InlineFeedbackPanel } from "./InlineFeedbackPanel";
 import {
   accountEmailStorageKey,
+  autoSellSettingsStorageKey,
   createShopStock,
+  defaultAutoSellSettings,
   getItemSellPrice,
   toShopItemState,
   type ShopItemState
@@ -69,6 +71,19 @@ export const App = () => {
   const [queuedMapIds, setQueuedMapIds] = useState<string[]>([]);
   const [selectedEquipmentSlot, setSelectedEquipmentSlot] = useState<EquipmentSlot>("Weapon");
   const [selectedSupportSlot, setSelectedSupportSlot] = useState<0 | 1>(0);
+  const [autoSellSettings, setAutoSellSettings] = useState(() => {
+    const saved = localStorage.getItem(autoSellSettingsStorageKey);
+
+    if (!saved) {
+      return defaultAutoSellSettings;
+    }
+
+    try {
+      return { ...defaultAutoSellSettings, ...JSON.parse(saved) };
+    } catch {
+      return defaultAutoSellSettings;
+    }
+  });
   const [runSummaryData, setRunSummaryData] = useState<RunSummaryData | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -125,6 +140,7 @@ export const App = () => {
     handleRefreshShop,
     handleSellItem,
     handleSellAllItems,
+    handleSellItemsByRarity,
     handleSpendStatPoint,
     handleUpgradeSpell,
     handleUseLifeFlask
@@ -187,6 +203,7 @@ export const App = () => {
     activeMapId,
     activeMapEnhancements,
     activeMapRunId,
+    autoSellSettings,
     arenaRuntimeRef,
     queuedMapIdsRef,
     commitCharacter,
@@ -223,6 +240,10 @@ export const App = () => {
   useEffect(() => {
     queuedMapIdsRef.current = queuedMapIds;
   }, [queuedMapIds]);
+
+  useEffect(() => {
+    localStorage.setItem(autoSellSettingsStorageKey, JSON.stringify(autoSellSettings));
+  }, [autoSellSettings]);
 
   const updateStat = (key: keyof CharacterStats, delta: number) => {
     setCharacterStats((current) => {
@@ -404,6 +425,7 @@ export const App = () => {
         hubTab={hubTab}
         overlayPanel={overlayPanel}
         queuedMapCount={queuedMapIds.length}
+        autoSellSettings={autoSellSettings}
         selectedEquipmentSlot={selectedEquipmentSlot}
         selectedMapEntry={selectedMapEntry}
         selectedMapEnhancements={selectedMapEnhancements}
@@ -425,6 +447,7 @@ export const App = () => {
           setOverlayPanel("supportPicker");
         }}
         onRefreshShop={handleRefreshShop}
+        onSetAutoSellSettings={setAutoSellSettings}
         onRunAllMaps={handleRunAllMaps}
         onSave={() => void handleManualSave()}
         onSelectEquipmentSlot={setSelectedEquipmentSlot}
@@ -434,6 +457,7 @@ export const App = () => {
         onSelectSupportSpell={handleSelectSupportSpell}
         onStartBossTier={handleStartBossTier}
         onSellAllItems={handleSellAllItems}
+        onSellItemsByRarity={handleSellItemsByRarity}
         onSellItem={handleSellItem}
         onSpendStatPoint={handleSpendStatPoint}
         onStartMap={handleStartMap}

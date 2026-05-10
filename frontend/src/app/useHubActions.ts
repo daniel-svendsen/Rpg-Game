@@ -7,7 +7,7 @@ import { spendLevelStatPoint } from "../game/domain/player/playerTypes";
 import { getSpellName } from "../game/domain/spells/spellDrops";
 import { getSpellLevel, upgradeSpell } from "../game/domain/spells/spellProgression";
 import type { ArenaRuntimeState } from "../game/domain/combat/arenaSimulation";
-import type { ArenaSnapshot, CharacterRecord, CharacterStats, EquipmentSlot, InventoryItem } from "../shared/types/saveTypes";
+import type { ArenaSnapshot, AutoSellRarity, CharacterRecord, CharacterStats, EquipmentSlot, InventoryItem } from "../shared/types/saveTypes";
 import type { ScreenMode } from "./appTypes";
 
 type ShopItemState = InventoryItem & { price: number };
@@ -182,6 +182,37 @@ export const useHubActions = ({
     setStatusMessage(`Sold all inventory items for ${totalGold} gold.`);
   };
 
+  const handleSellItemsByRarity = (rarity: AutoSellRarity): void => {
+    if (!character) {
+      return;
+    }
+
+    const itemsToSell = character.inventory.filter((item) => item.rarity === rarity);
+
+    if (itemsToSell.length === 0) {
+      setErrorMessage(`No ${rarity.toLowerCase()} items to sell.`);
+      return;
+    }
+
+    const totalGold = itemsToSell.reduce((total, item) => total + getItemSellPrice(item), 0);
+    const isConfirmed = window.confirm(
+      `Sell all ${rarity.toLowerCase()} items (${itemsToSell.length}) for ${totalGold} gold?`
+    );
+
+    if (!isConfirmed) {
+      return;
+    }
+
+    const soldIds = new Set(itemsToSell.map((item) => item.id));
+    commitCharacter({
+      ...character,
+      gold: character.gold + totalGold,
+      inventory: character.inventory.filter((item) => !soldIds.has(item.id))
+    });
+    setStatusMessage(`Sold ${itemsToSell.length} ${rarity.toLowerCase()} item${itemsToSell.length === 1 ? "" : "s"} for ${totalGold} gold.`);
+    setErrorMessage(null);
+  };
+
   const handleSpendStatPoint = (statKey: keyof CharacterStats): void => {
     if (!character) {
       return;
@@ -247,6 +278,7 @@ export const useHubActions = ({
     handleRefreshShop,
     handleSellItem,
     handleSellAllItems,
+    handleSellItemsByRarity,
     handleSpendStatPoint,
     handleUpgradeSpell,
     handleUseLifeFlask

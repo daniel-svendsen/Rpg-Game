@@ -1,11 +1,11 @@
-import type { ReactNode } from "react";
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 import {
   getItemPowerScore,
   getPowerChangeForCharacterItem
 } from "../game/domain/items/itemPower";
 import { getItemStatEntries } from "../game/domain/items/itemStats";
 import { balanceConfig } from "../game/config/balanceConfig";
-import type { CharacterRecord, InventoryItem } from "../shared/types/saveTypes";
+import type { AutoSellRarity, AutoSellSettings, CharacterRecord, InventoryItem } from "../shared/types/saveTypes";
 import { ItemSlotIcon } from "./ItemSlotIcon";
 
 type ShopItemState = InventoryItem & { price: number };
@@ -14,10 +14,14 @@ interface ShopTabProps {
   topBar: ReactNode;
   character: CharacterRecord | null;
   shopItems: ShopItemState[];
+  autoSellSettings: AutoSellSettings;
   sellAllValue: number;
+  sellValueByRarity: Record<AutoSellRarity, number>;
   formatPowerChange: (powerChange: number | null) => string;
   onBuyShopItem: (itemId: string) => void;
   onSellAllItems: () => void;
+  onSellItemsByRarity: (rarity: AutoSellRarity) => void;
+  onSetAutoSellSettings: Dispatch<SetStateAction<AutoSellSettings>>;
   onRefreshShop: () => void;
 }
 
@@ -25,10 +29,14 @@ export const ShopTab = ({
   topBar,
   character,
   shopItems,
+  autoSellSettings,
   sellAllValue,
+  sellValueByRarity,
   formatPowerChange,
   onBuyShopItem,
   onSellAllItems,
+  onSellItemsByRarity,
+  onSetAutoSellSettings,
   onRefreshShop
 }: ShopTabProps) => (
   <div className="content stack mobile-content">
@@ -40,6 +48,40 @@ export const ShopTab = ({
           {sellAllValue > 0 ? `Sell all (+${sellAllValue}g)` : "Sell all"}
         </button>
       </div>
+      <div className="shop-sell-actions">
+        {(["Normal", "Magic", "Rare"] as const).map((rarity) => (
+          <button
+            key={`sell-${rarity}`}
+            className="secondary-button shop-sell-actions__button"
+            disabled={sellValueByRarity[rarity] <= 0}
+            onClick={() => onSellItemsByRarity(rarity)}
+            type="button"
+          >
+            {sellValueByRarity[rarity] > 0
+              ? `Sell ${rarity} (+${sellValueByRarity[rarity]}g)`
+              : `Sell ${rarity}`}
+          </button>
+        ))}
+      </div>
+      <section className="panel stack">
+        <h4>Auto-sell</h4>
+        <p className="status-text">Automatically sell picked up Normal, Magic, or Rare items. Unique items are never auto-sold.</p>
+        {(["Normal", "Magic", "Rare"] as const).map((rarity) => (
+          <label key={`auto-${rarity}`} className="inventory-row">
+            <span>{`Auto-sell ${rarity}`}</span>
+            <input
+              checked={autoSellSettings[rarity]}
+              onChange={(event) =>
+                onSetAutoSellSettings((current) => ({
+                  ...current,
+                  [rarity]: event.target.checked
+                }))
+              }
+              type="checkbox"
+            />
+          </label>
+        ))}
+      </section>
       {shopItems.map((item) => {
         const powerChange = character ? getPowerChangeForCharacterItem(character, item) : null;
         const canAfford = (character?.gold ?? 0) >= item.price;
