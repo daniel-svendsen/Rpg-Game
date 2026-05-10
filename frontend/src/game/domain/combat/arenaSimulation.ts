@@ -12,7 +12,13 @@ import { generateItemDropForCharacter } from "../items/itemGenerator";
 import { getItemPowerScore, isUpgradeForCharacter } from "../items/itemPower";
 import { getItemStatEntries } from "../items/itemStats";
 import { getEquippedUniqueModifiers } from "../items/uniqueEffects";
-import { addOwnedMap } from "../maps/mapProgress";
+import {
+  addOwnedMap,
+  clearBossTier,
+  isBossTierCleared,
+  isBossTierRetryUnlocked,
+  unlockBossRetry
+} from "../maps/mapProgress";
 import { resolveMapInstance, type ResolvedMapInstance } from "../maps/mapEnhancements";
 import { gainLifeFlaskCharges } from "../player/lifeFlask";
 import { applyExperience } from "../progression/progression";
@@ -37,13 +43,13 @@ import type {
   SpellVisualEvent
 } from "../../../shared/types/saveTypes";
 
-const bossUniqueIds = {
-  common1: "warlordSignet",
-  common2: "lairbornMantle",
-  chase: "crownOfAscension"
-} as const;
-
 const createBossUniqueDrop = (tier: number): InventoryItem | null => {
+  const bossUniqueIds = itemBalance.bossUniquePools[tier as keyof typeof itemBalance.bossUniquePools];
+
+  if (!bossUniqueIds) {
+    return null;
+  }
+
   const chaseRoll = Math.random() < 0.05;
   const selectedId = chaseRoll
     ? bossUniqueIds.chase
@@ -339,7 +345,7 @@ const createMonsterPacks = (
   map: ResolvedMapInstance,
   playerStartX: number,
   playerStartY: number,
-  highestUnlockedTier: number
+  mapProgress: CharacterRecord["mapProgress"]
 ): { packs: MonsterPackState[]; enemies: InternalEnemyState[]; rareMonstersSpawned: number } => {
   const packs: MonsterPackState[] = [];
   const enemies: InternalEnemyState[] = [];
@@ -394,12 +400,10 @@ const createMonsterPacks = (
     }
   }
 
-  // Key guardian: a rare enemy that always drops a boss key when killed.
-  // Spawns at 10% chance if the boss for the next tier hasn't been cleared, 5% otherwise.
-  const nextTier = map.tier + 1;
-  const bossNotCleared = highestUnlockedTier < nextTier;
-  const guardianSpawnChance = bossNotCleared ? 0.1 : 0.05;
-  const isEligibleForGuardian = !isBossMap && map.tier >= 1 && map.tier < mapBalance.maxTier;
+  const bossCleared = isBossTierCleared(mapProgress, map.tier);
+  const bossRetryUnlocked = isBossTierRetryUnlocked(mapProgress, map.tier);
+  const guardianSpawnChance = bossCleared ? 0.05 : bossRetryUnlocked ? 0 : 0.1;
+  const isEligibleForGuardian = !isBossMap && map.tier >= 1 && map.tier <= mapBalance.maxTier;
   if (isEligibleForGuardian && Math.random() < guardianSpawnChance) {
     const rareEnemies = enemies.filter((e) => e.rarity === "Rare");
     if (rareEnemies.length > 0) {
@@ -544,14 +548,30 @@ const applyGroundLootPickup = (
     };
   }
 
-  const nextCharacter = addOwnedMap(character, payload.mapId, payload.tier);
   const isBossKey = payload.mapId.startsWith("bossTier");
   const mapName = isBossKey ? `Boss Key (Tier ${payload.tier})` : `Tier ${payload.tier} Map`;
+
+  if (isBossKey && !isBossTierCleared(character.mapProgress, payload.tier)) {
+    const nextCharacter = unlockBossRetry(character, payload.tier);
+
+    return {
+      character: nextCharacter,
+      lootEvent: {
+        id: `${entry.id}-picked`,
+        kind: "Map",
+        name: mapName,
+        details: [
+          "Boss challenge permanently unlocked until first kill.",
+          `Defeat this boss to unlock Tier ${Math.min(mapBalance.maxTier, payload.tier + 1)} maps.`
+        ],
+        isUpgrade: true
+      }
+    };
+  }
+
+  const nextCharacter = addOwnedMap(character, payload.mapId, payload.tier);
   const details = isBossKey
-    ? [
-        "Consumable boss key added to your map inventory",
-        `Defeat this boss to unlock Tier ${payload.tier} maps.`
-      ]
+    ? ["Consumable boss key added to your map inventory"]
     : ["Consumable map added to your map inventory"];
 
   return {
@@ -705,7 +725,7 @@ const rollGroundDrops = (
       });
     }
 
-    if (mapTier < mapBalance.maxTier) {
+    if (mapTier < mapBalance.maxTier && isBossTierCleared(character.mapProgress, mapTier)) {
       const nextTier = Math.max(1, mapTier + 1);
       const nextTierMapDropChance = getPerMonsterDropChance(
         tierBalance.nextTierMapDropsPerRunTarget,
@@ -739,7 +759,7 @@ export const createArenaRuntime = (
   const map = resolveMapInstance(mapConfig[mapId], enhancements);
   const initialPlayerX = ARENA_WIDTH / 2;
   const initialPlayerY = ARENA_HEIGHT / 2;
-  const packsResult = createMonsterPacks(map, initialPlayerX, initialPlayerY, character.mapProgress.highestUnlockedTier);
+  const packsResult = createMonsterPacks(map, initialPlayerX, initialPlayerY, character.mapProgress);
 
   return {
     mapId,
@@ -1124,9 +1144,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
         };
 
         if (enemy.isKeyGuardian) {
-          const nextTier = mapTier + 1;
-          const unlockedTier = nextPlayer.mapProgress.highestUnlockedTier;
-          const keyDropTier = unlockedTier < nextTier ? nextTier : mapTier > 1 ? mapTier : null;
+          const keyDropTier = mapTier >= 1 ? mapTier : null;
 
           if (keyDropTier !== null) {
             nextGroundLoot = [
@@ -1183,21 +1201,26 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   const justCompleted = !state.snapshot.isComplete && isComplete;
 
   if (justCompleted) {
-    const mapProgress = nextPlayer.mapProgress;
     const isBossMap = state.mapId.startsWith("bossTier");
-    const nextHighestUnlockedTier = isBossMap
-      ? Math.max(mapProgress.highestUnlockedTier, mapTier)
-      : mapProgress.highestUnlockedTier;
-    const nextLastCompletedTier = Math.max(mapProgress.lastCompletedTier, mapTier);
+    const wasFirstBossClear = isBossMap && !isBossTierCleared(nextPlayer.mapProgress, mapTier);
 
     nextPlayer = {
       ...nextPlayer,
       mapProgress: {
-        ...mapProgress,
-        highestUnlockedTier: nextHighestUnlockedTier,
-        lastCompletedTier: nextLastCompletedTier
+        ...nextPlayer.mapProgress,
+        lastCompletedTier: Math.max(nextPlayer.mapProgress.lastCompletedTier, mapTier)
       }
     };
+
+    if (wasFirstBossClear) {
+      nextPlayer = clearBossTier(nextPlayer, mapTier, mapBalance.maxTier);
+
+      if (mapTier < mapBalance.maxTier) {
+        for (let rewardCount = 0; rewardCount < 3; rewardCount += 1) {
+          nextPlayer = addOwnedMap(nextPlayer, `tier${mapTier + 1}Map`, mapTier + 1);
+        }
+      }
+    }
   }
 
   const snapshot: ArenaSnapshot = {

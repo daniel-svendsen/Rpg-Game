@@ -8,8 +8,13 @@ import {
 export const createInitialMapProgress = (): MapProgressState => ({
   highestUnlockedTier: 1,
   lastCompletedTier: 0,
-  consumableMaps: []
+  consumableMaps: [],
+  bossRetryUnlockedTiers: [],
+  clearedBossTiers: []
 });
+
+const normalizeBossTierList = (tiers: number[] | undefined): number[] =>
+  [...new Set((tiers ?? []).filter((tier) => Number.isInteger(tier) && tier > 0))].sort((left, right) => left - right);
 
 const sortConsumableMaps = (consumableMaps: OwnedMapStack[]): OwnedMapStack[] =>
   [...consumableMaps].sort((left, right) => {
@@ -46,14 +51,22 @@ const normalizeOwnedMapStack = (
 };
 
 export const normalizeMapProgress = (mapProgress: Partial<MapProgressState> | undefined): MapProgressState => ({
-  highestUnlockedTier: mapProgress?.highestUnlockedTier ?? 0,
+  highestUnlockedTier: Math.max(1, mapProgress?.highestUnlockedTier ?? 1),
   lastCompletedTier: mapProgress?.lastCompletedTier ?? 0,
   consumableMaps: sortConsumableMaps(
     (mapProgress?.consumableMaps ?? [])
       .map((entry, index) => normalizeOwnedMapStack(entry, index))
       .filter((entry): entry is OwnedMapStack => entry !== null)
-  )
+  ),
+  bossRetryUnlockedTiers: normalizeBossTierList(mapProgress?.bossRetryUnlockedTiers),
+  clearedBossTiers: normalizeBossTierList(mapProgress?.clearedBossTiers)
 });
+
+export const isBossTierRetryUnlocked = (mapProgress: MapProgressState, tier: number): boolean =>
+  (mapProgress.bossRetryUnlockedTiers ?? []).includes(tier);
+
+export const isBossTierCleared = (mapProgress: MapProgressState, tier: number): boolean =>
+  (mapProgress.clearedBossTiers ?? []).includes(tier);
 
 export const getMapQuantity = (mapProgress: MapProgressState, mapId: string): number =>
   mapProgress.consumableMaps
@@ -102,7 +115,9 @@ export const addOwnedMap = (
     ...character,
     mapProgress: {
       ...normalizedMapProgress,
-      highestUnlockedTier: Math.max(normalizedMapProgress.highestUnlockedTier, tier),
+      highestUnlockedTier: mapId.startsWith("bossTier")
+        ? normalizedMapProgress.highestUnlockedTier
+        : Math.max(normalizedMapProgress.highestUnlockedTier, tier),
       consumableMaps: mergeMapStack(normalizedMapProgress.consumableMaps, {
         stackId: createOwnedMapStackId(),
         mapId,
@@ -110,6 +125,37 @@ export const addOwnedMap = (
         quantity: 1,
         enhancements: normalizeMapEnhancements(enhancements)
       })
+    }
+  };
+};
+
+export const unlockBossRetry = (character: CharacterRecord, tier: number): CharacterRecord => {
+  const normalizedMapProgress = normalizeMapProgress(character.mapProgress);
+
+  return {
+    ...character,
+    mapProgress: {
+      ...normalizedMapProgress,
+      bossRetryUnlockedTiers: normalizeBossTierList([
+        ...(normalizedMapProgress.bossRetryUnlockedTiers ?? []),
+        tier
+      ])
+    }
+  };
+};
+
+export const clearBossTier = (character: CharacterRecord, tier: number, maxTier: number): CharacterRecord => {
+  const normalizedMapProgress = normalizeMapProgress(character.mapProgress);
+
+  return {
+    ...character,
+    mapProgress: {
+      ...normalizedMapProgress,
+      highestUnlockedTier: Math.max(normalizedMapProgress.highestUnlockedTier, Math.min(maxTier, tier + 1)),
+      clearedBossTiers: normalizeBossTierList([...(normalizedMapProgress.clearedBossTiers ?? []), tier]),
+      bossRetryUnlockedTiers: (normalizedMapProgress.bossRetryUnlockedTiers ?? []).filter(
+        (retryTier) => retryTier !== tier
+      )
     }
   };
 };

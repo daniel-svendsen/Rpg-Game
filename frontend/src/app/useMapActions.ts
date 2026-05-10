@@ -5,6 +5,8 @@ import { mapConfig } from "../game/config/mapConfig";
 import {
   addOwnedMap,
   consumeOwnedMap,
+  isBossTierCleared,
+  isBossTierRetryUnlocked,
   getOwnedMapStack,
   getOwnedMapStackBySignature
 } from "../game/domain/maps/mapProgress";
@@ -58,7 +60,9 @@ export const useMapActions = ({
     let nextCharacter = normalizeCharacterRecord(sourceCharacter);
     const ownedMapStack =
       mapTarget !== "trainingGrounds" ? getOwnedMapStack(nextCharacter.mapProgress, mapTarget) : null;
-    const mapId = ownedMapStack?.mapId ?? "trainingGrounds";
+    const directMapId =
+      mapTarget !== "trainingGrounds" && !ownedMapStack && mapConfig[mapTarget] ? mapTarget : null;
+    const mapId = ownedMapStack?.mapId ?? directMapId ?? "trainingGrounds";
     const mapTier = ownedMapStack?.tier ?? mapConfig[mapId]?.tier ?? 0;
     const isBossMap = mapId.startsWith("bossTier");
     const mapEnhancements = ownedMapStack?.enhancements ?? [];
@@ -75,23 +79,29 @@ export const useMapActions = ({
 
     if (mapTarget !== "trainingGrounds") {
       if (!ownedMapStack || ownedMapStack.quantity <= 0) {
-        setErrorMessage("You do not own that map.");
-        return false;
+        if (isBossMap && mapConfig[mapTarget]) {
+          // Boss retries before first clear do not consume a stored key.
+        } else {
+          setErrorMessage("You do not own that map.");
+          return false;
+        }
       }
 
       const unlockedTier = nextCharacter.mapProgress.highestUnlockedTier;
 
       if (isBossMap) {
-        if (mapTier > unlockedTier + 1) {
-          setErrorMessage(`That boss lair is locked. Unlock Tier ${mapTier - 1} first.`);
+        if (mapTier > unlockedTier) {
+          setErrorMessage(`That boss lair is locked. Unlock Tier ${mapTier} maps first.`);
           return false;
         }
       } else if (mapTier > unlockedTier) {
-        setErrorMessage(`That map is locked. Defeat the Tier ${mapTier} boss first.`);
+        setErrorMessage(`That map is locked. Defeat the Tier ${Math.max(1, mapTier - 1)} boss first.`);
         return false;
       }
 
-      nextCharacter = consumeOwnedMap(nextCharacter, mapTarget);
+      if (ownedMapStack) {
+        nextCharacter = consumeOwnedMap(nextCharacter, mapTarget);
+      }
     }
 
     commitCharacter(nextCharacter);
@@ -139,19 +149,26 @@ export const useMapActions = ({
       return;
     }
 
+    const bossMapId = `bossTier${tier}`;
+    const bossCleared = isBossTierCleared(character.mapProgress, tier);
+    const bossRetryUnlocked = isBossTierRetryUnlocked(character.mapProgress, tier);
     const bossKeyEntry =
-      character.mapProgress.consumableMaps.find((entry) => entry.mapId === `bossTier${tier}` && entry.quantity > 0) ??
+      character.mapProgress.consumableMaps.find((entry) => entry.mapId === bossMapId && entry.quantity > 0) ??
       null;
+    const unlockedTier = character.mapProgress.highestUnlockedTier;
 
-    if (!bossKeyEntry) {
-      setErrorMessage(`You do not own a Tier ${tier} boss key.`);
+    if (tier > unlockedTier) {
+      setErrorMessage(`That boss lair is locked. Unlock Tier ${tier} maps first.`);
       return;
     }
 
-    const unlockedTier = character.mapProgress.highestUnlockedTier;
+    if (!bossCleared && bossRetryUnlocked) {
+      startMapRun(bossMapId, character);
+      return;
+    }
 
-    if (tier > unlockedTier + 1) {
-      setErrorMessage(`That boss lair is locked. Unlock Tier ${tier - 1} first.`);
+    if (!bossKeyEntry) {
+      setErrorMessage(`You do not own a Tier ${tier} boss key.`);
       return;
     }
 
@@ -232,7 +249,9 @@ export const useMapActions = ({
     const currentShards = getCurrencyAmount(character, "mapShard");
 
     if (tier > character.mapProgress.highestUnlockedTier) {
-      setErrorMessage(`Tier ${tier} maps are locked. Defeat the Tier ${tier} boss first.`);
+      setErrorMessage(
+        `Tier ${tier} maps are locked. Defeat the Tier ${Math.max(1, tier - 1)} boss first.`
+      );
       return;
     }
 

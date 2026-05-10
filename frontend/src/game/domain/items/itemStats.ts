@@ -85,8 +85,7 @@ export const getItemStatEntries = (item: InventoryItem): StatEntry[] => [
     })();
 
     return [{ label: statKeyLabels[statKey], formattedValue, tier: getStatTier(statKey, Number(value), item.tier), isBase: false }];
-  }),
-  ...(item.uniqueEffectDescription ? [{ label: "Unique", formattedValue: item.uniqueEffectDescription, tier: null, isBase: false }] : [])
+  })
 ];
 
 export const getItemStatLines = (item: InventoryItem): string[] =>

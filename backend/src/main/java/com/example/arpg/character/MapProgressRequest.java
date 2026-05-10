@@ -9,7 +9,9 @@ import java.util.List;
 public record MapProgressRequest(
         @Min(0) int highestUnlockedTier,
         @Min(0) int lastCompletedTier,
-        @NotNull List<@Valid OwnedMapStackRequest> consumableMaps
+        @NotNull List<@Valid OwnedMapStackRequest> consumableMaps,
+        @NotNull List<@Min(1) Integer> bossRetryUnlockedTiers,
+        @NotNull List<@Min(1) Integer> clearedBossTiers
 ) {
 }
 

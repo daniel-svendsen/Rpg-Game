@@ -85,7 +85,9 @@ export const MapsTab = ({
           ) : null}
         </div>
         {isSelectedMapLocked ? (
-          <p className="error-text">Locked. Unlocked by defeating the Tier {selectedTier} boss.</p>
+          <p className="error-text">
+            Locked. Unlocked by defeating the Tier {Math.max(1, selectedTier - 1)} boss.
+          </p>
         ) : null}
         {selectedMapTarget !== "trainingGrounds" ? (
           <div className="status-text">
@@ -126,7 +128,9 @@ export const MapsTab = ({
                     Qty {entry.quantity} • {getMapVariantLabel(entry.enhancements.length)}
                   </div>
                   {entry.tier > highestUnlockedTier ? (
-                    <div className="error-text">Unlocked by defeating the Tier {entry.tier} boss.</div>
+                    <div className="error-text">
+                      Unlocked by defeating the Tier {Math.max(1, entry.tier - 1)} boss.
+                    </div>
                   ) : null}
                 </div>
                 <div>

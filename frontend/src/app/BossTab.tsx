@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { mapBalance } from "../game/config/balance";
+import { isBossTierCleared, isBossTierRetryUnlocked } from "../game/domain/maps/mapProgress";
 import type { CharacterRecord } from "../shared/types/saveTypes";
 
 interface BossTabProps {
@@ -27,7 +28,11 @@ const countBossKeysByTier = (character: CharacterRecord | null): Record<number, 
 export const BossTab = ({ topBar, healthHud, character, onStartBossTier }: BossTabProps) => {
   const highestUnlockedTier = character?.mapProgress.highestUnlockedTier ?? 1;
   const bossKeysByTier = countBossKeysByTier(character);
-  const nextTier = Math.min(mapBalance.maxTier, Math.max(2, highestUnlockedTier + 1));
+  const nextTier = character
+    ? Array.from({ length: mapBalance.maxTier }, (_, index) => index + 1).find(
+        (tier) => tier <= highestUnlockedTier && !isBossTierCleared(character.mapProgress, tier)
+      ) ?? Math.min(mapBalance.maxTier, highestUnlockedTier)
+    : 1;
 
   return (
     <div className="content stack mobile-content">
@@ -36,18 +41,25 @@ export const BossTab = ({ topBar, healthHud, character, onStartBossTier }: BossT
       <section className="panel stack">
         <h4>Bosses</h4>
         <p className="status-text">
-          Boss keys drop from rare enemies during map runs. Defeat a boss to unlock its tier of maps and access better loot.
+          Each tier boss unlocks the next tier of maps on first kill. Your first key unlocks permanent retries until you win.
         </p>
         <p className="status-text">
-          Next unlock target: Tier {nextTier} boss ({bossKeysByTier[nextTier] ?? 0} key
-          {(bossKeysByTier[nextTier] ?? 0) === 1 ? "" : "s"}).
+          Next unlock target: Tier {nextTier} boss.
         </p>
 
-        {Array.from({ length: mapBalance.maxTier - 1 }, (_, index) => index + 2).map((tier) => {
+        {Array.from({ length: mapBalance.maxTier }, (_, index) => index + 1).map((tier) => {
           const keyCount = bossKeysByTier[tier] ?? 0;
-          const isUnlocked = highestUnlockedTier >= tier;
-          const isAvailable = tier <= highestUnlockedTier + 1;
-          const canChallenge = keyCount > 0 && isAvailable;
+          const isCleared = character ? isBossTierCleared(character.mapProgress, tier) : false;
+          const hasRetryUnlock = character ? isBossTierRetryUnlocked(character.mapProgress, tier) : false;
+          const isAvailable = highestUnlockedTier >= tier;
+          const canChallenge = isAvailable && (hasRetryUnlock || keyCount > 0);
+          const availabilityLabel = !isAvailable
+            ? "Not available yet"
+            : isCleared
+              ? "Cleared"
+              : hasRetryUnlock
+                ? "Retry unlocked"
+                : "Need first key";
 
           return (
             <div key={`boss-${tier}`} className="map-card">
@@ -55,10 +67,17 @@ export const BossTab = ({ topBar, healthHud, character, onStartBossTier }: BossT
                 <div>
                   <strong>Tier {tier} Boss</strong>
                   <div className="status-text">
-                    Keys: {keyCount} | {isUnlocked ? "Unlocked" : isAvailable ? "Locked" : "Not available yet"}
+                    Keys: {keyCount} | {availabilityLabel}
                   </div>
-                  {!isUnlocked && !isAvailable ? (
-                    <div className="status-text">Unlock Tier {tier - 1} first.</div>
+                  {isAvailable && !isCleared ? (
+                    <div className="status-text">
+                      {tier < mapBalance.maxTier
+                        ? `First kill unlocks Tier ${tier + 1} maps.`
+                        : "Final boss: first kill completes the current tier ladder."}
+                    </div>
+                  ) : null}
+                  {!isAvailable ? (
+                    <div className="status-text">Unlock Tier {tier} maps first.</div>
                   ) : null}
                 </div>
                 <button
@@ -67,7 +86,7 @@ export const BossTab = ({ topBar, healthHud, character, onStartBossTier }: BossT
                   onClick={() => onStartBossTier(tier)}
                   type="button"
                 >
-                  {keyCount <= 0 ? "Need key" : "Challenge"}
+                  {canChallenge ? "Challenge" : "Need key"}
                 </button>
               </div>
             </div>

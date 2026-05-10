@@ -1,4 +1,4 @@
-import type { EquipmentSlot, ItemRarity, ItemSlot, Tag } from "../../shared/types/saveTypes";
+import type { EquipmentSlot, InventoryItem, ItemRarity, ItemSlot, Tag } from "../../shared/types/saveTypes";
 import { itemBalance } from "./balance";
 
 export interface ItemBaseDefinition {
@@ -44,17 +44,9 @@ export interface UniqueItemDefinition {
   dropWeight: number;
   uniqueTier: 1 | 2 | 3;
   tags: Tag[];
-  uniqueEffectId: string;
-  uniqueEffectDescription: string;
-  statBonuses: {
-    strength?: number;
-    agility?: number;
-    vitality?: number;
-    dexterity?: number;
-    maxHealth?: number;
-    critChance?: number;
-    spellPowerMultiplier?: number;
-  };
+  uniqueEffectId?: string;
+  uniqueEffectDescription?: string;
+  statBonuses: InventoryItem["statBonuses"];
 }
 
 export const itemBases: ItemBaseDefinition[] = [

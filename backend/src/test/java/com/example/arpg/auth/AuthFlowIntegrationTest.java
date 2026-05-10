@@ -109,7 +109,7 @@ class AuthFlowIntegrationTest {
                 List.of(new SpellProgressState("stormChain", 1)),
                 List.of(new SpellLoadoutEntry("stormChain", List.of())),
                 List.of(),
-                new MapProgressData(0, 0, List.of())
+                new MapProgressData(1, 0, List.of(), List.of(), List.of())
         ));
     }
 

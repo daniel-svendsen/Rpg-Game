@@ -108,7 +108,7 @@ class CharacterPersistenceIT {
                 .andExpect(jsonPath("$.id").value(characterId))
                 .andExpect(jsonPath("$.name").value("Integration Warden"))
                 .andExpect(jsonPath("$.baseStats.strength").value(2))
-                .andExpect(jsonPath("$.mapProgress.highestUnlockedTier").value(0));
+                .andExpect(jsonPath("$.mapProgress.highestUnlockedTier").value(1));
     }
 
     private String extractToken(String registerResponse) throws IOException {
