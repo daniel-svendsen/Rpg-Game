@@ -132,7 +132,8 @@ Notes:
 
 - `frameWidth` is one frame width inside the sheet, not the full image width.
 - Keep the sheet as one PNG with all idle frames in a single horizontal row.
-- The background must use real alpha transparency. If the image model bakes in a checkerboard preview, clean it before using it in-game.
+- For generation prompts, prefer a single removable chroma-key background color instead of asking the model for transparency directly.
+- The final in-game asset must still use real alpha transparency. If the image model bakes in a checkerboard preview or flat background color, clean it before using it in-game.
 - Use `docs/PIXEL_ART_PROMPTS.md` for the current master prompts and asset data blocks when generating new monster or spell art externally.
 
 ---
@@ -230,10 +231,10 @@ To swap the player, update `PLAYER_SPRITE_CONFIG.spriteName`.
 | Monster ID | Sprite | Size | Rarity |
 |---|---|---|---|
 | `scrapCrawler` | custom `scrap_crawler_clean.png` sheet | `1032x1024` per frame, scaled to `0.04` | Normal |
-| `cinderGrub` | `imp` | `16x16` | Normal |
-| `frostSprite` | `chort` | `16x23` | Normal |
-| `stormHound` | `wogol` | `16x23` | Normal |
-| `voidStalker` | `masked_orc` | `16x23` | Rare |
+| `cinderGrub` | custom `cinder_grub_clean.png` sheet | `1032x1024` per frame, scaled to `0.04` | Normal |
+| `frostSprite` | custom `frost_sprite_2_clean.png` sheet | `1032x1024` per frame, scaled to `0.04` | Normal |
+| `stormHound` | custom `storm_hound_clean.png` sheet | `1032x1024` per frame, scaled to `0.04` | Normal |
+| `voidStalker` | custom `void_stalker_clean.png` sheet | `1032x1024` per frame, scaled to `0.04` | Rare |
 | `blazeWarden` | `big_demon` | `32x36` | Rare |
 
 ### Spells

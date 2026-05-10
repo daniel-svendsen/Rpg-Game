@@ -22,23 +22,27 @@ export const MONSTER_SPRITE_CONFIG: Record<string, MonsterSpriteConfig> = {
     idleFrameCount: 4, healthBarOffsetY: -26
   },
   cinderGrub: {
-    spriteName: "imp",
-    frameWidth: 16, frameHeight: 16, scale: 2.5,
+    spriteName: "cinder-grub-custom",
+    frameWidth: 1032, frameHeight: 1024, scale: 0.04,
+    assetPath: "/assets/monstersprites/cinder_grub_clean.png",
     idleFrameCount: 4, healthBarOffsetY: -26
   },
   frostSprite: {
-    spriteName: "chort",
-    frameWidth: 16, frameHeight: 23, scale: 2.5,
+    spriteName: "frost-sprite-custom",
+    frameWidth: 1032, frameHeight: 1024, scale: 0.04,
+    assetPath: "/assets/monstersprites/frost_sprite_2_clean.png",
     idleFrameCount: 4, healthBarOffsetY: -34
   },
   stormHound: {
-    spriteName: "wogol",
-    frameWidth: 16, frameHeight: 23, scale: 2.5,
+    spriteName: "storm-hound-custom",
+    frameWidth: 1032, frameHeight: 1024, scale: 0.04,
+    assetPath: "/assets/monstersprites/storm_hound_clean.png",
     idleFrameCount: 4, healthBarOffsetY: -34
   },
   voidStalker: {
-    spriteName: "masked_orc",
-    frameWidth: 16, frameHeight: 23, scale: 2.5,
+    spriteName: "void-stalker-custom",
+    frameWidth: 1032, frameHeight: 1024, scale: 0.04,
+    assetPath: "/assets/monstersprites/void_stalker_clean.png",
     idleFrameCount: 4, healthBarOffsetY: -34
   },
   blazeWarden: {

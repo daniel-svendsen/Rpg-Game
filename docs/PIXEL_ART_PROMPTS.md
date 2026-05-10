@@ -14,18 +14,20 @@ Copy this prompt first, then append one monster data block from the list below.
 
 ```text
 Create a pixel art enemy sprite sheet for a retro dungeon RPG.
-Output format: one single PNG image with a true transparent background and real alpha channel.
-Important: background pixels must be fully transparent. Do not include any checkerboard preview pattern, gray transparency grid, solid background color, or frame divider lines.
+Output format: one single PNG image with a flat single-color background that is easy to remove in post.
+Important: use one clean chroma-key background color only across the full image, preferably pure magenta (#FF00FF) or bright green (#00FF00), and keep that background color completely absent from the sprite itself.
 Canvas size: 128x32 pixels total.
 Frame layout: 4 idle animation frames in one horizontal row.
 Frame size: 32x32 pixels per frame.
-Keep each frame fully contained inside its own 32x32 area with 1-2 pixels of transparent padding around the sprite.
+Keep each frame fully contained inside its own 32x32 area with 1-2 pixels of background-color padding around the sprite.
 Style: dark retro dungeon RPG, similar in spirit to 0x72 DungeonTilesetII.
 Use crisp readable pixel clusters, clean black outlines, muted base colors, minimal selective shading, and no anti-aliasing.
-Animation: idle only, 4 frames of subtle motion.
+Animation: idle only, 4 frames with clearly readable motion at gameplay size.
+Make the animation visibly different frame to frame: body bob, head tilt, wing lift, tail curl, ember pulse, limb shift, or other silhouette-safe motion depending on the creature.
+Do not make four near-duplicate frames. Each frame should read as part of a real loop when played in sequence.
 Prioritize strong silhouette readability at very small size during crowded combat.
-Do not include UI, text, backgrounds, frame separator lines, floor shadows outside the sprite, blur, soft airbrush gradients, or glow outside sprite bounds.
-Technical requirement: the PNG must contain real transparency in the alpha channel. Do not simulate transparency with a checkerboard pattern.
+Do not include UI, text, extra background elements, frame separator lines, floor shadows outside the sprite, blur, soft airbrush gradients, or glow outside sprite bounds.
+Technical requirement: do not simulate transparency with a checkerboard preview. Use only one flat removable background color.
 Use this enemy data:
 ```
 
@@ -37,16 +39,17 @@ Copy this prompt first, then append one spell/effect data block from the list be
 
 ```text
 Create a pixel art spell effect sprite sheet for a retro dungeon RPG.
-Output format: one single PNG image with a true transparent background and real alpha channel.
-Important: background pixels must be fully transparent. Do not include any checkerboard preview pattern, gray transparency grid, solid background color, or frame divider lines.
+Output format: one single PNG image with a flat single-color background that is easy to remove in post.
+Important: use one clean chroma-key background color only across the full image, preferably pure magenta (#FF00FF) or bright green (#00FF00), and keep that background color completely absent from the effect itself.
 Canvas size: 128x32 pixels total.
 Frame layout: 4 animation frames in one horizontal row.
 Frame size: 32x32 pixels per frame.
-Keep each frame fully contained inside its own 32x32 area with 1-2 pixels of transparent padding around the effect.
+Keep each frame fully contained inside its own 32x32 area with 1-2 pixels of background-color padding around the effect.
 Style: readable retro dungeon RPG combat effect, crisp pixel art, controlled brightness, clean shape language, no anti-aliasing, no blurry gradients.
 Prioritize readability in fast combat at very small size.
+Make the animation progression obvious frame to frame so the effect reads clearly in motion, not as four nearly identical stills.
 Do not include background, UI, text, frame separator lines, smoke clouds unless requested, or particles extending outside frame bounds.
-Technical requirement: the PNG must contain real transparency in the alpha channel. Do not simulate transparency with a checkerboard pattern.
+Technical requirement: do not simulate transparency with a checkerboard preview. Use only one flat removable background color.
 Use this effect data:
 ```
 
@@ -219,10 +222,12 @@ Avoid: pure fire colors, muddy gray smoke, thick solid orb
 ## Usage Notes
 
 - Generate one asset at a time.
-- If the model keeps adding a fake transparent background, append this line:
+- The generated file can use a flat chroma-key background, but the final in-game asset still needs real alpha transparency after cleanup.
+- Prefer `#FF00FF` first because it is unlikely to appear naturally in these assets. Switch to `#00FF00` only if the sprite needs stronger pink or violet highlights.
+- If the model keeps adding a fake transparent background or checkerboard preview, append this line:
 
 ```text
-Final output must have real alpha transparency and absolutely no visible checkerboard background.
+Use a single flat magenta background (#FF00FF) across the whole image, with no checkerboard transparency preview and no extra background details.
 ```
 
 - If the model adds vertical separators between frames, append this line:
@@ -234,5 +239,11 @@ Do not draw separator lines or borders between frames.
 - If the model draws the asset too large inside the frame, append this line:
 
 ```text
-Keep the sprite comfortably inside each 32x32 frame with visible transparent padding on all sides.
+Keep the sprite comfortably inside each 32x32 frame with visible flat background-color padding on all sides.
+```
+
+- If the animation is too static, append this line:
+
+```text
+Push the motion further. Make each of the 4 frames visibly different at small gameplay size while keeping the same character design and frame footprint.
 ```
