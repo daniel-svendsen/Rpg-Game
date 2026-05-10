@@ -97,6 +97,7 @@ export class ArenaScene extends Phaser.Scene {
       this.playerSprite.play(playerAnimKey);
     }
 
+    this.cameras.main.setZoom(2);
     this.cameras.main.startFollow(this.playerSprite, true, 0.08, 0.08);
     this.renderSnapshot();
   }

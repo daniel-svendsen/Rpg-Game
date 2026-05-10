@@ -42,6 +42,7 @@ export const ShopTab = ({
       </div>
       {shopItems.map((item) => {
         const powerChange = character ? getPowerChangeForCharacterItem(character, item) : null;
+        const canAfford = (character?.gold ?? 0) >= item.price;
 
         return (
           <div key={item.id} className={`loot-entry rarity-card rarity-${item.rarity.toLowerCase()}`}>
@@ -50,7 +51,7 @@ export const ShopTab = ({
                 {item.slot ? <ItemSlotIcon slot={item.slot} /> : null}
                 <strong>{item.name}</strong>
               </div>
-              <span>{item.price}g</span>
+              <span className={canAfford ? "shop-price--affordable" : "shop-price--unaffordable"}>{item.price}g</span>
             </div>
             <div className="inventory-row">
               <div className="status-text">Power {getItemPowerScore(item).toFixed(0)}</div>
@@ -76,8 +77,8 @@ export const ShopTab = ({
             {powerChange !== null && powerChange > 0 ? (
               <div className="upgrade-text">Possible upgrade</div>
             ) : null}
-            <button className="secondary-button" onClick={() => onBuyShopItem(item.id)}>
-              Buy
+            <button className="secondary-button" disabled={!canAfford} onClick={() => onBuyShopItem(item.id)}>
+              {canAfford ? "Buy" : "Not enough gold"}
             </button>
           </div>
         );

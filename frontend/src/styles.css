@@ -156,7 +156,9 @@ button {
 }
 
 .arena-host {
-  position: relative;
+  position: sticky;
+  top: max(12px, env(safe-area-inset-top));
+  z-index: 10;
   min-height: 640px;
   border-radius: 20px;
   overflow: hidden;
@@ -1377,4 +1379,38 @@ button {
   background: rgba(239, 68, 68, 0.16);
   color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.28);
+}
+
+/* ── Save button feedback ─────────────────────────────────────────────────── */
+
+.save-btn--saved {
+  border-color: rgba(134, 239, 172, 0.4) !important;
+  color: #86efac !important;
+}
+
+/* ── Shop affordability ───────────────────────────────────────────────────── */
+
+.shop-price--affordable {
+  color: var(--accent-gold);
+  font-weight: 600;
+}
+
+.shop-price--unaffordable {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* ── Run summary action group ─────────────────────────────────────────────── */
+
+.run-summary-action-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.run-summary-action-hint {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  letter-spacing: 0.02em;
 }

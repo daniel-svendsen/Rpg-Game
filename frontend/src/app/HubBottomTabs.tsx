@@ -11,7 +11,7 @@ const tabs: Array<{ id: HubTab; label: string; icon: string }> = [
   { id: "equipment", label: "Gear", icon: "⚔" },
   { id: "spells", label: "Spells", icon: "✦" },
   { id: "shop", label: "Shop", icon: "◎" },
-  { id: "character", label: "Account", icon: "⊙" }
+  { id: "character", label: "Character", icon: "⊙" }
 ];
 
 export const HubBottomTabs = ({ activeTab, onSelectTab }: HubBottomTabsProps) => (

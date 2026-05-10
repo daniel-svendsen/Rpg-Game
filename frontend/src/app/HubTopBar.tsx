@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { HubTab } from "./appTypes";
 
 interface HubTopBarProps {
@@ -11,7 +12,14 @@ interface HubTopBarProps {
 }
 
 export const HubTopBar = ({ activeTab, level, gold, mapShards, bossKeys, totalPower, onSave }: HubTopBarProps) => {
+  const [justSaved, setJustSaved] = useState(false);
   const showPower = (activeTab === "equipment" || activeTab === "shop") && typeof totalPower === "number";
+
+  const handleSave = () => {
+    onSave();
+    setJustSaved(true);
+    setTimeout(() => setJustSaved(false), 2000);
+  };
 
   return (
     <section className="hub-summary-bar">
@@ -26,8 +34,8 @@ export const HubTopBar = ({ activeTab, level, gold, mapShards, bossKeys, totalPo
         ) : null}
         {showPower ? <span className="summary-chip">Power {totalPower}</span> : null}
       </div>
-      <button className="secondary-button" onClick={onSave}>
-        Save
+      <button className={justSaved ? "secondary-button save-btn--saved" : "secondary-button"} onClick={handleSave}>
+        {justSaved ? "Saved ✓" : "Save"}
       </button>
     </section>
   );

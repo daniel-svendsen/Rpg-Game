@@ -52,6 +52,7 @@ export const SpellsTab = ({
       <section className="panel stack">
         <div className="spell-panel-header">
           <h4>{getSpellName(activeMainSpellId) || "Linked Spell"}</h4>
+          <p className="status-text">Link supports to your spell to enhance its effects. Tap an orb to change it.</p>
           {activeMainSpellId ? (
             <p className="status-text spell-description">{getSpellDescription(activeMainSpellId)}</p>
           ) : null}

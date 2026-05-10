@@ -33,7 +33,7 @@ export const AuthScreen = ({
       <div className="auth-logo-section">
         <div className="auth-logo-emblem">⚔</div>
         <h1 className="auth-logo-title">SHARDBORNE</h1>
-        <p className="auth-logo-tagline">Path of Exile — Minigame</p>
+        <p className="auth-logo-tagline">Run maps. Collect loot. Build your character.</p>
         <div className="auth-logo-divider" />
       </div>
       <section className="panel stack auth-panel">

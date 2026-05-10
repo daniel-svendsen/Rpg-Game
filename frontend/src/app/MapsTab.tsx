@@ -103,7 +103,7 @@ export const MapsTab = ({
           <div className="inventory-row">
             <div>
               <strong>Training Grounds</strong>
-              <div className="status-text">Infinite practice run. Drops Tier 1 maps.</div>
+              <div className="status-text">Always available. Drops Tier 1 maps and loot.</div>
             </div>
             <button className="secondary-button" onClick={() => onSelectMap("trainingGrounds")}>
               {selectedMapTarget === "trainingGrounds" ? "Selected" : "Select"}
@@ -147,6 +147,7 @@ export const MapsTab = ({
       <section className="panel stack">
         <h4>Map Crafting</h4>
         <p className="status-text">Map Shards: {mapShardAmount}</p>
+        <p className="status-text">Combine shards to craft random maps, or craft directly into the tier of your selected map.</p>
         <button className="secondary-button" onClick={onConvertShardsToMaps}>
           Combine {balanceConfig.mapCrafting.combineShardsCost} shards into maps
         </button>

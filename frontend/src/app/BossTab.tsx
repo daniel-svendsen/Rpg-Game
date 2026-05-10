@@ -36,7 +36,7 @@ export const BossTab = ({ topBar, healthHud, character, onStartBossTier }: BossT
       <section className="panel stack">
         <h4>Bosses</h4>
         <p className="status-text">
-          Boss keys drop from rare enemies. Defeating a boss unlocks its tier of maps.
+          Boss keys drop from rare enemies during map runs. Defeat a boss to unlock its tier of maps and access better loot.
         </p>
         <p className="status-text">
           Next unlock target: Tier {nextTier} boss ({bossKeysByTier[nextTier] ?? 0} key

@@ -23,6 +23,21 @@ export const RunSummaryScreen = ({ summaryData, onKeepFarming, onReturnToHub }: 
         <h2 className="run-summary-map-name">{mapName}</h2>
       </div>
 
+      <div className="run-summary-actions">
+        <div className="run-summary-action-group">
+          <button className="primary-button" onClick={onKeepFarming} type="button">
+            Keep Farming
+          </button>
+          <span className="run-summary-action-hint">Start another run immediately</span>
+        </div>
+        <div className="run-summary-action-group">
+          <button className="secondary-button" onClick={onReturnToHub} type="button">
+            Return to Hub
+          </button>
+          <span className="run-summary-action-hint">Manage gear, spells and shop</span>
+        </div>
+      </div>
+
       <section className="panel stack">
         <h4>Loot Found</h4>
         {loot.length === 0 ? (
@@ -68,15 +83,6 @@ export const RunSummaryScreen = ({ summaryData, onKeepFarming, onReturnToHub }: 
           </>
         )}
       </section>
-
-      <div className="run-summary-actions">
-        <button className="primary-button" onClick={onKeepFarming} type="button">
-          Keep Farming
-        </button>
-        <button className="secondary-button" onClick={onReturnToHub} type="button">
-          Return to Hub
-        </button>
-      </div>
     </div>
   );
 };

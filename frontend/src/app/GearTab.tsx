@@ -150,6 +150,9 @@ export const GearTab = ({
       <div className="inventory-row">
         <h4>Inventory</h4>
       </div>
+      {(character?.inventory ?? []).length === 0 ? (
+        <p className="status-text">Your inventory is empty. Run a map to collect loot.</p>
+      ) : null}
       {(character?.inventory ?? []).map((item) => (
         <div key={item.id} className={`loot-entry rarity-card rarity-${item.rarity.toLowerCase()}`}>
           <div className="inventory-row">
