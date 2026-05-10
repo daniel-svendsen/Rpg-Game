@@ -58,6 +58,13 @@ export class ArenaScene extends Phaser.Scene {
     for (const cfg of allConfigs) {
       if (loaded.has(cfg.spriteName)) continue;
       loaded.add(cfg.spriteName);
+      if (cfg.assetPath) {
+        this.load.spritesheet(cfg.spriteName, cfg.assetPath, {
+          frameWidth: cfg.frameWidth,
+          frameHeight: cfg.frameHeight
+        });
+        continue;
+      }
       for (let i = 0; i < cfg.idleFrameCount; i++) {
         this.load.image(
           `${cfg.spriteName}-idle-${i}`,
@@ -186,9 +193,14 @@ export class ArenaScene extends Phaser.Scene {
       if (done.has(animKey) || this.anims.exists(animKey)) { done.add(animKey); continue; }
       done.add(animKey);
 
-      const frames = Array.from({ length: cfg.idleFrameCount }, (_, i) => ({
-        key: `${cfg.spriteName}-idle-${i}`
-      }));
+      const frames = cfg.assetPath
+        ? Array.from({ length: cfg.idleFrameCount }, (_, i) => ({
+            key: cfg.spriteName,
+            frame: i
+          }))
+        : Array.from({ length: cfg.idleFrameCount }, (_, i) => ({
+            key: `${cfg.spriteName}-idle-${i}`
+          }));
       this.anims.create({ key: animKey, frames, frameRate: 8, repeat: -1 });
     }
   }
@@ -275,10 +287,9 @@ export class ArenaScene extends Phaser.Scene {
   private createEnemySprite(enemy: ArenaEnemyState): Phaser.GameObjects.Sprite {
     const cfg = this.getSpriteConfig(enemy.monsterTypeId);
     const animKey = `${cfg.spriteName}-idle`;
-    const firstFrameKey = `${cfg.spriteName}-idle-0`;
 
     const sprite = this.add
-      .sprite(enemy.x, enemy.y, firstFrameKey)
+      .sprite(enemy.x, enemy.y, cfg.assetPath ? cfg.spriteName : `${cfg.spriteName}-idle-0`)
       .setScale(cfg.scale)
       .setDepth(5);
 

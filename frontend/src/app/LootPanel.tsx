@@ -20,6 +20,7 @@ export const LootPanel = ({ recentLoot }: LootPanelProps) => (
             </div>
             <span>{loot.kind}</span>
           </div>
+          {loot.details.length > 0 ? <div className="item-divider" /> : null}
           {loot.details.map((detail) => (
             <div key={`${loot.id}-${detail}`} className="status-text">
               {detail}

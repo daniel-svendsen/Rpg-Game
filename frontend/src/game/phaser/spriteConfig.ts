@@ -11,12 +11,14 @@ export interface MonsterSpriteConfig {
   scale: number;
   idleFrameCount: number;
   healthBarOffsetY: number;
+  assetPath?: string;
 }
 
 export const MONSTER_SPRITE_CONFIG: Record<string, MonsterSpriteConfig> = {
   scrapCrawler: {
-    spriteName: "goblin",
-    frameWidth: 16, frameHeight: 16, scale: 2.5,
+    spriteName: "scrap-crawler-custom",
+    frameWidth: 1032, frameHeight: 1024, scale: 0.04,
+    assetPath: "/assets/monstersprites/scrap_crawler_clean.png",
     idleFrameCount: 4, healthBarOffsetY: -26
   },
   cinderGrub: {

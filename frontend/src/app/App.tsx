@@ -95,6 +95,7 @@ export const App = () => {
   const selectedMapId = selectedMapEntry?.mapId ?? "trainingGrounds";
   const selectedMapEnhancements = selectedMapEntry?.enhancements ?? [];
   const {
+    startMapRun,
     handleConvertShardsToMaps,
     handleCraftMapAtTier,
     handleEnhanceSelectedMap,
@@ -338,10 +339,16 @@ export const App = () => {
   };
 
   const handleSummaryKeepFarming = (): void => {
+    if (!character) {
+      setRunSummaryData(null);
+      setHubTab("maps");
+      setScreenMode("hub");
+      setStatusMessage("");
+      return;
+    }
+
     setRunSummaryData(null);
-    setHubTab("maps");
-    setScreenMode("hub");
-    setStatusMessage("");
+    startMapRun(selectedMapTarget, character);
   };
 
   const handleSummaryReturnToHub = (): void => {
