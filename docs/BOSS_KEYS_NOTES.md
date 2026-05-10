@@ -1,39 +1,39 @@
 # Boss keys and boss drops (brainstorm notes)
 
-Status: implemented (first pass) on May 8, 2026.
+Status: implemented and updated through May 10, 2026.
 
 ## High-level concept
 
 - Rare monster variants can sometimes spawn in maps.
-- Map runs can drop consumable boss keys (`bossTierN`) that start a boss lair run.
-- Defeating a boss lair unlocks the corresponding map tier.
-- Boss lairs have a separate, higher-value drop pool.
+- A map tier is gated by defeating the boss for the previous tier.
+- Finding your first key for a tier permanently unlocks boss retries for that tier until the first successful kill.
+- Boss lairs have a separate, higher-value drop pool with tier-specific uniques.
 
-## Current implementation (first pass)
+## Current implementation
 
 - Boss keys are stored as consumable maps with `mapId` like `bossTier2`.
-- Boss key drops are rolled on the first rare kill per run in non-boss maps:
-  - If the next tier is still locked: attempt next-tier key at 10%, otherwise attempt current-tier key at 5%.
-  - If the next tier is already unlocked: attempt current-tier key at 5% (boss farming).
+- Boss key drops come from a designated `key guardian` rare in non-boss maps:
+  - `10%` guardian spawn chance while that tier boss is still uncleared
+  - `5%` guardian spawn chance after that tier boss has been cleared
+  - if the guardian dies, it always drops the key for that same tier boss
 - Boss lairs spawn a single guaranteed rare boss.
+- Once the first key for a tier is found, the player can challenge that boss repeatedly without finding another key first.
+- The first kill of a tier boss unlocks the next map tier.
+- The first kill of a tier boss also grants `3` starter maps of the next tier.
 - Boss lairs drop:
   - at least `1` guaranteed boss reward on a successful boss kill
-  - the guaranteed reward is currently a boss-only unique (with `Imbuing Orb` as the fallback if the unique definition cannot be resolved)
+  - the guaranteed reward is currently a boss-only unique drawn from that tier boss pool (`2` regular uniques + `1` chase unique)
   - an additional `Imbuing Orb` currency drop still has a `60%` chance
-- Boss lairs can be farmed indefinitely as long as you have keys. The first kill of `bossTierN` is what unlocks Tier `N` maps.
-- Normal maps now target roughly `1.0` same-tier map and `0.25` next-tier maps per full clear. Boss lairs do not participate in that normal map-sustain model.
+- Boss lairs can be farmed indefinitely after discovery, but first-clear progression still gates next-tier map access.
+- Normal maps now target roughly `1.0` same-tier map and only unlock next-tier map drops after the relevant boss clear. Boss lairs do not participate in that normal map-sustain model.
 
-## Questions to answer before implementation
+## Notes and remaining follow-up
 
-- How rare are keys supposed to be (per map, per rare pack, or per rare kill)?
-- Are keys tier-gated?
-- Are keys boss-specific, generic, or tier-scoped?
-- Should keys be craftable (e.g. fragments), or only drop as a full key?
-- What are the trade-offs: sell vs save vs use (and what is the intended gold value)?
-- What makes boss fights distinct (mechanics, resistances, arenas, time pressure)?
-- What is the intended chase structure for boss uniques and how does that interact with map sustain?
+- Keys are tier-scoped and progression-gated, but still use internal `bossTierN` map ids for the lair runs.
+- Boss reward identity now exists per tier, but crafting-material depth beyond `Imbuing Orb` is still open.
+- Boss fight mechanics are still mostly stat-and-pressure driven rather than bespoke encounter mechanics.
 
-## Simulator expectations (later)
+## Simulator expectations
 
 - Rare key-monster spawn rate
 - Key drop rate

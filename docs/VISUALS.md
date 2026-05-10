@@ -6,30 +6,31 @@ How to add and modify sprites, animations, and spell effects in Shardborne.
 
 ## How it works
 
-The visual layer is completely separate from game logic. Each simulation tick produces an `ArenaSnapshot` (in `arenaSimulation.ts`). `ArenaScene.ts` (Phaser) reads the snapshot and renders it — it never writes back to game state.
+The visual layer is separate from gameplay logic. Each simulation tick produces an `ArenaSnapshot` in `frontend/src/game/domain/combat/arenaSimulation.ts`. `frontend/src/game/phaser/scenes/ArenaScene.ts` reads the snapshot and renders it; Phaser does not write back into game state.
 
-Spell visuals ride on `SpellVisualEvent` objects inside the snapshot. Each event carries the spell's tags, origin point, and impact positions. `ArenaScene` processes each event exactly once (tracked by `processedSpellEventIds: Set<string>`).
+Spell visuals are driven by `SpellVisualEvent` objects inside the snapshot. Each event carries the spell tags, origin point, and impact positions. `ArenaScene` processes each event exactly once by tracking `processedSpellEventIds`.
 
-```
-Domain tick → ArenaSnapshot.spellEvents[] → ArenaScene.animateSpellEvent()
-                                               ├── animateAreaExplosion()   (areaRadius > 0)
-                                               ├── animateProjectileLance() (Projectile, not Chain)
-                                               └── animateLightningChain()  (everything else)
+```text
+Domain tick -> ArenaSnapshot.spellEvents[] -> ArenaScene.animateSpellEvent()
+                                            |- animateAreaExplosion()
+                                            |- animateProjectileLance()
+                                            `- animateLightningChain()
 ```
 
 ---
 
 ## Central config file
 
-**`frontend/src/game/phaser/spriteConfig.ts`** — the only file you normally need to edit for visual assignments.
+`frontend/src/game/phaser/spriteConfig.ts` is the main file for visual assignments.
 
 It exports:
-- `MONSTER_SPRITE_CONFIG` — maps `monsterTypeId → sprite name + frame info`
-- `PLAYER_SPRITE_CONFIG` — player sprite name + frame info
-- `FALLBACK_MONSTER_CONFIG` — used when a monster has no entry in the map
-- `FX_SHEET` — Gizmo effect spritesheet path + frame dimensions
-- `FX_ANIMS` — named animation ranges inside the effect sheet (`fire`, `electric`, `ice`)
-- `SPRITE_BASE_PATH` — root path for 0x72 dungeon frames
+
+- `MONSTER_SPRITE_CONFIG` — maps `monsterTypeId` to sprite metadata
+- `PLAYER_SPRITE_CONFIG` — player sprite metadata
+- `FALLBACK_MONSTER_CONFIG` — used when a monster has no explicit config
+- `FX_SHEET` — the spell effect spritesheet path and frame size
+- `FX_ANIMS` — named animation ranges inside the effect sheet
+- `SPRITE_BASE_PATH` — root path for the 0x72 dungeon frame files
 
 ---
 
@@ -37,52 +38,40 @@ It exports:
 
 | Asset pack | Location |
 |---|---|
-| Monster / player frames | `frontend/public/assets/0x72_DungeonTilesetII_v1.7/frames/` |
+| Monster and player frame files | `frontend/public/assets/0x72_DungeonTilesetII_v1.7/frames/` |
+| Custom generated monster sheets | `frontend/public/assets/monstersprites/` |
 | Effect spritesheet | `frontend/public/assets/Gizmo Pixel Art - Effect pack/sheets/32x32.png` |
 
 ### 0x72 frame naming convention
 
-Individual PNG files, four idle frames each:
+The 0x72 assets are individual PNG files with four idle frames:
 
-```
+```text
 {name}_idle_anim_f0.png
 {name}_idle_anim_f1.png
 {name}_idle_anim_f2.png
 {name}_idle_anim_f3.png
 ```
 
-Available names include: `goblin`, `imp`, `chort`, `wogol`, `masked_orc`, `big_demon`,
-`big_zombie`, `skelet`, `tiny_zombie`, `orc_warrior`, `orc_shaman`, `pumpkin_dude`, `ogre`,
-`knight_m`, `knight_f`, `wizzard_m`, `wizzard_f`, `elf_m`, `lizard_m`, and more.
+Common names include `goblin`, `imp`, `chort`, `wogol`, `masked_orc`, `big_demon`, `big_zombie`, `skelet`, `orc_warrior`, `orc_shaman`, and `pumpkin_dude`.
 
-Frame sizes vary — measure the PNG before setting `frameWidth`/`frameHeight`:
-- Small sprites (goblin, imp, etc.): 16×16
-- Medium sprites (chort, wogol, masked_orc): 16×23
-- Large sprites (big_demon, big_zombie): 32×36
+Frame sizes vary. Measure the PNG before wiring it:
+
+- Small sprites: `16x16`
+- Medium sprites: `16x23`
+- Large sprites: `32x36`
 
 ### Gizmo effect sheet layout
 
-The sheet is 192×352 px, 6 columns × 11 rows, each cell 32×32. Frame index = `row * 6 + col`.
+The bundled effect sheet is `192x352`, arranged as `6` columns by `11` rows. Each frame is `32x32`. Frame index uses `row * 6 + col`.
 
 | Effect | Row | Frames | `startFrame` | `frameCount` |
 |---|---|---|---|---|
-| Fire | 2 | 12–17 | 12 | 6 |
-| Electric | 3 | 18–21 | 18 | 4 |
-| Ice | 4 | 24–26 | 24 | 3 |
+| Fire | 2 | 12-17 | 12 | 6 |
+| Electric | 3 | 18-21 | 18 | 4 |
+| Ice | 4 | 24-26 | 24 | 3 |
 
-To add a new FX animation, add an entry to `FX_ANIMS` in `spriteConfig.ts`:
-
-```typescript
-export const FX_ANIMS = {
-  fire:     { key: "fx-fire",     startFrame: 12, frameCount: 6, frameRate: 12 },
-  electric: { key: "fx-electric", startFrame: 18, frameCount: 4, frameRate: 12 },
-  ice:      { key: "fx-ice",      startFrame: 24, frameCount: 3, frameRate: 10 },
-  // Add new rows here
-  poison:   { key: "fx-poison",   startFrame: 30, frameCount: 5, frameRate: 10 },
-} as const;
-```
-
-`ArenaScene.createAnimations()` automatically registers every entry in `FX_ANIMS` on startup — no changes needed there.
+To add a new effect row, extend `FX_ANIMS` in `spriteConfig.ts`. `ArenaScene.createAnimations()` registers every entry automatically.
 
 ---
 
@@ -90,11 +79,11 @@ export const FX_ANIMS = {
 
 ### Step 1 — Define the monster in game config
 
-Add an entry to `monsterDefinitions` in `frontend/src/game/config/monsterConfig.ts`:
+Add an entry to `frontend/src/game/config/monsterConfig.ts`:
 
 ```typescript
 {
-  id: "ashWalker",          // must be unique, used as monsterTypeId
+  id: "ashWalker",
   name: "Ash Walker",
   tags: ["Fire"],
   rarity: "Normal",
@@ -104,24 +93,47 @@ Add an entry to `monsterDefinitions` in `frontend/src/game/config/monsterConfig.
 }
 ```
 
-### Step 2 — Assign a sprite in spriteConfig.ts
+### Step 2 — Assign a sprite in `spriteConfig.ts`
 
-Add a matching entry to `MONSTER_SPRITE_CONFIG` using the same `id` as key:
+Add a matching entry to `MONSTER_SPRITE_CONFIG` using the same `id`:
 
 ```typescript
 ashWalker: {
-  spriteName: "pumpkin_dude",   // filename prefix inside frames/
+  spriteName: "pumpkin_dude",
   frameWidth: 16,
   frameHeight: 16,
   scale: 2.5,
   idleFrameCount: 4,
-  healthBarOffsetY: -26         // px above sprite center where the health bar sits
+  healthBarOffsetY: -26
 },
 ```
 
-That's it. `ArenaScene.preload()` iterates all configs and loads the frames automatically. The idle animation is created and played without any further changes.
+That is enough for normal 0x72 frame-file monsters. `ArenaScene.preload()` iterates the config and loads the frames automatically.
 
-If you omit the `spriteConfig.ts` entry, the monster renders with `FALLBACK_MONSTER_CONFIG` (goblin sprite) so it always shows something.
+If you omit the `spriteConfig.ts` entry, the monster falls back to `FALLBACK_MONSTER_CONFIG` so it still renders.
+
+### Optional — Use a custom generated spritesheet
+
+If a monster uses one horizontal spritesheet instead of the built-in 0x72 frame files, point the config at a custom PNG with `assetPath`:
+
+```typescript
+scrapCrawler: {
+  spriteName: "scrap-crawler-custom",
+  assetPath: "/assets/monstersprites/scrap_crawler_clean.png",
+  frameWidth: 1032,
+  frameHeight: 1024,
+  scale: 0.04,
+  idleFrameCount: 4,
+  healthBarOffsetY: -26
+},
+```
+
+Notes:
+
+- `frameWidth` is one frame width inside the sheet, not the full image width.
+- Keep the sheet as one PNG with all idle frames in a single horizontal row.
+- The background must use real alpha transparency. If the image model bakes in a checkerboard preview, clean it before using it in-game.
+- Use `docs/PIXEL_ART_PROMPTS.md` for the current master prompts and asset data blocks when generating new monster or spell art externally.
 
 ---
 
@@ -129,75 +141,85 @@ If you omit the `spriteConfig.ts` entry, the monster renders with `FALLBACK_MONS
 
 ### Step 1 — Define the spell in game config
 
-Add to `spellConfig` in `frontend/src/game/config/spellConfig.ts`. The `tags` array controls both gameplay and visual routing:
+Add the spell to `frontend/src/game/config/spellConfig.ts`. The `tags` array controls both gameplay and visual routing.
 
 | Tag | Effect |
 |---|---|
-| `"Projectile"` | Straight beam animation (unless `"Chain"` is also present) |
+| `"Projectile"` | Straight beam animation unless `"Chain"` is also present |
 | `"Chain"` | Jagged bolt hopping between enemies |
-| `"Area"` | Explosion circle + sprite at center |
-| `"Fire"` | Fire FX sprite + orange/red color |
-| `"Cold"` | Ice FX sprite + blue color |
-| `"Lightning"` | Electric FX sprite + yellow color |
+| `"Area"` | Explosion circle plus sprite at the center |
+| `"Fire"` | Fire FX sprite plus orange-red color |
+| `"Cold"` | Ice FX sprite plus blue color |
+| `"Lightning"` | Electric FX sprite plus yellow-violet color |
 
-Tags can be combined. `"Area"` takes priority over `"Projectile"` and `"Chain"` in the visual router.
+Example:
 
 ```typescript
 voidBeam: {
   id: "voidBeam",
   name: "Void Beam",
-  tags: ["Lightning", "Projectile", "SpellDamage"],  // → straight beam
+  tags: ["Lightning", "Projectile", "SpellDamage"],
   ...
 }
 ```
 
-### Step 2 — Visual routing (usually no code needed)
+### Step 2 — Visual routing
 
-The routing in `ArenaScene.animateSpellEvent()` is tag-driven:
+`ArenaScene.animateSpellEvent()` routes visuals from the spell tags:
 
 ```typescript
-const isArea       = event.areaRadius > 0;
+const isArea = event.areaRadius > 0;
 const isProjectile = event.tags.includes("Projectile") && !event.tags.includes("Chain");
 
-if (isArea)            animateAreaExplosion(event);
+if (isArea) animateAreaExplosion(event);
 else if (isProjectile) animateProjectileLance(event);
-else                   animateLightningChain(event);
+else animateLightningChain(event);
 ```
 
-If none of the three existing visuals fits your new spell, add a new `animate*()` method in `ArenaScene.ts` and extend the routing block.
+If none of the three visual families fits, add a new `animate*()` method in `ArenaScene.ts` and extend the router.
 
-### Step 3 — Color/FX customization per spell
+### Step 3 — Color and FX customization
 
-Inside each `animate*()` method, element colors and which FX animation to use are determined by checking `event.tags`:
+Inside the animation methods, the element color and effect animation are selected from the spell tags:
 
 ```typescript
 const isFire = event.tags.includes("Fire");
 const isCold = event.tags.includes("Cold");
-// isLightning implied by else / default
-const fxAnim  = isCold ? FX_ANIMS.ice.key : isFire ? FX_ANIMS.fire.key : FX_ANIMS.electric.key;
-const color   = isFire ? 0xf97316 : isCold ? 0x38bdf8 : 0xa78bfa;
+const fxAnim = isCold ? FX_ANIMS.ice.key : isFire ? FX_ANIMS.fire.key : FX_ANIMS.electric.key;
+const color = isFire ? 0xf97316 : isCold ? 0x38bdf8 : 0xa78bfa;
 ```
 
-To add a new element (e.g. poison), add a `poison` entry to `FX_ANIMS`, add a `"Poison"` tag to the spell, and extend the color/FX selection in each `animate*` method.
+To add a new element such as poison, add a `poison` entry to `FX_ANIMS`, a `"Poison"` tag in spell config, and matching selection logic in the Phaser animation methods.
 
 ---
 
 ## How to swap an existing sprite
 
-Open `frontend/src/game/phaser/spriteConfig.ts` and change `spriteName` for any entry:
+Open `frontend/src/game/phaser/spriteConfig.ts` and update the monster entry:
 
 ```typescript
 // Before
 scrapCrawler: { spriteName: "goblin", ... }
 
 // After
-scrapCrawler: { spriteName: "skelet", frameWidth: 16, frameHeight: 16, scale: 2.5,
-                idleFrameCount: 4, healthBarOffsetY: -26 },
+scrapCrawler: {
+  spriteName: "skelet",
+  frameWidth: 16,
+  frameHeight: 16,
+  scale: 2.5,
+  idleFrameCount: 4,
+  healthBarOffsetY: -26
+},
 ```
 
-Also update `frameWidth`, `frameHeight`, and `healthBarOffsetY` if the new sprite has different dimensions.
+When changing the asset, also review:
 
-To swap the player, change `PLAYER_SPRITE_CONFIG.spriteName`.
+- `frameWidth`
+- `frameHeight`
+- `scale`
+- `healthBarOffsetY`
+
+To swap the player, update `PLAYER_SPRITE_CONFIG.spriteName`.
 
 ---
 
@@ -207,23 +229,23 @@ To swap the player, change `PLAYER_SPRITE_CONFIG.spriteName`.
 
 | Monster ID | Sprite | Size | Rarity |
 |---|---|---|---|
-| `scrapCrawler` | goblin | 16×16 | Normal |
-| `cinderGrub` | imp | 16×16 | Normal |
-| `frostSprite` | chort | 16×23 | Normal |
-| `stormHound` | wogol | 16×23 | Normal |
-| `voidStalker` | masked_orc | 16×23 | Rare |
-| `blazeWarden` | big_demon | 32×36 | Rare |
+| `scrapCrawler` | custom `scrap_crawler_clean.png` sheet | `1032x1024` per frame, scaled to `0.04` | Normal |
+| `cinderGrub` | `imp` | `16x16` | Normal |
+| `frostSprite` | `chort` | `16x23` | Normal |
+| `stormHound` | `wogol` | `16x23` | Normal |
+| `voidStalker` | `masked_orc` | `16x23` | Rare |
+| `blazeWarden` | `big_demon` | `32x36` | Rare |
 
 ### Spells
 
 | Spell ID | Tags | Visual |
 |---|---|---|
-| `stormChain` | Lightning, Projectile, Chain | Jagged yellow bolt, hops between enemies |
-| `arcLance` | Lightning, Projectile | Straight yellow beam with electric impact |
-| `emberBurst` | Fire, Area, Explosion | Fire sprite + orange ring at radius |
-| `ashenOrbit` | Fire, Area, Explosion | Fire sprite + orange ring at radius |
-| `glacierNova` | Cold, Area, Critical | Ice sprite + blue ring at radius |
-| `tempestBloom` | Lightning, Cold, Area, Chain | Area explosion (Cold FX + blue ring) |
+| `stormChain` | Lightning, Projectile, Chain | Jagged lightning bolt that hops between enemies |
+| `arcLance` | Lightning, Projectile | Straight beam with electric impact |
+| `emberBurst` | Fire, Area, Explosion | Fire sprite plus orange ring at radius |
+| `ashenOrbit` | Fire, Area, Explosion | Fire sprite plus orange ring at radius |
+| `glacierNova` | Cold, Area, Critical | Ice sprite plus blue ring at radius |
+| `tempestBloom` | Lightning, Cold, Area, Chain | Area explosion using cold FX plus blue ring |
 
 ---
 
@@ -231,10 +253,11 @@ To swap the player, change `PLAYER_SPRITE_CONFIG.spriteName`.
 
 | File | Purpose |
 |---|---|
-| `frontend/src/game/phaser/spriteConfig.ts` | All sprite/FX assignments — start here |
-| `frontend/src/game/phaser/scenes/ArenaScene.ts` | Phaser scene: loading, animations, rendering |
-| `frontend/src/game/config/monsterConfig.ts` | Monster definitions (id, tags, rarity) |
-| `frontend/src/game/config/spellConfig.ts` | Spell definitions (id, tags, areaRadius, chainCount) |
-| `frontend/src/shared/types/saveTypes.ts` | `SpellVisualEvent`, `ArenaEnemyState` type definitions |
-| `frontend/src/game/domain/combat/arenaSimulation.ts` | Emits `SpellVisualEvent` when a spell fires |
-| `frontend/src/app/useArenaSession.ts` | Forwards snapshot to React; bypasses throttle when spell events are present |
+| `frontend/src/game/phaser/spriteConfig.ts` | All sprite and FX assignments |
+| `frontend/src/game/phaser/scenes/ArenaScene.ts` | Phaser scene loading, animations, and rendering |
+| `frontend/src/game/config/monsterConfig.ts` | Monster definitions |
+| `frontend/src/game/config/spellConfig.ts` | Spell definitions and tags |
+| `frontend/src/shared/types/saveTypes.ts` | `SpellVisualEvent` and arena visual types |
+| `frontend/src/game/domain/combat/arenaSimulation.ts` | Emits `SpellVisualEvent` when spells fire |
+| `frontend/src/app/useArenaSession.ts` | Forwards snapshots and bypasses throttle when spell events exist |
+| `docs/PIXEL_ART_PROMPTS.md` | Prompt templates and current asset data blocks for generated art |

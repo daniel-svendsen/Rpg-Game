@@ -98,6 +98,7 @@ Success criteria:
 Status:
 
 - Implemented May 8, 2026: the button shows total gold and prompts before selling.
+- Expanded May 10, 2026: the shop also supports `Sell Normal`, `Sell Magic`, `Sell Rare`, plus pickup auto-sell toggles for those rarities. Unique items remain protected.
 
 Idea:
 
@@ -176,6 +177,7 @@ Success criteria:
 Status:
 
 - Implemented (first pass) May 8, 2026: boss keys drop from rares, boss challenges unlock tiers, and boss-only drops exist.
+- Expanded May 10, 2026: first-key discovery now unlocks permanent retries until first clear, next-tier maps are gated behind the relevant boss kill, and each tier boss has its own `2` regular + `1` chase unique pool.
 
 High-level concept:
 
@@ -183,13 +185,11 @@ High-level concept:
 - Rare spawns can drop “boss keys”.
 - Boss keys unlock boss fights with a separate, higher-value drop pool.
 
-Questions to answer before implementation:
+Remaining follow-up:
 
-- How rare are keys?
-- Are keys tier-gated, boss-specific, or craftable from fragments?
-- Should there be trade-offs (sell vs save vs use)?
-- What makes boss fights distinct (mechanics, resistances, arenas)?
-- What is the intended “chase” structure for boss uniques?
+- What stronger boss-only crafting materials should sit on top of the current unique pools?
+- What makes boss fights distinct beyond stat and pressure tuning (mechanics, resistances, arenas)?
+- How deep should the long-term boss chase structure become after the first-pass tier pools?
 
 Simulator expectations (later):
 

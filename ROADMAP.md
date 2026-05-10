@@ -396,6 +396,7 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 
 - [x] Improve login/register error handling so the UI shows clear causes such as wrong password, invalid email, existing account, missing fields, short password, and backend/API failures.
 - [x] Show total gold value before confirming `Sell all`.
+- [x] Add rarity-specific inventory selling and pickup auto-sell controls (`Sell Normal/Magic/Rare`, `Auto-sell Normal/Magic/Rare`) while keeping uniques protected.
 - [ ] Hide, move, or replace low-value `Active spell` and `Map state` panels during map runs.
 
 ### Map pacing and sustain
@@ -408,6 +409,8 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 ### Item readability and visuals
 
 - [x] Centralize item rarity colors so equipped gear, inventory, loot, shop, and item cards use the same visual rules.
+- [x] Remove misleading unique flavor text from item cards when no gameplay effect exists; show concrete stats only.
+- [x] Make `Normal` items roll zero affixes so rarity lines up with item complexity (`Magic` = 1–2, `Rare` = 3+).
 - [ ] Add more varied map backgrounds driven by config, with room for tier-specific and random variants.
 
 ### Longer-term chase systems
@@ -415,7 +418,8 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 - [x] Add a first-pass rare-spawn boss key loop for progression and farming (guardian mechanic: 10%/5% per-map spawn chance, always drops key on kill).
 - [x] Add a first-pass boss key structure with tier-linked unlocks and reusable farming keys.
 - [x] Add a first-pass boss reward structure with a separate boss drop pool and simulator-visible expected value.
-- [ ] Expand boss rewards into tier-specific unique pools, stronger crafting materials, and a fuller long-term chase structure.
+- [x] Expand the first-pass boss reward structure into tier-specific unique pools (`2` regular uniques + `1` chase unique per tier boss).
+- [ ] Add stronger crafting materials and a fuller long-term chase structure on top of the new tier-specific boss pools.
 
 ## Phase 2 Scope Extensions Status Snapshot
 
@@ -438,8 +442,8 @@ Implemented (first pass):
   - slot-scoped prefix/suffix pools
   - rarity controls affix count with `max 3 prefixes` + `max 3 suffixes`
   - base items provide inherent armor/evasion (defense bases) and inherent weapon speed multipliers (weapon bases), gated by map tier
-- Boss key guardian mechanic: at map creation a single rare is designated the "key guardian" (10% chance if the boss for the next tier is not yet cleared, 5% otherwise). When that specific enemy is killed it always drops a key — no roll. Replaces the old first-rare-kill 10%/5% roll model.
-- Boss lairs now exist as challengeable tier bosses with a separate boss drop pool, first-pass boss uniques, and imbuing orb rewards.
+- Boss key guardian mechanic: at map creation a single rare is designated the "key guardian" (10% chance before first clear of that tier boss, 5% afterward). When that specific enemy is killed it always drops a key — no roll. Replaces the old first-rare-kill 10%/5% roll model.
+- Boss lairs now exist as challengeable tier bosses with permanent retry unlock after your first key discovery, first-clear unlock gating for the next map tier, three guaranteed next-tier starter maps on first clear, and tier-specific boss unique pools.
 - Simulator reporting includes item roll distributions (tier buckets), movement-speed affix visibility, boss key gain rate, imbuing orb output, and clearer map-sustain stall signals.
 
 Implemented (continued):
@@ -462,13 +466,14 @@ Implemented (continued):
 
 - Phaser visuals (first pass, out-of-phase early delivery):
   - All monsters now render with real 0x72 DungeonTileset II idle sprite animations, each mapped to a named spriteName in `frontend/src/game/phaser/spriteConfig.ts`.
+  - Phaser now also supports custom horizontal spritesheets via `assetPath`, piloted with a cleaned `Scrap Crawler` sheet in `frontend/public/assets/monstersprites/`.
   - Player character renders as an animated wizard sprite (wizzard_m) with camera follow.
   - Spell effects use the Gizmo Effect pack spritesheet (32Ã—32): fire, electric, and ice animations routed per spell tags.
   - Three visual animation types: `animateLightningChain` (jagged bolt hopping between enemies), `animateProjectileLance` (straight beam), `animateAreaExplosion` (ring + impact sprite at radius).
   - `SpellVisualEvent` added to `ArenaSnapshot`; domain emits one event per cast; Phaser processes each event exactly once via `processedSpellEventIds`.
   - Snapshot throttle in `useArenaSession` bypassed when spell events are present so no cast is silently dropped.
-  - `docs/VISUALS.md` documents the full process for adding new monster sprites and spell visual types.
+  - `docs/VISUALS.md` and `docs/PIXEL_ART_PROMPTS.md` now document both visual wiring and external sprite-prompt workflows.
 
 Still planned (next major domain work):
 - Item stat roll UI: expose roll distributions to players (min/max per stat, tier label on item card).
-- Expand boss rewards into tier-specific unique pools, stronger crafting materials, and a fuller long-term chase structure.
+- Add stronger boss crafting/material rewards and a fuller long-term chase structure beyond the current tier-specific unique pools.
