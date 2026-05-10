@@ -5,8 +5,15 @@ export type HubTab = "maps" | "boss" | "equipment" | "spells" | "shop" | "charac
 export type OverlayPanel = "equipmentPicker" | "mainSpellPicker" | "supportPicker" | null;
 export type SelectedMapTarget = "trainingGrounds" | string;
 
+export interface RunBatchState {
+  totalMaps: number;
+  completedMaps: number;
+  loot: LootEntry[];
+}
+
 export interface RunSummaryData {
   mapName: string;
   wasDefeated: boolean;
   loot: LootEntry[];
+  completedMaps: number;
 }

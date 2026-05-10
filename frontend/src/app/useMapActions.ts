@@ -13,7 +13,7 @@ import {
 import { getMapEnhancementSummary, rollMapEnhancement } from "../game/domain/maps/mapEnhancements";
 import { normalizeCharacterRecord } from "../game/domain/player/playerTypes";
 import type { ArenaSnapshot, CharacterRecord, MapEnhancementInstance } from "../shared/types/saveTypes";
-import type { ScreenMode, SelectedMapTarget } from "./appTypes";
+import type { RunBatchState, ScreenMode, SelectedMapTarget } from "./appTypes";
 import {
   buildOwnedMapRunQueue,
   getCurrencyAmount,
@@ -30,6 +30,7 @@ interface UseMapActionsParams {
   setActiveMapId: Dispatch<SetStateAction<string | null>>;
   setActiveMapEnhancements: Dispatch<SetStateAction<MapEnhancementInstance[]>>;
   setActiveMapRunId: Dispatch<SetStateAction<number>>;
+  setActiveRunBatch: Dispatch<SetStateAction<RunBatchState | null>>;
   setArenaSnapshot: Dispatch<SetStateAction<ArenaSnapshot | null>>;
   setSelectedMapTarget: Dispatch<SetStateAction<SelectedMapTarget>>;
   setScreenMode: Dispatch<SetStateAction<ScreenMode>>;
@@ -46,6 +47,7 @@ export const useMapActions = ({
   setActiveMapId,
   setActiveMapEnhancements,
   setActiveMapRunId,
+  setActiveRunBatch,
   setArenaSnapshot,
   setSelectedMapTarget,
   setScreenMode,
@@ -55,7 +57,8 @@ export const useMapActions = ({
   const startMapRun = (
     mapTarget: SelectedMapTarget,
     sourceCharacter: CharacterRecord,
-    remainingQueue: string[] = []
+    remainingQueue: string[] = [],
+    runBatch: RunBatchState | null = null
   ): boolean => {
     let nextCharacter = normalizeCharacterRecord(sourceCharacter);
     const ownedMapStack =
@@ -109,6 +112,7 @@ export const useMapActions = ({
     setActiveMapId(mapId);
     setActiveMapEnhancements(mapEnhancements);
     setActiveMapRunId((current) => current + 1);
+    setActiveRunBatch(runBatch);
     setArenaSnapshot(null);
     setErrorMessage(null);
     setScreenMode("arena");
@@ -141,7 +145,11 @@ export const useMapActions = ({
     }
 
     const [firstMapId, ...remainingQueue] = queue;
-    startMapRun(firstMapId, character, remainingQueue);
+    startMapRun(firstMapId, character, remainingQueue, {
+      totalMaps: queue.length,
+      completedMaps: 0,
+      loot: []
+    });
   };
 
   const handleStartBossTier = (tier: number): void => {

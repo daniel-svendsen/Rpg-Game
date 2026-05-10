@@ -8,7 +8,8 @@ interface RunSummaryScreenProps {
 }
 
 export const RunSummaryScreen = ({ summaryData, onKeepFarming, onReturnToHub }: RunSummaryScreenProps) => {
-  const { mapName, wasDefeated, loot } = summaryData;
+  const { mapName, wasDefeated, loot, completedMaps } = summaryData;
+  const summaryTitle = completedMaps > 1 ? `${completedMaps} Maps Complete` : mapName;
 
   const uniqueCount = loot.filter((l) => l.rarity?.toLowerCase() === "unique").length;
   const rareCount = loot.filter((l) => l.rarity?.toLowerCase() === "rare").length;
@@ -20,7 +21,8 @@ export const RunSummaryScreen = ({ summaryData, onKeepFarming, onReturnToHub }: 
         <span className={`run-summary-badge ${wasDefeated ? "run-summary-badge--defeat" : "run-summary-badge--victory"}`}>
           {wasDefeated ? "Defeated" : "Map Complete"}
         </span>
-        <h2 className="run-summary-map-name">{mapName}</h2>
+        <h2 className="run-summary-map-name">{summaryTitle}</h2>
+        {completedMaps > 1 ? <p className="status-text">Last map: {mapName}</p> : null}
       </div>
 
       <div className="run-summary-actions">

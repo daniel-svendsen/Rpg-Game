@@ -5,7 +5,7 @@ import { login, register } from "../api/authApi";
 import type { AuthFieldErrors, AuthFormState } from "../auth/authTypes";
 import { resolveAuthErrorMessage } from "./authFeedback";
 import { AuthScreen } from "./AuthScreen";
-import type { HubTab, OverlayPanel, RunSummaryData, ScreenMode, SelectedMapTarget } from "./appTypes";
+import type { HubTab, OverlayPanel, RunBatchState, RunSummaryData, ScreenMode, SelectedMapTarget } from "./appTypes";
 import { HubScreen } from "./HubScreen";
 import { RunSummaryScreen } from "./RunSummaryScreen";
 import { InlineFeedbackPanel } from "./InlineFeedbackPanel";
@@ -65,6 +65,7 @@ export const App = () => {
   const [activeMapId, setActiveMapId] = useState<string | null>(null);
   const [activeMapEnhancements, setActiveMapEnhancements] = useState<MapEnhancementInstance[]>([]);
   const [activeMapRunId, setActiveMapRunId] = useState(0);
+  const [activeRunBatch, setActiveRunBatch] = useState<RunBatchState | null>(null);
   const [selectedMapTarget, setSelectedMapTarget] = useState<SelectedMapTarget>("trainingGrounds");
   const [recentLoot, setRecentLoot] = useState<LootEntry[]>([]);
   const [shopItems, setShopItems] = useState<ShopItemState[]>([]);
@@ -126,6 +127,7 @@ export const App = () => {
     setActiveMapId,
     setActiveMapEnhancements,
     setActiveMapRunId,
+    setActiveRunBatch,
     setArenaSnapshot,
     setSelectedMapTarget,
     setScreenMode,
@@ -203,6 +205,7 @@ export const App = () => {
     activeMapId,
     activeMapEnhancements,
     activeMapRunId,
+    activeRunBatch,
     autoSellSettings,
     arenaRuntimeRef,
     queuedMapIdsRef,
@@ -213,6 +216,7 @@ export const App = () => {
     setActiveMapId,
     setActiveMapEnhancements,
     setActiveMapRunId,
+    setActiveRunBatch,
     setScreenMode,
     setRunSummaryData,
     setStatusMessage,
@@ -351,6 +355,7 @@ export const App = () => {
     setArenaSnapshot(null);
     setActiveMapId(null);
     setActiveMapEnhancements([]);
+    setActiveRunBatch(null);
     setShopItems([]);
     setOverlayPanel(null);
     setHubTab("maps");
@@ -362,6 +367,7 @@ export const App = () => {
   const handleSummaryKeepFarming = (): void => {
     if (!character) {
       setRunSummaryData(null);
+      setActiveRunBatch(null);
       setHubTab("maps");
       setScreenMode("hub");
       setStatusMessage("");
@@ -369,11 +375,13 @@ export const App = () => {
     }
 
     setRunSummaryData(null);
+    setActiveRunBatch(null);
     startMapRun(selectedMapTarget, character);
   };
 
   const handleSummaryReturnToHub = (): void => {
     setRunSummaryData(null);
+    setActiveRunBatch(null);
     setScreenMode("hub");
     setStatusMessage("");
   };
@@ -491,6 +499,7 @@ export const App = () => {
             setScreenMode("hub");
             setActiveMapId(null);
             setActiveMapEnhancements([]);
+            setActiveRunBatch(null);
           }}
         />
       </Suspense>

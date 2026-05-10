@@ -5,11 +5,12 @@ import { createArenaRuntime, stepArenaRuntime, type ArenaRuntimeState } from "..
 import { consumeOwnedMap, getOwnedMapStack } from "../game/domain/maps/mapProgress";
 import { normalizeCharacterRecord } from "../game/domain/player/playerTypes";
 import type { ArenaSnapshot, AutoSellSettings, CharacterRecord, LootEntry, MapEnhancementInstance } from "../shared/types/saveTypes";
-import type { RunSummaryData, ScreenMode } from "./appTypes";
+import type { RunBatchState, RunSummaryData, ScreenMode } from "./appTypes";
 import {
   shouldSyncArenaCharacter,
   shouldSyncArenaSnapshot
 } from "./arenaSessionTiming";
+import { advanceRunBatch, buildRunSummaryData } from "./runSummaryHelpers";
 
 interface UseArenaSessionParams {
   screenMode: ScreenMode;
@@ -17,6 +18,7 @@ interface UseArenaSessionParams {
   activeMapId: string | null;
   activeMapEnhancements: MapEnhancementInstance[];
   activeMapRunId: number;
+  activeRunBatch: RunBatchState | null;
   autoSellSettings: AutoSellSettings;
   arenaRuntimeRef: MutableRefObject<ArenaRuntimeState | null>;
   queuedMapIdsRef: MutableRefObject<string[]>;
@@ -27,6 +29,7 @@ interface UseArenaSessionParams {
   setActiveMapId: Dispatch<SetStateAction<string | null>>;
   setActiveMapEnhancements: Dispatch<SetStateAction<MapEnhancementInstance[]>>;
   setActiveMapRunId: Dispatch<SetStateAction<number>>;
+  setActiveRunBatch: Dispatch<SetStateAction<RunBatchState | null>>;
   setScreenMode: Dispatch<SetStateAction<ScreenMode>>;
   setRunSummaryData: Dispatch<SetStateAction<RunSummaryData | null>>;
   setStatusMessage: Dispatch<SetStateAction<string>>;
@@ -39,6 +42,7 @@ export const useArenaSession = ({
   activeMapId,
   activeMapEnhancements,
   activeMapRunId,
+  activeRunBatch,
   autoSellSettings,
   arenaRuntimeRef,
   queuedMapIdsRef,
@@ -49,6 +53,7 @@ export const useArenaSession = ({
   setActiveMapId,
   setActiveMapEnhancements,
   setActiveMapRunId,
+  setActiveRunBatch,
   setScreenMode,
   setRunSummaryData,
   setStatusMessage,
@@ -97,6 +102,7 @@ export const useArenaSession = ({
 
         const wasDefeated = runtime.snapshot.player.currentHealth <= 0;
         const nextQueuedMapIds = queuedMapIdsRef.current;
+        const nextRunBatch = advanceRunBatch(activeRunBatch, lootThisRun);
 
         if (!wasDefeated && nextQueuedMapIds.length > 0) {
           const [nextMapStackId, ...remainingQueue] = nextQueuedMapIds;
@@ -122,6 +128,7 @@ export const useArenaSession = ({
             setActiveMapId(nextMapStack.mapId);
             setActiveMapEnhancements(nextMapStack.enhancements);
             setActiveMapRunId((current) => current + 1);
+            setActiveRunBatch(nextRunBatch);
             setArenaSnapshot(null);
             setErrorMessage(null);
             setScreenMode("arena");
@@ -133,11 +140,8 @@ export const useArenaSession = ({
         }
 
         setQueuedMapIds([]);
-        setRunSummaryData({
-          mapName: runtime.snapshot.mapName,
-          wasDefeated,
-          loot: lootThisRun,
-        });
+        setActiveRunBatch(null);
+        setRunSummaryData(buildRunSummaryData(runtime.snapshot.mapName, wasDefeated, lootThisRun, activeRunBatch));
         setScreenMode("runSummary");
         setActiveMapId(null);
         setActiveMapEnhancements([]);
@@ -156,6 +160,7 @@ export const useArenaSession = ({
     activeMapId,
     activeMapEnhancements,
     activeMapRunId,
+    activeRunBatch,
     autoSellSettings,
     arenaRuntimeRef,
     queuedMapIdsRef,
@@ -166,6 +171,7 @@ export const useArenaSession = ({
     setActiveMapId,
     setActiveMapEnhancements,
     setActiveMapRunId,
+    setActiveRunBatch,
     setScreenMode,
     setRunSummaryData,
     setStatusMessage,
