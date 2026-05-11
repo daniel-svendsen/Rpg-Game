@@ -109,6 +109,7 @@
 - `docs/PROJECT_VISION.md` captures higher-level game direction and product intent.
 - `docs/COMMANDS.md` documents the main local workflow, demo, build, and verification commands.
 - `docs/SIMULATION.md` documents the simulator workflow and report interpretation.
+- `docs/SYSTEM_FLOWCHARTS.md` documents current technical flows for combat, loot, login, boss progression, save/load/autosave, and map progression.
 - `docs/VISUALS.md` documents how to add monster sprites, player sprites, and spell visual effects.
 - `frontend/AGENTS.md` contains frontend, domain, UI, and balance guardrails specific to `frontend/`.
 - `backend/AGENTS.md` contains backend, persistence, API, and save-contract guardrails specific to `backend/`.

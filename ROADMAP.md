@@ -386,6 +386,7 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 - [x] Add a dedicated project vision doc if the game direction starts stretching beyond what belongs in `README.md`.
 - [x] Add a simulator-focused doc for how to run reports and interpret results.
 - [x] Add a command reference doc for `dev`, `demo`, `start`, `stop`, `build`, and `test` workflows.
+- [x] Add technical system flowcharts for current combat, loot, auth, boss, persistence, and map progression behavior (`docs/SYSTEM_FLOWCHARTS.md`).
 - [x] Decide which command content should stay in `README.md` versus dedicated docs.
 - [x] Break roadmap work into smaller phase checklists when that improves continuity and portfolio readability.
 - [x] Keep roadmap/checklist status updated when implementation changes project status.

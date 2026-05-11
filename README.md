@@ -41,6 +41,7 @@ That file covers:
 - [docs/PROJECT_VISION.md](docs/PROJECT_VISION.md)
 - [docs/SIMULATION.md](docs/SIMULATION.md)
 - [docs/COMMANDS.md](docs/COMMANDS.md)
+- [docs/SYSTEM_FLOWCHARTS.md](docs/SYSTEM_FLOWCHARTS.md)
 
 ## Project Structure
 
@@ -283,6 +284,7 @@ The main project instructions for future AI agents live in:
 - [frontend/AGENTS.md](frontend/AGENTS.md)
 - [backend/AGENTS.md](backend/AGENTS.md)
 - [ROADMAP.md](ROADMAP.md)
+- [docs/SYSTEM_FLOWCHARTS.md](docs/SYSTEM_FLOWCHARTS.md)
 
 ## Important Files
 
