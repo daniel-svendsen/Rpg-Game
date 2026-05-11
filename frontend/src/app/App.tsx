@@ -211,6 +211,7 @@ export const App = () => {
     arenaRuntimeRef,
     queuedMapIdsRef,
     commitCharacter,
+    persistCharacterNow,
     setRecentLoot,
     setArenaSnapshot,
     setQueuedMapIds,

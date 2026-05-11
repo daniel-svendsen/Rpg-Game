@@ -10,7 +10,7 @@ import {
   shouldSyncArenaCharacter,
   shouldSyncArenaSnapshot
 } from "./arenaSessionTiming";
-import { advanceRunBatch, buildRunSummaryData } from "./runSummaryHelpers";
+import { advanceRunBatch, buildBossRunCompletionNotes, buildRunSummaryData } from "./runSummaryHelpers";
 
 interface UseArenaSessionParams {
   screenMode: ScreenMode;
@@ -23,6 +23,7 @@ interface UseArenaSessionParams {
   arenaRuntimeRef: MutableRefObject<ArenaRuntimeState | null>;
   queuedMapIdsRef: MutableRefObject<string[]>;
   commitCharacter: (nextCharacter: CharacterRecord | null) => void;
+  persistCharacterNow: (nextCharacter: CharacterRecord, failureMessage: string) => Promise<void>;
   setRecentLoot: Dispatch<SetStateAction<LootEntry[]>>;
   setArenaSnapshot: Dispatch<SetStateAction<ArenaSnapshot | null>>;
   setQueuedMapIds: Dispatch<SetStateAction<string[]>>;
@@ -47,6 +48,7 @@ export const useArenaSession = ({
   arenaRuntimeRef,
   queuedMapIdsRef,
   commitCharacter,
+  persistCharacterNow,
   setRecentLoot,
   setArenaSnapshot,
   setQueuedMapIds,
@@ -103,6 +105,19 @@ export const useArenaSession = ({
         const wasDefeated = runtime.snapshot.player.currentHealth <= 0;
         const nextQueuedMapIds = queuedMapIdsRef.current;
         const nextRunBatch = advanceRunBatch(activeRunBatch, lootThisRun);
+        const completionNotes = buildBossRunCompletionNotes({
+          mapId: activeMapId,
+          wasDefeated,
+          previousHighestUnlockedTier: character.mapProgress.highestUnlockedTier,
+          nextHighestUnlockedTier: runtime.snapshot.player.mapProgress.highestUnlockedTier,
+          previousClearedBossTiers: character.mapProgress.clearedBossTiers ?? [],
+          nextClearedBossTiers: runtime.snapshot.player.mapProgress.clearedBossTiers ?? []
+        });
+
+        void persistCharacterNow(
+          runtime.snapshot.player,
+          "Run completion save failed. Try saving manually before refreshing."
+        );
 
         if (!wasDefeated && nextQueuedMapIds.length > 0) {
           const [nextMapStackId, ...remainingQueue] = nextQueuedMapIds;
@@ -124,6 +139,10 @@ export const useArenaSession = ({
           if (nextMapStack && nextMapStack.quantity > 0) {
             preparedCharacter = consumeOwnedMap(preparedCharacter, nextMapStackId);
             commitCharacter(preparedCharacter);
+            void persistCharacterNow(
+              preparedCharacter,
+              "Queued map transition save failed. Try saving manually before refreshing."
+            );
             setQueuedMapIds(remainingQueue);
             setActiveMapId(nextMapStack.mapId);
             setActiveMapEnhancements(nextMapStack.enhancements);
@@ -141,7 +160,9 @@ export const useArenaSession = ({
 
         setQueuedMapIds([]);
         setActiveRunBatch(null);
-        setRunSummaryData(buildRunSummaryData(runtime.snapshot.mapName, wasDefeated, lootThisRun, activeRunBatch));
+        setRunSummaryData(
+          buildRunSummaryData(runtime.snapshot.mapName, wasDefeated, lootThisRun, activeRunBatch, completionNotes)
+        );
         setScreenMode("runSummary");
         setActiveMapId(null);
         setActiveMapEnhancements([]);
@@ -165,6 +186,7 @@ export const useArenaSession = ({
     arenaRuntimeRef,
     queuedMapIdsRef,
     commitCharacter,
+    persistCharacterNow,
     setRecentLoot,
     setArenaSnapshot,
     setQueuedMapIds,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { LootEntry } from "../shared/types/saveTypes";
-import { advanceRunBatch, buildRunSummaryData } from "./runSummaryHelpers";
+import { advanceRunBatch, buildBossRunCompletionNotes, buildRunSummaryData } from "./runSummaryHelpers";
 
 const createLootEntry = (id: string, rarity: "Magic" | "Rare"): LootEntry => ({
   id,
@@ -37,5 +37,23 @@ describe("runSummaryHelpers", () => {
 
     expect(summary.completedMaps).toBe(1);
     expect(summary.loot).toEqual(loot);
+    expect(summary.completionNotes).toEqual([]);
+  });
+
+  it("reports first-time boss unlock rewards in the run summary", () => {
+    const notes = buildBossRunCompletionNotes({
+      mapId: "bossTier1",
+      wasDefeated: false,
+      previousHighestUnlockedTier: 1,
+      nextHighestUnlockedTier: 2,
+      previousClearedBossTiers: [],
+      nextClearedBossTiers: [1]
+    });
+
+    expect(notes).toEqual([
+      "Tier 1 boss defeated for the first time.",
+      "Tier 2 maps unlocked.",
+      "Awarded 3 Tier 2 maps."
+    ]);
   });
 });

@@ -68,6 +68,13 @@ export const BossTab = ({ topBar, healthHud, character, onStartBossTier }: BossT
                   <div className="status-text">
                     Keys: {keyCount} | {availabilityLabel}
                   </div>
+                  {isCleared ? (
+                    <div className="status-text">
+                      {tier < mapBalance.maxTier
+                        ? `First clear completed. Tier ${tier + 1} maps are unlocked.`
+                        : "First clear completed. Final tier boss already defeated."}
+                    </div>
+                  ) : null}
                   {isAvailable && !isCleared ? (
                     <div className="status-text">
                       {tier < mapBalance.maxTier

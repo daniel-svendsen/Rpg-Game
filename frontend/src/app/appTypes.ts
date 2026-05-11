@@ -16,4 +16,5 @@ export interface RunSummaryData {
   wasDefeated: boolean;
   loot: LootEntry[];
   completedMaps: number;
+  completionNotes: string[];
 }

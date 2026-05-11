@@ -8,7 +8,7 @@ interface RunSummaryScreenProps {
 }
 
 export const RunSummaryScreen = ({ summaryData, onKeepFarming, onReturnToHub }: RunSummaryScreenProps) => {
-  const { mapName, wasDefeated, loot, completedMaps } = summaryData;
+  const { mapName, wasDefeated, loot, completedMaps, completionNotes } = summaryData;
   const summaryTitle = completedMaps > 1 ? `${completedMaps} Maps Complete` : mapName;
 
   const uniqueCount = loot.filter((l) => l.rarity?.toLowerCase() === "unique").length;
@@ -39,6 +39,19 @@ export const RunSummaryScreen = ({ summaryData, onKeepFarming, onReturnToHub }: 
           <span className="run-summary-action-hint">Manage gear, spells and shop</span>
         </div>
       </div>
+
+      {completionNotes.length > 0 ? (
+        <section className="panel stack">
+          <h4>Run Outcome</h4>
+          <div className="stack">
+            {completionNotes.map((note) => (
+              <p key={note} className="status-text">
+                {note}
+              </p>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="panel stack">
         <h4>Loot Found</h4>
