@@ -11,7 +11,7 @@ export class PhaserGame {
     this.game = new Phaser.Game({
       type: Phaser.AUTO,
       width: 960,
-      height: 640,
+      height: 736,
       parent,
       backgroundColor: "#050a12",
       scene: [this.arenaScene]

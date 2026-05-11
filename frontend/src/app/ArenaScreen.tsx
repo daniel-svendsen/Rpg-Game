@@ -66,43 +66,45 @@ const ArenaScreen = ({
   return (
     <div className="content arena-layout">
       <div className="mobile-only-feedback">{feedback}</div>
-      <section className="panel arena-host">
-        <div className="arena-top-hud">
-          {mapName ? <span className="arena-hud-map-name">{mapName}</span> : null}
-          {isComplete ? (
-            <div className="overlay-chip overlay-chip--complete">Map Complete!</div>
-          ) : (
-            <div className="overlay-chip">{enemyCount} enemies remaining</div>
-          )}
-        </div>
-        <div ref={phaserContainerRef} />
-        <div className="arena-bottom-hud">
-          <div className="arena-hp-section">
-            <div className="arena-hp-label">
-              {currentHealth} / {maxHealth} HP
-            </div>
-            <div className="arena-hp-track">
-              <div className={`arena-hp-fill ${hpFillClass}`} style={{ width: `${healthPct}%` }} />
-            </div>
+      <div className="arena-col">
+        <section className="arena-host">
+          <div className="arena-top-hud">
+            {mapName ? <span className="arena-hud-map-name">{mapName}</span> : null}
+            {isComplete ? (
+              <div className="overlay-chip overlay-chip--complete">Map Complete!</div>
+            ) : (
+              <div className="overlay-chip">{enemyCount} enemies remaining</div>
+            )}
           </div>
-          <button
-            className="arena-flask-btn"
-            disabled={!canFlask}
-            onClick={onUseLifeFlask}
-            title="Use Life Flask"
-            type="button"
-          >
-            Flask {flaskCharges}/{maxFlaskCharges}
+          <div ref={phaserContainerRef} />
+          <div className="arena-bottom-hud">
+            <div className="arena-hp-section">
+              <div className="arena-hp-label">
+                {currentHealth} / {maxHealth} HP
+              </div>
+              <div className="arena-hp-track">
+                <div className={`arena-hp-fill ${hpFillClass}`} style={{ width: `${healthPct}%` }} />
+              </div>
+            </div>
+            <button
+              className="arena-flask-btn"
+              disabled={!canFlask}
+              onClick={onUseLifeFlask}
+              title="Use Life Flask"
+              type="button"
+            >
+              Flask {flaskCharges}/{maxFlaskCharges}
+            </button>
+          </div>
+        </section>
+        <div className="arena-action-bar">
+          <button className="primary-button" onClick={() => void onManualSave()}>
+            Save progress
+          </button>
+          <button className="secondary-button" onClick={onBackToHub}>
+            Back to hub
           </button>
         </div>
-      </section>
-      <div className="arena-action-bar">
-        <button className="primary-button" onClick={() => void onManualSave()}>
-          Save progress
-        </button>
-        <button className="secondary-button" onClick={onBackToHub}>
-          Back to hub
-        </button>
       </div>
       <aside className="stack">
         <LootPanel recentLoot={recentLoot} />
