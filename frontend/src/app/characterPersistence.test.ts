@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createTestCharacter } from "../test/createTestCharacter";
 import {
   serializeCharacterForPersistence,
+  shouldHydrateSaveResponse,
   shouldAutosaveCharacter
 } from "./characterPersistence";
 
@@ -52,6 +53,37 @@ describe("characterPersistence", () => {
         latestCharacter: changedCharacter,
         lastPersistedSnapshot: serializeCharacterForPersistence(character),
         isSaveInFlight: false
+      })
+    ).toBe(true);
+  });
+
+  it("does not hydrate a save response after newer local progress exists", () => {
+    const character = createTestCharacter();
+    const staleSnapshot = serializeCharacterForPersistence(character);
+    const progressedCharacter = {
+      ...character,
+      mapProgress: {
+        ...character.mapProgress,
+        bossRetryUnlockedTiers: [1]
+      }
+    };
+
+    expect(
+      shouldHydrateSaveResponse({
+        latestCharacter: progressedCharacter,
+        requestedSnapshot: staleSnapshot
+      })
+    ).toBe(false);
+  });
+
+  it("hydrates a save response when local state still matches the saved request", () => {
+    const character = createTestCharacter();
+    const requestedSnapshot = serializeCharacterForPersistence(character);
+
+    expect(
+      shouldHydrateSaveResponse({
+        latestCharacter: character,
+        requestedSnapshot
       })
     ).toBe(true);
   });

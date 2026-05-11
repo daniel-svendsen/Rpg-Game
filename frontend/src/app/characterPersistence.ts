@@ -11,6 +11,22 @@ export interface AutosaveDecisionInput {
 export const serializeCharacterForPersistence = (character: CharacterRecord | null): string | null =>
   character ? JSON.stringify(character) : null;
 
+interface SaveResponseHydrationInput {
+  latestCharacter: CharacterRecord | null;
+  requestedSnapshot: string | null;
+}
+
+export const shouldHydrateSaveResponse = ({
+  latestCharacter,
+  requestedSnapshot
+}: SaveResponseHydrationInput): boolean => {
+  if (!requestedSnapshot) {
+    return false;
+  }
+
+  return serializeCharacterForPersistence(latestCharacter) === requestedSnapshot;
+};
+
 export const shouldAutosaveCharacter = ({
   token,
   isAutosaveEnabled,

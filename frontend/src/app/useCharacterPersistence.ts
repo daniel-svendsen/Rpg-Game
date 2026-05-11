@@ -3,6 +3,7 @@ import { saveCharacter } from "../api/gameApi";
 import { normalizeCharacterRecord } from "../game/domain/player/playerTypes";
 import type { CharacterRecord } from "../shared/types/saveTypes";
 import {
+  shouldHydrateSaveResponse,
   serializeCharacterForPersistence,
   shouldAutosaveCharacter
 } from "./characterPersistence";
@@ -43,6 +44,16 @@ export const useCharacterPersistence = ({
     setCharacter(savedCharacter);
   }, []);
 
+  const syncSuccessfulSave = useCallback((savedCharacter: CharacterRecord, requestedSnapshot: string | null): void => {
+    const savedSnapshot = serializeCharacterForPersistence(savedCharacter);
+    lastPersistedSnapshotRef.current = savedSnapshot;
+
+    if (shouldHydrateSaveResponse({ latestCharacter: latestCharacterRef.current, requestedSnapshot })) {
+      latestCharacterRef.current = savedCharacter;
+      setCharacter(savedCharacter);
+    }
+  }, []);
+
   const hydrateCharacter = useCallback(
     (nextCharacter: CharacterRecord | null): void => {
       syncSavedCharacter(nextCharacter);
@@ -57,13 +68,14 @@ export const useCharacterPersistence = ({
       }
 
       try {
+        const requestedSnapshot = serializeCharacterForPersistence(nextCharacter);
         const savedCharacter = normalizeCharacterRecord(await saveCharacter(nextCharacter, token));
-        syncSavedCharacter(savedCharacter);
+        syncSuccessfulSave(savedCharacter, requestedSnapshot);
       } catch {
         onAutosaveError(failureMessage);
       }
     },
-    [onAutosaveError, syncSavedCharacter, token]
+    [onAutosaveError, syncSuccessfulSave, token]
   );
 
   const saveCharacterManually = useCallback(async (nextCharacter: CharacterRecord): Promise<void> => {
@@ -71,9 +83,10 @@ export const useCharacterPersistence = ({
       return;
     }
 
+    const requestedSnapshot = serializeCharacterForPersistence(nextCharacter);
     const savedCharacter = normalizeCharacterRecord(await saveCharacter(nextCharacter, token));
-    syncSavedCharacter(savedCharacter);
-  }, [syncSavedCharacter, token]);
+    syncSuccessfulSave(savedCharacter, requestedSnapshot);
+  }, [syncSuccessfulSave, token]);
 
   useEffect(() => {
     if (token) {
@@ -109,11 +122,12 @@ export const useCharacterPersistence = ({
       }
 
       isAutosaveInFlightRef.current = true;
+      const requestedSnapshot = serializeCharacterForPersistence(latestCharacter);
 
       void saveCharacter(latestCharacter, token)
         .then((savedCharacter) => {
           const normalizedCharacter = normalizeCharacterRecord(savedCharacter);
-          syncSavedCharacter(normalizedCharacter);
+          syncSuccessfulSave(normalizedCharacter, requestedSnapshot);
         })
         .catch(() => {
           onAutosaveError("Autosave failed. Check that the backend is running.");
@@ -124,7 +138,7 @@ export const useCharacterPersistence = ({
     }, 10_000);
 
     return () => window.clearInterval(intervalId);
-  }, [character, isAutosaveEnabled, onAutosaveError, syncSavedCharacter, token]);
+  }, [character, isAutosaveEnabled, onAutosaveError, syncSuccessfulSave, token]);
 
   return {
     character,
