@@ -26,7 +26,11 @@
 - Prefer small, focused edits over broad refactors.
 - State important assumptions explicitly when they affect implementation or verification.
 - If requirements are ambiguous and the choice is risky, surface the tradeoff instead of deciding silently.
+- If something is unclear, stop and ask — do not silently pick an interpretation.
 - Prefer the simplest solution that satisfies the request; avoid speculative abstractions, configurability, or single-use indirection.
+- Do not improve, reformat, or refactor adjacent code that the task did not touch.
+- If you notice unrelated dead code or issues while working, mention them — do not delete or fix them unless asked.
+- Remove imports, variables, and functions that your own changes made unused. Do not remove pre-existing dead code unless explicitly asked.
 - Keep systems modular and easy to extend.
 - Prefer reusable systems over one-off logic.
 - Prefer centralized configuration over duplicated constants.
@@ -56,6 +60,7 @@
   - key risks or side effects
   - what should be tested
   - whether the work should be split into smaller steps
+- For multi-step tasks, define verifiable success criteria before starting: "add validation" → "write tests for invalid inputs, then make them pass". Weak criteria require constant clarification; strong criteria let you verify independently.
 - If completed work changes roadmap status, update the relevant `ROADMAP.md` checklist item(s) in the same pass when practical.
 - Do not mark roadmap checklist items complete unless the implementation is actually done and verified enough for the current scope.
 
