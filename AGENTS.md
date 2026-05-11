@@ -24,6 +24,9 @@
 - Always write code, comments, documentation, UI text, config names, and commit messages in English.
 - Change only what the task requires unless a closely related fix is necessary for correctness.
 - Prefer small, focused edits over broad refactors.
+- State important assumptions explicitly when they affect implementation or verification.
+- If requirements are ambiguous and the choice is risky, surface the tradeoff instead of deciding silently.
+- Prefer the simplest solution that satisfies the request; avoid speculative abstractions, configurability, or single-use indirection.
 - Keep systems modular and easy to extend.
 - Prefer reusable systems over one-off logic.
 - Prefer centralized configuration over duplicated constants.
@@ -73,6 +76,7 @@
 - After making changes, run relevant checks when practical and make a best effort to verify they pass.
 - After adding a feature, add or update relevant automated tests when practical.
 - After fixing a bug, prefer adding a regression test when practical.
+- Turn bug fixes and validation changes into concrete verification steps or tests when practical.
 - If tests are not added or updated when they would normally be expected, explain why.
 - Common checks for this repo:
   - frontend build
