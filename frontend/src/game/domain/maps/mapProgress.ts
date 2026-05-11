@@ -86,6 +86,9 @@ export const getOwnedMapStackBySignature = (
   return mapProgress.consumableMaps.find((entry) => getMapStackSignature(entry) === signature) ?? null;
 };
 
+export const getOwnedMapStackByMapId = (mapProgress: MapProgressState, mapId: string): OwnedMapStack | null =>
+  mapProgress.consumableMaps.find((entry) => entry.mapId === mapId && entry.quantity > 0) ?? null;
+
 const mergeMapStack = (consumableMaps: OwnedMapStack[], incoming: OwnedMapStack): OwnedMapStack[] => {
   const incomingSignature = getMapStackSignature(incoming);
   const existing = consumableMaps.find((entry) => getMapStackSignature(entry) === incomingSignature);

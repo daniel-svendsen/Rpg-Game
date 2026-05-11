@@ -15,9 +15,9 @@ import { getEquippedUniqueModifiers } from "../items/uniqueEffects";
 import {
   addOwnedMap,
   clearBossTier,
+  consumeOwnedMap,
+  getOwnedMapStackByMapId,
   isBossTierCleared,
-  isBossTierRetryUnlocked,
-  unlockBossRetry
 } from "../maps/mapProgress";
 import { resolveMapInstance, type ResolvedMapInstance } from "../maps/mapEnhancements";
 import { gainLifeFlaskCharges } from "../player/lifeFlask";
@@ -408,8 +408,7 @@ const createMonsterPacks = (
   }
 
   const bossCleared = isBossTierCleared(mapProgress, map.tier);
-  const bossRetryUnlocked = isBossTierRetryUnlocked(mapProgress, map.tier);
-  const guardianSpawnChance = bossCleared ? 0.05 : bossRetryUnlocked ? 0 : 0.1;
+  const guardianSpawnChance = bossCleared ? 0.05 : 0.1;
   const isEligibleForGuardian = !isBossMap && map.tier >= 1 && map.tier <= mapBalance.maxTier;
   if (isEligibleForGuardian && Math.random() < guardianSpawnChance) {
     const rareEnemies = enemies.filter((e) => e.rarity === "Rare");
@@ -585,27 +584,12 @@ const applyGroundLootPickup = (
   const isBossKey = payload.mapId.startsWith("bossTier");
   const mapName = isBossKey ? `Boss Key (Tier ${payload.tier})` : `Tier ${payload.tier} Map`;
 
-  if (isBossKey && !isBossTierCleared(character.mapProgress, payload.tier)) {
-    const nextCharacter = unlockBossRetry(character, payload.tier);
-
-    return {
-      character: nextCharacter,
-      lootEvent: {
-        id: `${entry.id}-picked`,
-        kind: "Map",
-        name: mapName,
-        details: [
-          "Boss challenge permanently unlocked until first kill.",
-          `Defeat this boss to unlock Tier ${Math.min(mapBalance.maxTier, payload.tier + 1)} maps.`
-        ],
-        isUpgrade: true
-      }
-    };
-  }
-
   const nextCharacter = addOwnedMap(character, payload.mapId, payload.tier);
   const details = isBossKey
-    ? ["Consumable boss key added to your map inventory"]
+    ? [
+        "Boss key added to your inventory.",
+        `Defeat this boss to unlock Tier ${Math.min(mapBalance.maxTier, payload.tier + 1)} maps.`
+      ]
     : ["Consumable map added to your map inventory"];
 
   return {
@@ -1239,6 +1223,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   if (justCompleted) {
     const isBossMap = state.mapId.startsWith("bossTier");
     const wasFirstBossClear = isBossMap && !isBossTierCleared(nextPlayer.mapProgress, mapTier);
+    const bossKeyStack = isBossMap ? getOwnedMapStackByMapId(nextPlayer.mapProgress, state.mapId) : null;
 
     nextPlayer = {
       ...nextPlayer,
@@ -1249,6 +1234,9 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
     };
 
     if (wasFirstBossClear) {
+      if (bossKeyStack) {
+        nextPlayer = consumeOwnedMap(nextPlayer, bossKeyStack.stackId);
+      }
       nextPlayer = clearBossTier(nextPlayer, mapTier, mapBalance.maxTier);
 
       if (mapTier < mapBalance.maxTier) {
@@ -1256,6 +1244,8 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
           nextPlayer = addOwnedMap(nextPlayer, `tier${mapTier + 1}Map`, mapTier + 1);
         }
       }
+    } else if (isBossMap && bossKeyStack) {
+      nextPlayer = consumeOwnedMap(nextPlayer, bossKeyStack.stackId);
     }
   }
 
@@ -1291,7 +1281,9 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
               : entry.payload.code
             : kind === "Spell"
               ? getSpellName(entry.payload.spellId)
-              : `Tier ${entry.payload.tier} Map`;
+              : entry.payload.mapId.startsWith("bossTier")
+                ? `Boss Key (Tier ${entry.payload.tier})`
+                : `Tier ${entry.payload.tier} Map`;
 
       return {
         id: entry.id,

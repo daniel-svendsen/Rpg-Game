@@ -18,6 +18,7 @@ import {
   toShopItemState,
   type ShopItemState
 } from "./appUiHelpers";
+import { resolveManualSaveCharacter } from "./characterPersistence";
 import { getPreferredMapSelection } from "./mapFlow";
 import { CharacterCreationScreen } from "./CharacterCreationScreen";
 import { useArenaSession } from "./useArenaSession";
@@ -333,12 +334,19 @@ export const App = () => {
   };
 
   const handleManualSave = async (): Promise<void> => {
-    if (!character) {
+    const characterToSave = resolveManualSaveCharacter({
+      screenMode,
+      character,
+      latestCharacter: latestCharacterRef.current,
+      arenaCharacter: arenaRuntimeRef.current?.snapshot.player ?? null
+    });
+
+    if (!characterToSave) {
       return;
     }
 
     try {
-      await saveCharacterManually(character);
+      await saveCharacterManually(characterToSave);
       setStatusMessage("Progress saved.");
       setErrorMessage(null);
     } catch (error) {

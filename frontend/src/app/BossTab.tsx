@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { mapBalance } from "../game/config/balance";
-import { isBossTierCleared, isBossTierRetryUnlocked } from "../game/domain/maps/mapProgress";
+import { isBossTierCleared } from "../game/domain/maps/mapProgress";
 import type { CharacterRecord } from "../shared/types/saveTypes";
 
 interface BossTabProps {
@@ -41,7 +41,7 @@ export const BossTab = ({ topBar, healthHud, character, onStartBossTier }: BossT
       <section className="panel stack">
         <h4>Bosses</h4>
         <p className="status-text">
-          Each tier boss unlocks the next tier of maps on first kill. Your first key unlocks permanent retries until you win.
+          Each tier boss requires a boss key. If you fail, leave, or refresh mid-run, the key stays with you until the boss is cleared.
         </p>
         <p className="status-text">
           Next unlock target: Tier {nextTier} boss.
@@ -50,16 +50,15 @@ export const BossTab = ({ topBar, healthHud, character, onStartBossTier }: BossT
         {Array.from({ length: mapBalance.maxTier }, (_, index) => index + 1).map((tier) => {
           const keyCount = bossKeysByTier[tier] ?? 0;
           const isCleared = character ? isBossTierCleared(character.mapProgress, tier) : false;
-          const hasRetryUnlock = character ? isBossTierRetryUnlocked(character.mapProgress, tier) : false;
           const isAvailable = highestUnlockedTier >= tier;
-          const canChallenge = isAvailable && (hasRetryUnlock || keyCount > 0);
+          const canChallenge = isAvailable && keyCount > 0;
           const availabilityLabel = !isAvailable
             ? "Not available yet"
             : isCleared
               ? "Cleared"
-              : hasRetryUnlock
-                ? "Retry unlocked"
-                : "Need first key";
+              : keyCount > 0
+                ? "Ready"
+                : "Need key";
 
           return (
             <div key={`boss-${tier}`} className="map-card">

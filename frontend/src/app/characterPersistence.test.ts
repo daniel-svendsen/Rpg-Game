@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createTestCharacter } from "../test/createTestCharacter";
 import {
+  resolveManualSaveCharacter,
   serializeCharacterForPersistence,
   shouldHydrateSaveResponse,
   shouldAutosaveCharacter
@@ -86,5 +87,46 @@ describe("characterPersistence", () => {
         requestedSnapshot
       })
     ).toBe(true);
+  });
+
+  it("prefers the live arena character for manual saves during combat", () => {
+    const appCharacter = createTestCharacter();
+    const syncedCharacter = {
+      ...appCharacter,
+      gold: appCharacter.gold + 10
+    };
+    const arenaCharacter = {
+      ...syncedCharacter,
+      mapProgress: {
+        ...syncedCharacter.mapProgress,
+        bossRetryUnlockedTiers: [1]
+      }
+    };
+
+    expect(
+      resolveManualSaveCharacter({
+        screenMode: "arena",
+        character: appCharacter,
+        latestCharacter: syncedCharacter,
+        arenaCharacter
+      })
+    ).toBe(arenaCharacter);
+  });
+
+  it("falls back to the latest synced character outside the arena", () => {
+    const appCharacter = createTestCharacter();
+    const latestCharacter = {
+      ...appCharacter,
+      gold: appCharacter.gold + 25
+    };
+
+    expect(
+      resolveManualSaveCharacter({
+        screenMode: "hub",
+        character: appCharacter,
+        latestCharacter,
+        arenaCharacter: null
+      })
+    ).toBe(latestCharacter);
   });
 });

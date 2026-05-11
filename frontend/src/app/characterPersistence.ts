@@ -1,4 +1,5 @@
 import type { CharacterRecord } from "../shared/types/saveTypes";
+import type { ScreenMode } from "./appTypes";
 
 export interface AutosaveDecisionInput {
   token: string | null;
@@ -25,6 +26,26 @@ export const shouldHydrateSaveResponse = ({
   }
 
   return serializeCharacterForPersistence(latestCharacter) === requestedSnapshot;
+};
+
+interface ManualSaveCharacterInput {
+  screenMode: ScreenMode;
+  character: CharacterRecord | null;
+  latestCharacter: CharacterRecord | null;
+  arenaCharacter: CharacterRecord | null;
+}
+
+export const resolveManualSaveCharacter = ({
+  screenMode,
+  character,
+  latestCharacter,
+  arenaCharacter
+}: ManualSaveCharacterInput): CharacterRecord | null => {
+  if (screenMode === "arena") {
+    return arenaCharacter ?? latestCharacter ?? character;
+  }
+
+  return latestCharacter ?? character;
 };
 
 export const shouldAutosaveCharacter = ({

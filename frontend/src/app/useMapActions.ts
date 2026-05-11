@@ -5,9 +5,8 @@ import { mapConfig } from "../game/config/mapConfig";
 import {
   addOwnedMap,
   consumeOwnedMap,
-  isBossTierCleared,
-  isBossTierRetryUnlocked,
   getOwnedMapStack,
+  getOwnedMapStackByMapId,
   getOwnedMapStackBySignature
 } from "../game/domain/maps/mapProgress";
 import { getMapEnhancementSummary, rollMapEnhancement } from "../game/domain/maps/mapEnhancements";
@@ -82,12 +81,8 @@ export const useMapActions = ({
 
     if (mapTarget !== "trainingGrounds") {
       if (!ownedMapStack || ownedMapStack.quantity <= 0) {
-        if (isBossMap && mapConfig[mapTarget]) {
-          // Boss retries before first clear do not consume a stored key.
-        } else {
-          setErrorMessage("You do not own that map.");
-          return false;
-        }
+        setErrorMessage("You do not own that map.");
+        return false;
       }
 
       const unlockedTier = nextCharacter.mapProgress.highestUnlockedTier;
@@ -158,20 +153,11 @@ export const useMapActions = ({
     }
 
     const bossMapId = `bossTier${tier}`;
-    const bossCleared = isBossTierCleared(character.mapProgress, tier);
-    const bossRetryUnlocked = isBossTierRetryUnlocked(character.mapProgress, tier);
-    const bossKeyEntry =
-      character.mapProgress.consumableMaps.find((entry) => entry.mapId === bossMapId && entry.quantity > 0) ??
-      null;
+    const bossKeyEntry = getOwnedMapStackByMapId(character.mapProgress, bossMapId);
     const unlockedTier = character.mapProgress.highestUnlockedTier;
 
     if (tier > unlockedTier) {
       setErrorMessage(`That boss lair is locked. Unlock Tier ${tier} maps first.`);
-      return;
-    }
-
-    if (!bossCleared && bossRetryUnlocked) {
-      startMapRun(bossMapId, character);
       return;
     }
 
