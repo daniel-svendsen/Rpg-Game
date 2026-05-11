@@ -412,6 +412,8 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 - [x] Centralize item rarity colors so equipped gear, inventory, loot, shop, and item cards use the same visual rules.
 - [x] Remove misleading unique flavor text from item cards when no gameplay effect exists; show concrete stats only.
 - [x] Make `Normal` items roll zero affixes so rarity lines up with item complexity (`Magic` = 1–2, `Rare` = 3+).
+- [ ] Rework key unique items so their effects are directly visible or clearly felt in combat, not only reflected in UI stats or hidden math.
+- [ ] Keep unique item descriptions, shared domain logic, simulator behavior, and runtime combat behavior aligned.
 - [ ] Add more varied map backgrounds driven by config, with room for tier-specific and random variants.
 
 ### Longer-term chase systems

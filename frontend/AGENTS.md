@@ -66,6 +66,15 @@ Avoid:
 - baking Phaser-only implementation details into domain logic
 - introducing visual metadata that is so specific it limits future iteration
 
+## Unique Item Behavior
+
+- When adding or reworking unique items, prefer effects that are directly visible or clearly felt in combat.
+- Unique items should not rely only on tooltip text, stat-sheet value, or hidden background math to feel meaningful.
+- If a unique grants extra chains, extra projectiles, larger area, movement changes, reactive defense, on-kill effects, or similar combat behavior, that effect should be implemented in shared domain logic so it is observable during gameplay.
+- Keep unique descriptions, simulator behavior, and runtime combat behavior aligned.
+- Prefer unique effects that change gameplay behavior over uniques that are only stronger rare-style stat bundles.
+- Use hidden or economy-facing effects such as loot luck, drop weighting, or subtle conditional multipliers sparingly unless they also have clear player-facing feedback.
+
 ## Product Priorities
 
 - `Training Grounds` is rerunnable forever.

@@ -61,15 +61,42 @@ export const resolveSpell = (
     critChance += support.apply.criticalChanceBonus ?? 0;
   });
 
+  cooldownMs = Math.round(cooldownMs / equippedUniqueModifiers.castSpeedMultiplierForSpells);
+
+  if (baseSpell.tags.includes("Fire")) {
+    cooldownMs = Math.round(cooldownMs / equippedUniqueModifiers.castSpeedMultiplierForFireSpells);
+  }
+
+  if (baseSpell.tags.includes("Cold")) {
+    cooldownMs = Math.round(cooldownMs / equippedUniqueModifiers.castSpeedMultiplierForColdSpells);
+  }
+
+  if (baseSpell.tags.includes("Lightning")) {
+    cooldownMs = Math.round(cooldownMs / equippedUniqueModifiers.castSpeedMultiplierForLightningSpells);
+  }
+
   damageMultiplier *= 1 + equippedUniqueModifiers.moreDamageForSpells;
 
   if (baseSpell.tags.includes("Chain")) {
     chainCount += equippedUniqueModifiers.bonusChainsForChainSpells;
     chainRange += equippedUniqueModifiers.bonusChainRangeForChainSpells;
+
+    if (baseSpell.tags.includes("Lightning")) {
+      chainCount += equippedUniqueModifiers.bonusChainsForLightningSpells;
+      chainRange += equippedUniqueModifiers.bonusChainRangeForLightningSpells;
+    }
   }
 
   if (baseSpell.tags.includes("Area")) {
     areaRadius += equippedUniqueModifiers.bonusAreaRadiusForAreaSpells;
+
+    if (baseSpell.tags.includes("Fire")) {
+      areaRadius += equippedUniqueModifiers.bonusAreaRadiusForFireSpells;
+    }
+
+    if (baseSpell.tags.includes("Cold")) {
+      areaRadius += equippedUniqueModifiers.bonusAreaRadiusForColdSpells;
+    }
   }
 
   if (baseSpell.tags.includes("Area") || baseSpell.tags.includes("Fire")) {
@@ -78,6 +105,11 @@ export const resolveSpell = (
 
   if (baseSpell.tags.includes("Projectile")) {
     projectileCount += equippedUniqueModifiers.bonusProjectilesForProjectileSpells;
+
+    if (baseSpell.tags.includes("Lightning")) {
+      projectileCount += equippedUniqueModifiers.bonusProjectilesForLightningSpells;
+    }
+
     damageMultiplier *= Math.max(0.1, 1 - equippedUniqueModifiers.lessDamageForProjectileSpells);
   }
 

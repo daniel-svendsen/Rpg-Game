@@ -213,6 +213,8 @@ export const itemBalance = {
       dropWeight: 0,
       uniqueTier: 3,
       tags: ["Critical", "SpellDamage", "Unique"],
+      uniqueEffectId: "crownOfAscension",
+      uniqueEffectDescription: "Projectile spells fire +1 projectile and all spells cast 15% faster.",
       statBonuses: {
         agility: 8,
         vitality: 8,
@@ -260,6 +262,8 @@ export const itemBalance = {
       dropWeight: 0,
       uniqueTier: 3,
       tags: ["Fire", "Critical", "SpellDamage", "Unique"],
+      uniqueEffectId: "pyrelordCrown",
+      uniqueEffectDescription: "Fire area spells gain +26 radius and cast 18% faster.",
       statBonuses: {
         strength: 8,
         vitality: 9,
@@ -309,6 +313,8 @@ export const itemBalance = {
       dropWeight: 0,
       uniqueTier: 3,
       tags: ["Cold", "Critical", "SpellDamage", "Unique"],
+      uniqueEffectId: "winterwakeDiadem",
+      uniqueEffectDescription: "Cold area spells gain +30 radius and cast 18% faster.",
       statBonuses: {
         vitality: 10,
         armor: 26,
@@ -326,6 +332,8 @@ export const itemBalance = {
       dropWeight: 0,
       uniqueTier: 1,
       tags: ["Lightning", "Critical", "Unique"],
+      uniqueEffectId: "stormfangRing",
+      uniqueEffectDescription: "Lightning chain spells gain +1 chain and +60 chain range.",
       statBonuses: {
         dexterity: 10,
         lightningResistance: 0.2,
@@ -356,6 +364,8 @@ export const itemBalance = {
       dropWeight: 0,
       uniqueTier: 3,
       tags: ["Lightning", "Critical", "SpellDamage", "Unique"],
+      uniqueEffectId: "tempestHelm",
+      uniqueEffectDescription: "Lightning projectile spells fire +1 projectile and lightning spells cast 15% faster.",
       statBonuses: {
         dexterity: 10,
         vitality: 10,

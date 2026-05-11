@@ -60,6 +60,14 @@ Even at small scope, runs should gradually move away from "tiny arena bursts" an
 - making progression decisions between runs
 - pursuing rarer rewards over time
 
+## Unique Item Identity
+
+Unique items should create a noticeable gameplay identity, not just stronger stat packages.
+
+When a player equips a unique item, the effect should be visible or clearly felt in real gameplay. A strong unique should change how combat looks, how a spell behaves, how a run flows, or how the player survives and clears packs. Extra chains, extra projectiles, larger area, movement changes, reactive defense, on-kill effects, and other combat-facing behavior are preferred over effects that exist only as passive hidden math.
+
+As a rule, if a unique says it changes combat behavior, that change should be implemented in shared gameplay logic and be observable in actual battle. Tooltip text, domain logic, simulator behavior, and runtime combat results should stay aligned.
+
 ## Longer-Term Directions
 
 Some ideas are intentionally being explored without locking them into immediate implementation:
@@ -81,4 +89,3 @@ This project is also meant to demonstrate:
 - save/persistence awareness
 - simulator-first balance iteration
 - thoughtful scoping instead of uncontrolled feature sprawl
-

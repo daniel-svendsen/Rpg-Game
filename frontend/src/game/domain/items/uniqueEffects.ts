@@ -1,13 +1,22 @@
 import type { CharacterRecord, InventoryItem } from "../../../shared/types/saveTypes";
 
 export interface EquippedUniqueModifiers {
+  castSpeedMultiplierForSpells: number;
+  castSpeedMultiplierForFireSpells: number;
+  castSpeedMultiplierForColdSpells: number;
+  castSpeedMultiplierForLightningSpells: number;
   bonusChainsForChainSpells: number;
   bonusChainRangeForChainSpells: number;
+  bonusChainsForLightningSpells: number;
+  bonusChainRangeForLightningSpells: number;
   bonusAreaRadiusForAreaSpells: number;
+  bonusAreaRadiusForFireSpells: number;
+  bonusAreaRadiusForColdSpells: number;
   moreDamageForAreaAndFireSpells: number;
   moreDamageForSpells: number;
   bonusCritChanceForSpells: number;
   bonusProjectilesForProjectileSpells: number;
+  bonusProjectilesForLightningSpells: number;
   lessDamageForProjectileSpells: number;
   resistancePenetrationForFireSpells: number;
   spellDropChanceMultiplier: number;
@@ -19,13 +28,22 @@ export interface EquippedUniqueModifiers {
 }
 
 const defaultUniqueModifiers: EquippedUniqueModifiers = {
+  castSpeedMultiplierForSpells: 1,
+  castSpeedMultiplierForFireSpells: 1,
+  castSpeedMultiplierForColdSpells: 1,
+  castSpeedMultiplierForLightningSpells: 1,
   bonusChainsForChainSpells: 0,
   bonusChainRangeForChainSpells: 0,
+  bonusChainsForLightningSpells: 0,
+  bonusChainRangeForLightningSpells: 0,
   bonusAreaRadiusForAreaSpells: 0,
+  bonusAreaRadiusForFireSpells: 0,
+  bonusAreaRadiusForColdSpells: 0,
   moreDamageForAreaAndFireSpells: 0,
   moreDamageForSpells: 0,
   bonusCritChanceForSpells: 0,
   bonusProjectilesForProjectileSpells: 0,
+  bonusProjectilesForLightningSpells: 0,
   lessDamageForProjectileSpells: 0,
   resistancePenetrationForFireSpells: 0,
   spellDropChanceMultiplier: 1,
@@ -90,6 +108,36 @@ const applyUniqueEffect = (
         ...modifiers,
         moreDamageForSpells: modifiers.moreDamageForSpells + 0.18,
         bonusCritChanceForSpells: modifiers.bonusCritChanceForSpells + 0.06
+      };
+    case "crownOfAscension":
+      return {
+        ...modifiers,
+        castSpeedMultiplierForSpells: modifiers.castSpeedMultiplierForSpells * 1.15,
+        bonusProjectilesForProjectileSpells: modifiers.bonusProjectilesForProjectileSpells + 1
+      };
+    case "pyrelordCrown":
+      return {
+        ...modifiers,
+        castSpeedMultiplierForFireSpells: modifiers.castSpeedMultiplierForFireSpells * 1.18,
+        bonusAreaRadiusForFireSpells: modifiers.bonusAreaRadiusForFireSpells + 26
+      };
+    case "winterwakeDiadem":
+      return {
+        ...modifiers,
+        castSpeedMultiplierForColdSpells: modifiers.castSpeedMultiplierForColdSpells * 1.18,
+        bonusAreaRadiusForColdSpells: modifiers.bonusAreaRadiusForColdSpells + 30
+      };
+    case "stormfangRing":
+      return {
+        ...modifiers,
+        bonusChainsForLightningSpells: modifiers.bonusChainsForLightningSpells + 1,
+        bonusChainRangeForLightningSpells: modifiers.bonusChainRangeForLightningSpells + 60
+      };
+    case "tempestHelm":
+      return {
+        ...modifiers,
+        castSpeedMultiplierForLightningSpells: modifiers.castSpeedMultiplierForLightningSpells * 1.15,
+        bonusProjectilesForLightningSpells: modifiers.bonusProjectilesForLightningSpells + 1
       };
     default:
       return modifiers;
