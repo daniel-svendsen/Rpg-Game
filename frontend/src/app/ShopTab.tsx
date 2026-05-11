@@ -116,6 +116,9 @@ export const ShopTab = ({
                 <span className="stat-value">{entry.formattedValue}</span>
               </div>
             ))}
+            {item.uniqueEffectDescription ? (
+              <div className="unique-effect-line">{item.uniqueEffectDescription}</div>
+            ) : null}
             {powerChange !== null && powerChange > 0 ? (
               <div className="upgrade-text">Possible upgrade</div>
             ) : null}

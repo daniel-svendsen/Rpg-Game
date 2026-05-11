@@ -401,6 +401,13 @@ button {
     0 10px 30px rgba(124, 45, 18, 0.22);
 }
 
+.unique-effect-line {
+  color: #ffb172;
+  font-size: 0.9rem;
+  font-style: italic;
+  margin-top: 4px;
+}
+
 .upgrade-text {
   color: #b6f7a0;
   font-size: 0.92rem;

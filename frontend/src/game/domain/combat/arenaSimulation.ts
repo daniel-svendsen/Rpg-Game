@@ -1119,7 +1119,8 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
 
         const didCrit = Math.random() < resolvedSpell.critChance;
         if (didCrit) telemetry = { ...telemetry, critsLanded: telemetry.critsLanded + 1 };
-        const baseDamage = didCrit ? Math.round(resolvedSpell.damage * nextPlayer.derivedStats.critMultiplier) : resolvedSpell.damage;
+        const effectiveCritMultiplier = nextPlayer.derivedStats.critMultiplier + getEquippedUniqueModifiers(nextPlayer).bonusCritMultiplierForSpells;
+        const baseDamage = didCrit ? Math.round(resolvedSpell.damage * effectiveCritMultiplier) : resolvedSpell.damage;
         const relevantResistances = (["Fire", "Cold", "Lightning"] as const)
           .filter((type) => resolvedSpell.tags.includes(type))
           .map((type) => clampEnemyResistance(enemy.resistances[type] - resolvedSpell.resistancePenetration[type]));

@@ -61,6 +61,9 @@ export const InventoryTab = ({
               <span className="stat-value">{entry.formattedValue}</span>
             </div>
           ))}
+          {item.uniqueEffectDescription ? (
+            <div className="unique-effect-line">{item.uniqueEffectDescription}</div>
+          ) : null}
           <div className="actions">
             {item.slot ? (
               <button

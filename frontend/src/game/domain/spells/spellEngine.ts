@@ -128,9 +128,9 @@ export const resolveSpell = (
     areaRadius,
     critChance,
     resistancePenetration: {
-      Fire: baseSpell.tags.includes("Fire") ? equippedUniqueModifiers.resistancePenetrationForFireSpells : 0,
-      Cold: 0,
-      Lightning: 0
+      Fire: (baseSpell.tags.includes("Fire") ? equippedUniqueModifiers.resistancePenetrationForFireSpells : 0) + equippedUniqueModifiers.resistancePenetrationForAllSpells,
+      Cold: equippedUniqueModifiers.resistancePenetrationForAllSpells,
+      Lightning: equippedUniqueModifiers.resistancePenetrationForAllSpells
     }
   };
 };

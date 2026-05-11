@@ -91,6 +91,9 @@ export const HubOverlayPanel = ({
                   <span className="stat-value">{entry.formattedValue}</span>
                 </div>
               ))}
+              {item.uniqueEffectDescription ? (
+                <div className="unique-effect-line">{item.uniqueEffectDescription}</div>
+              ) : null}
               <button className="primary-button" onClick={() => onEquipItem(item.id, selectedEquipmentSlot)}>
                 Equip
               </button>

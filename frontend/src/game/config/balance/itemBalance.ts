@@ -415,6 +415,8 @@ export const itemBalance = {
       dropWeight: 0,
       uniqueTier: 3,
       tags: ["Physical", "Critical", "Unique"],
+      uniqueEffectId: "titansCommand",
+      uniqueEffectDescription: "Spells gain +50% crit multiplier.",
       statBonuses: {
         strength: 14,
         vitality: 12,
@@ -463,6 +465,8 @@ export const itemBalance = {
       dropWeight: 0,
       uniqueTier: 3,
       tags: ["Critical", "SpellDamage", "Unique"],
+      uniqueEffectId: "voidmantleHood",
+      uniqueEffectDescription: "All elemental spells penetrate 15% of resistances.",
       statBonuses: {
         agility: 12,
         vitality: 12,
@@ -514,6 +518,8 @@ export const itemBalance = {
       dropWeight: 0,
       uniqueTier: 3,
       tags: ["Critical", "SpellDamage", "Unique"],
+      uniqueEffectId: "kingsfallCrown",
+      uniqueEffectDescription: "Chain spells gain +2 chains, area spells gain +20 radius, and projectile spells fire +1 extra.",
       statBonuses: {
         strength: 10,
         agility: 10,
@@ -566,6 +572,8 @@ export const itemBalance = {
       dropWeight: 0,
       uniqueTier: 3,
       tags: ["Critical", "SpellDamage", "Fire", "Lightning", "Cold", "Unique"],
+      uniqueEffectId: "cataclysmHelm",
+      uniqueEffectDescription: "All spells deal 25% more damage. Area spells gain +25 radius.",
       statBonuses: {
         strength: 12,
         agility: 12,
@@ -627,6 +635,8 @@ export const itemBalance = {
       dropWeight: 0,
       uniqueTier: 3,
       tags: ["Critical", "SpellDamage", "Fire", "Lightning", "Cold", "Unique"],
+      uniqueEffectId: "eternityCrown",
+      uniqueEffectDescription: "All spells deal 30% more damage, gain +15% crit chance, and penetrate 20% of elemental resistances.",
       statBonuses: {
         strength: 14,
         agility: 14,

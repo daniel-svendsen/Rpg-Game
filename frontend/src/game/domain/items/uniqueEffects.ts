@@ -25,6 +25,8 @@ export interface EquippedUniqueModifiers {
   extraLifeFlaskChargesOnKill: number;
   enemyContactDamageTakenMultiplier: number;
   maxHealthMultiplier: number;
+  bonusCritMultiplierForSpells: number;
+  resistancePenetrationForAllSpells: number;
 }
 
 const defaultUniqueModifiers: EquippedUniqueModifiers = {
@@ -52,7 +54,9 @@ const defaultUniqueModifiers: EquippedUniqueModifiers = {
   mapShardDropMultiplier: 1,
   extraLifeFlaskChargesOnKill: 0,
   enemyContactDamageTakenMultiplier: 1,
-  maxHealthMultiplier: 1
+  maxHealthMultiplier: 1,
+  bonusCritMultiplierForSpells: 0,
+  resistancePenetrationForAllSpells: 0
 };
 
 const applyUniqueEffect = (
@@ -138,6 +142,36 @@ const applyUniqueEffect = (
         ...modifiers,
         castSpeedMultiplierForLightningSpells: modifiers.castSpeedMultiplierForLightningSpells * 1.15,
         bonusProjectilesForLightningSpells: modifiers.bonusProjectilesForLightningSpells + 1
+      };
+    case "titansCommand":
+      return {
+        ...modifiers,
+        bonusCritMultiplierForSpells: modifiers.bonusCritMultiplierForSpells + 0.5
+      };
+    case "voidmantleHood":
+      return {
+        ...modifiers,
+        resistancePenetrationForAllSpells: modifiers.resistancePenetrationForAllSpells + 0.15
+      };
+    case "kingsfallCrown":
+      return {
+        ...modifiers,
+        bonusChainsForChainSpells: modifiers.bonusChainsForChainSpells + 2,
+        bonusAreaRadiusForAreaSpells: modifiers.bonusAreaRadiusForAreaSpells + 20,
+        bonusProjectilesForProjectileSpells: modifiers.bonusProjectilesForProjectileSpells + 1
+      };
+    case "cataclysmHelm":
+      return {
+        ...modifiers,
+        moreDamageForSpells: modifiers.moreDamageForSpells + 0.25,
+        bonusAreaRadiusForAreaSpells: modifiers.bonusAreaRadiusForAreaSpells + 25
+      };
+    case "eternityCrown":
+      return {
+        ...modifiers,
+        moreDamageForSpells: modifiers.moreDamageForSpells + 0.30,
+        bonusCritChanceForSpells: modifiers.bonusCritChanceForSpells + 0.15,
+        resistancePenetrationForAllSpells: modifiers.resistancePenetrationForAllSpells + 0.20
       };
     default:
       return modifiers;
