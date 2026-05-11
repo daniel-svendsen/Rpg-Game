@@ -146,7 +146,6 @@ export interface MapProgressState {
   highestUnlockedTier: number;
   lastCompletedTier: number;
   consumableMaps: OwnedMapStack[];
-  bossRetryUnlockedTiers?: number[];
   clearedBossTiers?: number[];
 }
 

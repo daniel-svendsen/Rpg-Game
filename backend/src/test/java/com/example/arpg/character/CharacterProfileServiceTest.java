@@ -68,7 +68,7 @@ class CharacterProfileServiceTest {
                 List.of(new SpellProgressRequest("stormChain", 3)),
                 List.of(new SpellLinkRequest("stormChain", List.of("fasterCasting"))),
                 List.of(new CurrencyStackRequest("mapShard", 4)),
-                new MapProgressRequest(2, 1, List.of(), List.of(), List.of())
+                new MapProgressRequest(2, 1, List.of(), List.of())
         );
 
         when(characterProfileRepository.findById(42L)).thenReturn(Optional.of(entity));
@@ -139,7 +139,7 @@ class CharacterProfileServiceTest {
                 List.of(new SpellProgressRequest("stormChain", 2)),
                 List.of(new SpellLinkRequest("stormChain", List.of("fasterCasting"))),
                 List.of(),
-                new MapProgressRequest(1, 1, List.of(), List.of(), List.of())
+                new MapProgressRequest(1, 1, List.of(), List.of())
         );
 
         when(characterProfileRepository.findById(7L)).thenReturn(Optional.of(entity));
@@ -297,7 +297,6 @@ class CharacterProfileServiceTest {
                                 2,
                                 List.of(new MapEnhancementRequest("overflowingSpoils"))
                         )),
-                        List.of(2),
                         List.of(1)
                 )
         );
@@ -356,7 +355,6 @@ class CharacterProfileServiceTest {
                         2,
                         List.of(new MapEnhancementData("overflowingSpoils"))
                 )),
-                List.of(2),
                 List.of(1)
         ));
     }

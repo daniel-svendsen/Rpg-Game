@@ -65,7 +65,7 @@ describe("characterPersistence", () => {
       ...character,
       mapProgress: {
         ...character.mapProgress,
-        bossRetryUnlockedTiers: [1]
+        clearedBossTiers: [1]
       }
     };
 
@@ -99,7 +99,7 @@ describe("characterPersistence", () => {
       ...syncedCharacter,
       mapProgress: {
         ...syncedCharacter.mapProgress,
-        bossRetryUnlockedTiers: [1]
+        clearedBossTiers: [1]
       }
     };
 

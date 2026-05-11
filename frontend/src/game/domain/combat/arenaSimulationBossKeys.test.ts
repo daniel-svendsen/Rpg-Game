@@ -17,7 +17,6 @@ describe("arenaSimulation boss keys", () => {
             enhancements: []
           }
         ],
-        bossRetryUnlockedTiers: [],
         clearedBossTiers: []
       }
     });
@@ -43,7 +42,6 @@ describe("arenaSimulation boss keys", () => {
             enhancements: []
           }
         ],
-        bossRetryUnlockedTiers: [],
         clearedBossTiers: []
       }
     });
@@ -81,7 +79,6 @@ describe("arenaSimulation boss keys", () => {
             enhancements: []
           }
         ],
-        bossRetryUnlockedTiers: [],
         clearedBossTiers: [1]
       }
     });

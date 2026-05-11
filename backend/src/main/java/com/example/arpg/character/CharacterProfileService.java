@@ -70,7 +70,7 @@ public class CharacterProfileService {
         ));
         character.setSpellLoadout(List.of(new SpellLoadoutEntry("stormChain", List.of())));
         character.setCurrencies(List.of());
-        character.setMapProgress(new MapProgressData(1, 0, List.of(), List.of(), List.of()));
+        character.setMapProgress(new MapProgressData(1, 0, List.of(), List.of()));
 
         return toResponse(characterProfileRepository.save(character));
     }
@@ -133,7 +133,6 @@ public class CharacterProfileService {
                 request.mapProgress().highestUnlockedTier(),
                 request.mapProgress().lastCompletedTier(),
                 consumableMaps,
-                List.copyOf(request.mapProgress().bossRetryUnlockedTiers()),
                 List.copyOf(request.mapProgress().clearedBossTiers())
         ));
         character.setUpdatedAt(Instant.now());

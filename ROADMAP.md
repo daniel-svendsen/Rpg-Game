@@ -221,7 +221,7 @@ Simulator reporting (minimum):
 
 Goal:
 
-- move from â€œloot directly into inventoryâ€ to ground loot with world position, validated by domain rules
+- move from "loot directly into inventory" to ground loot with world position, validated by domain rules
 
 Acceptance targets:
 
@@ -247,14 +247,14 @@ Acceptance targets:
 - item stats are generated from slot-based stat pools (boots/weapon/armor/etc)
 - not all stats exist on all items; items roll a limited set based on rarity
 - some item bases influence what can roll (e.g. armor base can roll armor OR evasion focus)
-- weapons can roll cast/attack speed in a range (example: `1.0`â€“`1.5` multiplier)
+- weapons can roll cast/attack speed in a range (example: `1.0`-`1.5` multiplier)
 - rarity influences number of stats and roll quality
 - unique items keep fixed stats/effects
 
 Tiering + roll ranges:
 
 - each stat tier has an explicit numeric range, and a roll is sampled inside that range
-- ranges should have meaningful separation (example: Tier 1 = `1`â€“`10`, Tier 2 = `11`â€“`15`, etc)
+- ranges should have meaningful separation (example: Tier 1 = `1`-`10`, Tier 2 = `11`-`15`, etc)
 - tier ranges and weights are config-driven and overrideable
 
 Simulator reporting (minimum):
@@ -423,14 +423,14 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 
 ## Phase 2 Scope Extensions Status Snapshot
 
-These scope extensions are still part of `Phase 2`, but many have moved from â€œplannedâ€ to â€œimplemented (first pass)â€. The goal remains simulator-first correctness, not polish.
+These scope extensions are still part of `Phase 2`, but many have moved from "planned" to "implemented (first pass)". The goal remains simulator-first correctness, not polish.
 
 Implemented (first pass):
 
 - Elemental enemies now exist: `Cinder Grub` (Fire, tier 2+), `Frost Sprite` (Cold, tier 3+), `Storm Hound` (Lightning, tier 4+), `Blaze Warden` (Rare, Fire, tier 3+). Monster selection randomizes across eligible types per tier and rarity so maps gradually introduce elemental variety.
-- Boss difficulty tuned per tier so bosses function as a real progression gate (~50â€“55% completion for a well-geared benchmark character at T3â€“9). Normal map farming targets ~80â€“90% completion at T1â€“4 and T7â€“9.
+- Boss difficulty tuned per tier so bosses function as a real progression gate (~50-55% completion for a well-geared benchmark character at T3-9). Normal map farming targets ~80-90% completion at T1-4 and T7-9.
 - Benchmark profiles (`sim-profiles/benchmark-tier1` through `benchmark-tier9`) redesigned to reflect realistic player progression: 2 support spells per spell slot, a second spell loadout slot from tier 5, and tier-scaled equipment (weapon, boots, body armor, helmet, gloves, amulet, ring, belt) with meaningful resistance and HP growth. Benchmark profiles are gitignored and regenerated locally via `npm run sim:bench`.
-- A full tier 1â€“9 balance pass (normal maps + bosses) was completed using the simulator as the primary decision tool, with documented outcomes informing boss multiplier and gear scaling decisions.
+- A full tier 1-9 balance pass (normal maps + bosses) was completed using the simulator as the primary decision tool, with documented outcomes informing boss multiplier and gear scaling decisions.
 - Movement speed is a derived stat and affects runtime + simulation movement.
 - Auto-move targets the nearest living pack, walks straight-line toward pack center, stops in combat range, and continues to the next pack.
 - Packs spawn with a stable pack id + pack center, basic spacing from player and other packs, and an initial rare chance per pack.
@@ -443,7 +443,7 @@ Implemented (first pass):
   - rarity controls affix count with `max 3 prefixes` + `max 3 suffixes`
   - base items provide inherent armor/evasion (defense bases) and inherent weapon speed multipliers (weapon bases), gated by map tier
 - Boss key guardian mechanic: at map creation a single rare is designated the "key guardian" (10% chance before first clear of that tier boss, 5% afterward). When that specific enemy is killed it always drops a key — no roll. Replaces the old first-rare-kill 10%/5% roll model.
-- Boss lairs now exist as challengeable tier bosses with permanent retry unlock after your first key discovery, first-clear unlock gating for the next map tier, three guaranteed next-tier starter maps on first clear, and tier-specific boss unique pools.
+- Boss lairs now exist as challengeable tier bosses whose keys drop as real consumable map items, remain in inventory until a successful boss kill, gate next-tier progression on first clear, award three guaranteed next-tier starter maps on first clear, and use tier-specific boss unique pools.
 - Simulator reporting includes item roll distributions (tier buckets), movement-speed affix visibility, boss key gain rate, imbuing orb output, and clearer map-sustain stall signals.
 
 Implemented (continued):
@@ -468,7 +468,7 @@ Implemented (continued):
   - All monsters now render with real 0x72 DungeonTileset II idle sprite animations, each mapped to a named spriteName in `frontend/src/game/phaser/spriteConfig.ts`.
   - Phaser now also supports custom horizontal spritesheets via `assetPath`, piloted with a cleaned `Scrap Crawler` sheet in `frontend/public/assets/monstersprites/`.
   - Player character renders as an animated wizard sprite (wizzard_m) with camera follow.
-  - Spell effects use the Gizmo Effect pack spritesheet (32Ã—32): fire, electric, and ice animations routed per spell tags.
+  - Spell effects use the Gizmo Effect pack spritesheet (32x32): fire, electric, and ice animations routed per spell tags.
   - Three visual animation types: `animateLightningChain` (jagged bolt hopping between enemies), `animateProjectileLance` (straight beam), `animateAreaExplosion` (ring + impact sprite at radius).
   - `SpellVisualEvent` added to `ArenaSnapshot`; domain emits one event per cast; Phaser processes each event exactly once via `processedSpellEventIds`.
   - Snapshot throttle in `useArenaSession` bypassed when spell events are present so no cast is silently dropped.

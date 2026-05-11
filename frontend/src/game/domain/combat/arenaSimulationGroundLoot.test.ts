@@ -135,7 +135,6 @@ describe("arenaSimulation ground loot", () => {
           highestUnlockedTier: 1,
           lastCompletedTier: 0,
           consumableMaps: [],
-          bossRetryUnlockedTiers: [],
           clearedBossTiers: []
         }
       },
@@ -184,7 +183,7 @@ describe("arenaSimulation ground loot", () => {
     expect(stepped.player.mapProgress.consumableMaps).toHaveLength(1);
     expect(stepped.player.mapProgress.consumableMaps[0]?.mapId).toBe("bossTier1");
     expect(stepped.player.mapProgress.consumableMaps[0]?.quantity).toBe(1);
-    expect(stepped.player.mapProgress.bossRetryUnlockedTiers ?? []).toEqual([]);
+    expect(stepped.player.mapProgress.clearedBossTiers ?? []).toEqual([]);
   });
 });
 
