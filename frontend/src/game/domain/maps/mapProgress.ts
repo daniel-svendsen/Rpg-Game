@@ -63,6 +63,14 @@ export const normalizeMapProgress = (mapProgress: Partial<MapProgressState> | un
 export const isBossTierCleared = (mapProgress: MapProgressState, tier: number): boolean =>
   (mapProgress.clearedBossTiers ?? []).includes(tier) || mapProgress.highestUnlockedTier > tier;
 
+export const getNextUnclearedBossTier = (
+  mapProgress: MapProgressState,
+  maxTier: number
+): number | null =>
+  Array.from({ length: maxTier }, (_, index) => index + 1).find(
+    (tier) => tier <= mapProgress.highestUnlockedTier && !isBossTierCleared(mapProgress, tier)
+  ) ?? null;
+
 export const getMapQuantity = (mapProgress: MapProgressState, mapId: string): number =>
   mapProgress.consumableMaps
     .filter((entry) => entry.mapId === mapId)

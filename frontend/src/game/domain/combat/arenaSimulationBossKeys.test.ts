@@ -153,4 +153,38 @@ describe("arenaSimulation boss keys", () => {
     expect(afterPickup.snapshot.lootEvents.some((entry) => entry.kind === "Map" && entry.name === "Boss Key (Tier 10)")).toBe(true);
     expect(afterPickup.telemetry.guardianKilled).toBe(true);
   });
+
+  it("marks the final boss tier as cleared on first tier 10 boss clear", () => {
+    const character = createTestCharacter({
+      mapProgress: {
+        highestUnlockedTier: 10,
+        lastCompletedTier: 9,
+        consumableMaps: [
+          {
+            stackId: "boss-key-10",
+            mapId: "bossTier10",
+            tier: 10,
+            quantity: 1,
+            enhancements: []
+          }
+        ],
+        clearedBossTiers: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+      }
+    });
+
+    const runtime = createArenaRuntime(character, "bossTier10");
+    const clearedRuntime = {
+      ...runtime,
+      enemies: [],
+      snapshot: { ...runtime.snapshot, enemies: [], isComplete: false }
+    };
+
+    const afterClear = stepArenaRuntime(clearedRuntime, 0);
+    const completed = stepArenaRuntime(afterClear, 1000);
+
+    expect(completed.snapshot.isComplete).toBe(true);
+    expect(completed.player.mapProgress.clearedBossTiers ?? []).toContain(10);
+    expect(completed.player.mapProgress.highestUnlockedTier).toBe(10);
+    expect(completed.player.mapProgress.consumableMaps.some((entry) => entry.mapId === "bossTier10")).toBe(false);
+  });
 });

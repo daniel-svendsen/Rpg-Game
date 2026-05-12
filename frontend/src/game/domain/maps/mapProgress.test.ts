@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addOwnedMap, consumeOwnedMap } from "./mapProgress";
+import { addOwnedMap, consumeOwnedMap, getNextUnclearedBossTier } from "./mapProgress";
 import { createTestCharacter } from "../../../test/createTestCharacter";
 
 describe("mapProgress", () => {
@@ -28,5 +28,18 @@ describe("mapProgress", () => {
 
     expect(character.mapProgress.consumableMaps).toHaveLength(2);
     expect(character.mapProgress.consumableMaps.map((entry) => entry.enhancements.length)).toEqual([1, 0]);
+  });
+
+  it("returns null when every unlocked boss tier is already cleared", () => {
+    const character = createTestCharacter({
+      mapProgress: {
+        highestUnlockedTier: 10,
+        lastCompletedTier: 10,
+        consumableMaps: [],
+        clearedBossTiers: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+      }
+    });
+
+    expect(getNextUnclearedBossTier(character.mapProgress, 10)).toBeNull();
   });
 });

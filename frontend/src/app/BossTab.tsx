@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { mapBalance } from "../game/config/balance";
-import { isBossTierCleared } from "../game/domain/maps/mapProgress";
+import { getNextUnclearedBossTier, isBossTierCleared } from "../game/domain/maps/mapProgress";
 import type { CharacterRecord } from "../shared/types/saveTypes";
 
 interface BossTabProps {
@@ -28,11 +28,7 @@ const countBossKeysByTier = (character: CharacterRecord | null): Record<number, 
 export const BossTab = ({ topBar, healthHud, character, onStartBossTier }: BossTabProps) => {
   const highestUnlockedTier = character?.mapProgress.highestUnlockedTier ?? 1;
   const bossKeysByTier = countBossKeysByTier(character);
-  const nextTier = character
-    ? Array.from({ length: mapBalance.maxTier }, (_, index) => index + 1).find(
-        (tier) => tier <= highestUnlockedTier && !isBossTierCleared(character.mapProgress, tier)
-      ) ?? Math.min(mapBalance.maxTier, highestUnlockedTier)
-    : 1;
+  const nextTier = character ? getNextUnclearedBossTier(character.mapProgress, mapBalance.maxTier) : 1;
 
   return (
     <div className="content stack mobile-content">
@@ -44,7 +40,7 @@ export const BossTab = ({ topBar, healthHud, character, onStartBossTier }: BossT
           Each tier boss requires a boss key. If you fail, leave, or refresh mid-run, the key stays with you until the boss is cleared.
         </p>
         <p className="status-text">
-          Next unlock target: Tier {nextTier} boss.
+          {nextTier === null ? "Tier ladder complete. All bosses defeated." : `Next unlock target: Tier ${nextTier} boss.`}
         </p>
 
         {Array.from({ length: mapBalance.maxTier }, (_, index) => index + 1).map((tier) => {
