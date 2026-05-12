@@ -1106,11 +1106,9 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
             ? rawDamage * clampPlayerResistance(nextPlayer.derivedStats.resistances.Lightning)
             : 0;
     const afterResistance = Math.round(rawDamage - preventedByResistance);
-    const { appliedDamage: appliedSpellDamage, preventedByArmor } = applyArmorMitigation(
-      afterResistance,
-      nextPlayer.derivedStats.armor,
-      false
-    );
+    const afterArmor = applyArmorMitigation(afterResistance, nextPlayer.derivedStats.armor);
+    const appliedSpellDamage = afterArmor;
+    const preventedByArmor = afterResistance - afterArmor;
 
     if (appliedSpellDamage > 0) {
       nextPlayer = {
