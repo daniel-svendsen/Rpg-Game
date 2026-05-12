@@ -160,6 +160,7 @@ button {
   column-gap: 16px;
   row-gap: 0;
   align-items: start;
+  align-content: start;
 }
 
 .arena-col {
