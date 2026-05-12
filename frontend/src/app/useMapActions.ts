@@ -97,7 +97,7 @@ export const useMapActions = ({
         return false;
       }
 
-      if (ownedMapStack) {
+      if (ownedMapStack && !isBossMap) {
         nextCharacter = consumeOwnedMap(nextCharacter, mapTarget);
       }
     }

@@ -28,6 +28,10 @@ const ArenaScreen = ({
   const phaserGameRef = useRef<PhaserGame | null>(null);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
     if (!phaserContainerRef.current || phaserGameRef.current) {
       return;
     }

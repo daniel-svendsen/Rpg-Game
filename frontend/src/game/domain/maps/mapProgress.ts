@@ -61,7 +61,7 @@ export const normalizeMapProgress = (mapProgress: Partial<MapProgressState> | un
 });
 
 export const isBossTierCleared = (mapProgress: MapProgressState, tier: number): boolean =>
-  (mapProgress.clearedBossTiers ?? []).includes(tier);
+  (mapProgress.clearedBossTiers ?? []).includes(tier) || mapProgress.highestUnlockedTier > tier;
 
 export const getMapQuantity = (mapProgress: MapProgressState, mapId: string): number =>
   mapProgress.consumableMaps
