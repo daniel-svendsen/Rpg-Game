@@ -227,6 +227,7 @@ export const HubScreen = ({
           character={character}
           equipmentSlots={equipmentSlots}
           getItemSellPrice={getItemSellPrice}
+          formatPowerChange={formatPowerChange}
           onSellItem={onSellItem}
           onEquipItem={onEquipItem}
           onSelectEquipmentSlot={onSelectEquipmentSlot}

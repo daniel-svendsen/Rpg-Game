@@ -43,7 +43,57 @@ export const HubOverlayPanel = ({
     return null;
   }
 
+  const renderItemCard = (
+    item: CharacterRecord["inventory"][number],
+    options?: {
+      powerChange?: number | null;
+      actionLabel?: string;
+      onAction?: () => void;
+      badge?: string;
+    }
+  ) => (
+    <div key={item.id} className={`loot-entry rarity-card rarity-${item.rarity.toLowerCase()}`}>
+      <div className="inventory-row">
+        <div className="item-name-row">
+          {item.slot ? <ItemSlotIcon slot={item.slot} /> : null}
+          <strong>{item.name}</strong>
+        </div>
+        <span>Power {getItemPowerScore(item).toFixed(0)}</span>
+      </div>
+      {options?.badge ? <div className="status-text">{options.badge}</div> : null}
+      {typeof options?.powerChange !== "undefined" ? (
+        <div className="status-text">{formatPowerChange(options.powerChange)}</div>
+      ) : null}
+      {getItemStatEntries(item).filter((e) => e.isBase).map((entry) => (
+        <div key={`${item.id}-${entry.label}`} className="stat-line">
+          <span className="stat-label">{entry.label}</span>
+          <span className="stat-value">{entry.formattedValue}</span>
+        </div>
+      ))}
+      <div className="item-divider" />
+      {getItemStatEntries(item).filter((e) => !e.isBase).map((entry) => (
+        <div
+          key={`${item.id}-${entry.label}`}
+          className={`stat-line${entry.tier !== null ? ` stat-tier-${entry.tier}` : ""}`}
+        >
+          {entry.tier !== null && <span className="stat-tier-dot" />}
+          <span className="stat-label">{entry.label}</span>
+          <span className="stat-value">{entry.formattedValue}</span>
+        </div>
+      ))}
+      {item.uniqueEffectDescription ? (
+        <div className="unique-effect-line">{item.uniqueEffectDescription}</div>
+      ) : null}
+      {options?.actionLabel && options.onAction ? (
+        <button className="primary-button" onClick={options.onAction}>
+          {options.actionLabel}
+        </button>
+      ) : null}
+    </div>
+  );
+
   if (overlayPanel === "equipmentPicker") {
+    const currentlyEquippedItem = character.equippedItems[selectedEquipmentSlot];
     const selectedSlotItems = character.inventory
       .filter((item) =>
         selectedEquipmentSlot === "Ring1" || selectedEquipmentSlot === "Ring2"
@@ -61,44 +111,26 @@ export const HubOverlayPanel = ({
               Close
             </button>
           </div>
+          {currentlyEquippedItem ? (
+            <>
+              <div className="status-text">Currently equipped</div>
+              {renderItemCard(currentlyEquippedItem, {
+                powerChange: 0,
+                badge: "This is the item currently in the slot."
+              })}
+            </>
+          ) : (
+            <p className="status-text">Nothing is equipped in this slot yet.</p>
+          )}
+          {selectedSlotItems.length > 0 ? <div className="status-text">Available replacements</div> : null}
           {selectedSlotItems.length === 0 ? <p className="status-text">No items for this slot yet.</p> : null}
-          {selectedSlotItems.map((item) => (
-            <div key={item.id} className={`loot-entry rarity-card rarity-${item.rarity.toLowerCase()}`}>
-              <div className="inventory-row">
-                <div className="item-name-row">
-                  {item.slot ? <ItemSlotIcon slot={item.slot} /> : null}
-                  <strong>{item.name}</strong>
-                </div>
-                <span>Power {getItemPowerScore(item).toFixed(0)}</span>
-              </div>
-              <div className="status-text">
-                {formatPowerChange(character && item.slot ? getPowerChangeForCharacterItem(character, item) : null)}
-              </div>
-              {getItemStatEntries(item).filter((e) => e.isBase).map((entry) => (
-                <div key={`${item.id}-${entry.label}`} className="stat-line">
-                  <span className="stat-label">{entry.label}</span>
-                  <span className="stat-value">{entry.formattedValue}</span>
-                </div>
-              ))}
-              <div className="item-divider" />
-              {getItemStatEntries(item).filter((e) => !e.isBase).map((entry) => (
-                <div
-                  key={`${item.id}-${entry.label}`}
-                  className={`stat-line${entry.tier !== null ? ` stat-tier-${entry.tier}` : ""}`}
-                >
-                  {entry.tier !== null && <span className="stat-tier-dot" />}
-                  <span className="stat-label">{entry.label}</span>
-                  <span className="stat-value">{entry.formattedValue}</span>
-                </div>
-              ))}
-              {item.uniqueEffectDescription ? (
-                <div className="unique-effect-line">{item.uniqueEffectDescription}</div>
-              ) : null}
-              <button className="primary-button" onClick={() => onEquipItem(item.id, selectedEquipmentSlot)}>
-                Equip
-              </button>
-            </div>
-          ))}
+          {selectedSlotItems.map((item) =>
+            renderItemCard(item, {
+              powerChange: item.slot ? getPowerChangeForCharacterItem(character, item) : null,
+              actionLabel: "Equip",
+              onAction: () => onEquipItem(item.id, selectedEquipmentSlot)
+            })
+          )}
         </div>
       </div>
     );

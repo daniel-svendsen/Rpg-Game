@@ -80,6 +80,7 @@ interface GearTabProps {
   character: CharacterRecord | null;
   equipmentSlots: EquipmentSlot[];
   getItemSellPrice: (item: CharacterRecord["inventory"][number]) => number;
+  formatPowerChange: (powerChange: number | null) => string;
   onSellItem: (itemId: string) => void;
   onEquipItem: (itemId: string, targetSlotOverride?: EquipmentSlot) => void;
   onSelectEquipmentSlot: (slot: EquipmentSlot) => void;
@@ -91,6 +92,7 @@ export const GearTab = ({
   character,
   equipmentSlots,
   getItemSellPrice,
+  formatPowerChange,
   onSellItem,
   onEquipItem,
   onSelectEquipmentSlot,
@@ -176,8 +178,13 @@ export const GearTab = ({
           </div>
           <div className="inventory-row">
             <div className="status-text">Power {getItemPowerScore(item).toFixed(0)}</div>
-            <div className="status-text">Sell price {getItemSellPrice(item)} gold</div>
+            {character ? (
+              <div className="status-text">
+                {formatPowerChange(item.slot ? getPowerChangeForCharacterItem(character, item) : null)}
+              </div>
+            ) : null}
           </div>
+          <div className="status-text">Sell price {getItemSellPrice(item)} gold</div>
           {getItemStatEntries(item).filter((e) => e.isBase).map((entry) => (
             <div key={`${item.id}-${entry.label}`} className="stat-line">
               <span className="stat-label">{entry.label}</span>
@@ -203,6 +210,18 @@ export const GearTab = ({
               <button
                 className="secondary-button"
                 onClick={() => {
+                  if (!character) {
+                    return;
+                  }
+
+                  if (item.slot === "Ring") {
+                    const targetSlot =
+                      character.equippedItems.Ring1 && !character.equippedItems.Ring2 ? "Ring2" : "Ring1";
+                    onSelectEquipmentSlot(targetSlot);
+                    onEquipItem(item.id, targetSlot);
+                    return;
+                  }
+
                   onSelectEquipmentSlot(item.slot as EquipmentSlot);
                   onEquipItem(item.id, item.slot as EquipmentSlot);
                 }}

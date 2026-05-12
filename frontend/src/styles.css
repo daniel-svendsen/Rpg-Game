@@ -79,6 +79,7 @@ button {
   padding: max(16px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
   display: grid;
   gap: 16px;
+  min-height: 0;
 }
 
 .mobile-content {
@@ -777,8 +778,16 @@ button {
 
 .hub-shell {
   position: relative;
-  min-height: 100vh;
+  height: 100vh;
   padding-bottom: var(--bottom-tabs-offset);
+  overflow: hidden;
+}
+
+.hub-shell > .content {
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .mobile-header {

@@ -445,7 +445,7 @@ export const App = () => {
 
   const renderHub = () => (
     <>
-      <div className="content mobile-only-feedback">{renderInlineFeedback(false)}</div>
+      {errorMessage ? <div className="content mobile-only-feedback">{renderInlineFeedback(false)}</div> : null}
       <HubScreen
         accountEmail={accountEmail}
         arenaSnapshot={arenaSnapshot ? { player: arenaSnapshot.player } : null}
