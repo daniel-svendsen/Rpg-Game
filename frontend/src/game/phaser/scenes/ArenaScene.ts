@@ -1,9 +1,9 @@
 import Phaser from "phaser";
-import type { ArenaEnemyState, ArenaSnapshot, SpellVisualEvent } from "../../../shared/types/saveTypes";
+import type { ArenaEnemyState, ArenaSnapshot, MonsterSpellVisualEvent, SpellVisualEvent } from "../../../shared/types/saveTypes";
 import {
   FALLBACK_MONSTER_CONFIG,
   FX_ANIMS,
-  FX_SHEET,
+  FX_SHEETS,
   MONSTER_SPRITE_CONFIG,
   PLAYER_SPRITE_CONFIG,
   SPRITE_BASE_PATH,
@@ -20,6 +20,7 @@ export class ArenaScene extends Phaser.Scene {
   private enemyHealthBars = new Map<string, Phaser.GameObjects.Rectangle>();
   private floatingTexts = new Map<string, Phaser.GameObjects.Text>();
   private processedSpellEventIds = new Set<string>();
+  private processedMonsterSpellEventIds = new Set<string>();
   private background?: Phaser.GameObjects.TileSprite;
 
   constructor() {
@@ -34,21 +35,31 @@ export class ArenaScene extends Phaser.Scene {
   // ─── Lifecycle ──────────────────────────────────────────────────────────────
 
   preload(): void {
-    // Load effect spritesheet
-    this.load.spritesheet(FX_SHEET.key, FX_SHEET.path, {
-      frameWidth: FX_SHEET.frameWidth,
-      frameHeight: FX_SHEET.frameHeight
-    });
-
-    // Load player sprite frames
-    for (let i = 0; i < PLAYER_SPRITE_CONFIG.idleFrameCount; i++) {
-      this.load.image(
-        `${PLAYER_SPRITE_CONFIG.spriteName}-idle-${i}`,
-        `${SPRITE_BASE_PATH}/${PLAYER_SPRITE_CONFIG.spriteName}_idle_anim_f${i}.png`
-      );
+    // Load all new effect spritesheets (64x64 files)
+    for (const sheet of Object.values(FX_SHEETS)) {
+      this.load.spritesheet(sheet.key, sheet.path, {
+        frameWidth: sheet.frameWidth,
+        frameHeight: sheet.frameHeight
+      });
     }
 
-    // Load individual frames for each monster type used in the config
+    // Load player sprite
+    const pcfgPreload = PLAYER_SPRITE_CONFIG;
+    if (pcfgPreload.monsterSheet) {
+      this.load.spritesheet(`player-sheet`, `/assets/monsters/${pcfgPreload.spriteName}.png`, {
+        frameWidth: pcfgPreload.frameWidth,
+        frameHeight: pcfgPreload.frameHeight
+      });
+    } else {
+      for (let i = 0; i < pcfgPreload.idleFrameCount; i++) {
+        this.load.image(
+          `${pcfgPreload.spriteName}-idle-${i}`,
+          `${SPRITE_BASE_PATH}/${pcfgPreload.spriteName}_idle_anim_f${i}.png`
+        );
+      }
+    }
+
+    // Load monster spritesheets (80x80 files from assets/monsters/)
     const loaded = new Set<string>();
     const allConfigs = [
       ...Object.values(MONSTER_SPRITE_CONFIG),
@@ -57,20 +68,15 @@ export class ArenaScene extends Phaser.Scene {
 
     for (const cfg of allConfigs) {
       if (loaded.has(cfg.spriteName)) continue;
-      loaded.add(cfg.spriteName);
-      if (cfg.assetPath) {
-        this.load.spritesheet(cfg.spriteName, cfg.assetPath, {
-          frameWidth: cfg.frameWidth,
-          frameHeight: cfg.frameHeight
-        });
+      if (cfg.spriteName === PLAYER_SPRITE_CONFIG.spriteName) {
+        console.error(`Monster sprite "${cfg.spriteName}" conflicts with player sprite — assign a different spriteName.`);
         continue;
       }
-      for (let i = 0; i < cfg.idleFrameCount; i++) {
-        this.load.image(
-          `${cfg.spriteName}-idle-${i}`,
-          `${SPRITE_BASE_PATH}/${cfg.spriteName}_idle_anim_f${i}.png`
-        );
-      }
+      loaded.add(cfg.spriteName);
+      this.load.spritesheet(`monster-${cfg.spriteName}`, `/assets/monsters/${cfg.spriteName}.png`, {
+        frameWidth: cfg.frameWidth,
+        frameHeight: cfg.frameHeight
+      });
     }
   }
 
@@ -83,20 +89,29 @@ export class ArenaScene extends Phaser.Scene {
     this.add.rectangle(1000, 700, 1920, 1320, 0x0b1220, 0).setStrokeStyle(2, 0x1f2937);
 
     const pcfg = PLAYER_SPRITE_CONFIG;
-    const playerAnimKey = `${pcfg.spriteName}-idle`;
+    const playerAnimKey = `player-idle`;
     if (!this.anims.exists(playerAnimKey)) {
-      this.anims.create({
-        key: playerAnimKey,
-        frames: Array.from({ length: pcfg.idleFrameCount }, (_, i) => ({
-          key: `${pcfg.spriteName}-idle-${i}`
-        })),
-        frameRate: 8,
-        repeat: -1
-      });
+      if (pcfg.monsterSheet) {
+        this.anims.create({
+          key: playerAnimKey,
+          frames: this.anims.generateFrameNumbers("player-sheet", { start: 0, end: pcfg.idleFrameCount - 1 }),
+          frameRate: 8,
+          repeat: -1
+        });
+      } else {
+        this.anims.create({
+          key: playerAnimKey,
+          frames: Array.from({ length: pcfg.idleFrameCount }, (_, i) => ({
+            key: `${pcfg.spriteName}-idle-${i}`
+          })),
+          frameRate: 8,
+          repeat: -1
+        });
+      }
     }
 
     this.playerSprite = this.add
-      .sprite(1000, 700, `${pcfg.spriteName}-idle-0`)
+      .sprite(1000, 700, pcfg.monsterSheet ? "player-sheet" : `${pcfg.spriteName}-idle-0`, 0)
       .setScale(pcfg.scale)
       .setDepth(10);
 
@@ -174,17 +189,19 @@ export class ArenaScene extends Phaser.Scene {
   // ─── Animation definitions ──────────────────────────────────────────────────
 
   private createAnimations(): void {
-    // Effect animations from the Gizmo sheet
+    // Effect animations from new effect spritesheets
     for (const anim of Object.values(FX_ANIMS)) {
       if (this.anims.exists(anim.key)) continue;
+      const sheetKey = (anim as any).sheet; // Reference to sheet key in FX_SHEETS
+      if (!sheetKey) continue;
       const frames = Array.from({ length: anim.frameCount }, (_, i) => ({
-        key: FX_SHEET.key,
+        key: sheetKey,
         frame: anim.startFrame + i
       }));
       this.anims.create({ key: anim.key, frames, frameRate: anim.frameRate, repeat: 0 });
     }
 
-    // Idle animations for each monster sprite
+    // Idle animations for each monster sprite (all now from assets/monsters/ spritesheets)
     const done = new Set<string>();
     const allConfigs = [...Object.values(MONSTER_SPRITE_CONFIG), FALLBACK_MONSTER_CONFIG];
 
@@ -193,14 +210,11 @@ export class ArenaScene extends Phaser.Scene {
       if (done.has(animKey) || this.anims.exists(animKey)) { done.add(animKey); continue; }
       done.add(animKey);
 
-      const frames = cfg.assetPath
-        ? Array.from({ length: cfg.idleFrameCount }, (_, i) => ({
-            key: cfg.spriteName,
-            frame: i
-          }))
-        : Array.from({ length: cfg.idleFrameCount }, (_, i) => ({
-            key: `${cfg.spriteName}-idle-${i}`
-          }));
+      const spriteSheetKey = `monster-${cfg.spriteName}`;
+      const frames = Array.from({ length: cfg.idleFrameCount }, (_, i) => ({
+        key: spriteSheetKey,
+        frame: i
+      }));
       this.anims.create({ key: animKey, frames, frameRate: 8, repeat: -1 });
     }
   }
@@ -278,6 +292,13 @@ export class ArenaScene extends Phaser.Scene {
       this.processedSpellEventIds.add(event.id);
       this.animateSpellEvent(event);
     }
+
+    // Monster spell visual events
+    for (const event of this.latestSnapshot.monsterSpellEvents) {
+      if (this.processedMonsterSpellEventIds.has(event.id)) continue;
+      this.processedMonsterSpellEventIds.add(event.id);
+      this.animateMonsterSpellEvent(event);
+    }
   }
 
   private getSpriteConfig(monsterTypeId: string): MonsterSpriteConfig {
@@ -287,9 +308,10 @@ export class ArenaScene extends Phaser.Scene {
   private createEnemySprite(enemy: ArenaEnemyState): Phaser.GameObjects.Sprite {
     const cfg = this.getSpriteConfig(enemy.monsterTypeId);
     const animKey = `${cfg.spriteName}-idle`;
+    const spriteSheetKey = `monster-${cfg.spriteName}`;
 
     const sprite = this.add
-      .sprite(enemy.x, enemy.y, cfg.assetPath ? cfg.spriteName : `${cfg.spriteName}-idle-0`)
+      .sprite(enemy.x, enemy.y, spriteSheetKey, 0)
       .setScale(cfg.scale)
       .setDepth(5);
 
@@ -317,13 +339,49 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
+  private animateMonsterSpellEvent(event: MonsterSpellVisualEvent): void {
+    const isArea = event.areaRadius > 0;
+    const isLightning = event.tags.includes("Lightning");
+    const isCold = event.tags.includes("Cold");
+    const isFire = event.tags.includes("Fire");
+    const color = isLightning ? 0xfbbf24 : isCold ? 0x38bdf8 : isFire ? 0xf97316 : 0xa78bfa;
+
+    const gfx = this.add.graphics().setDepth(12);
+    gfx.lineStyle(6, color, 0.12);
+    gfx.beginPath();
+    gfx.moveTo(event.originX, event.originY);
+    gfx.lineTo(event.targetX, event.targetY);
+    gfx.strokePath();
+    gfx.lineStyle(2.5, color, 0.65);
+    gfx.beginPath();
+    gfx.moveTo(event.originX, event.originY);
+    gfx.lineTo(event.targetX, event.targetY);
+    gfx.strokePath();
+    this.tweens.add({
+      targets: gfx,
+      alpha: 0,
+      duration: 250,
+      ease: "Quad.easeIn",
+      onComplete: () => { gfx.destroy(); }
+    });
+
+    if (isArea) {
+      const fxAnim = isCold ? FX_ANIMS.iceWave.key : isFire ? FX_ANIMS.fireWave.key : FX_ANIMS.electric.key;
+      this.spawnFxSprite(event.targetX, event.targetY, fxAnim, 1.5);
+    } else {
+      const fxAnim = isLightning ? FX_ANIMS.electricArc.key : isCold ? FX_ANIMS.ice.key : FX_ANIMS.fire.key;
+      this.spawnFxSprite(event.targetX, event.targetY, fxAnim, 1.2);
+    }
+  }
+
   private animateProjectileLance(event: SpellVisualEvent): void {
     const target = event.chainPositions[0];
     if (!target) return;
 
     const isLightning = event.tags.includes("Lightning");
     const isCold = event.tags.includes("Cold");
-    const color = isLightning ? 0xfbbf24 : isCold ? 0x38bdf8 : 0xa78bfa;
+    const isFire = event.tags.includes("Fire");
+    const color = isLightning ? 0xfbbf24 : isCold ? 0x38bdf8 : isFire ? 0xf97316 : 0xa78bfa;
 
     const gfx = this.add.graphics().setDepth(12);
 
@@ -347,14 +405,16 @@ export class ArenaScene extends Phaser.Scene {
       onComplete: () => { gfx.destroy(); }
     });
 
-    this.spawnFxSprite(target.x, target.y, FX_ANIMS.electric.key, 3.0);
+    const fxAnim = isLightning ? FX_ANIMS.electricArc.key : isCold ? FX_ANIMS.ice.key : FX_ANIMS.fire.key;
+    this.spawnFxSprite(target.x, target.y, fxAnim, 1.5);
   }
 
   private animateLightningChain(event: SpellVisualEvent): void {
     const isLightning = event.tags.includes("Lightning");
     const isCold = event.tags.includes("Cold");
-    const boltColor = isLightning ? 0xfbbf24 : isCold ? 0x38bdf8 : 0xa78bfa;
-    const fxAnim = isCold ? FX_ANIMS.ice.key : FX_ANIMS.electric.key;
+    const isFire = event.tags.includes("Fire");
+    const boltColor = isLightning ? 0xfbbf24 : isCold ? 0x38bdf8 : isFire ? 0xf97316 : 0xa78bfa;
+    const fxAnim = isCold ? FX_ANIMS.iceWave.key : isLightning ? FX_ANIMS.electric.key : isFire ? FX_ANIMS.fire.key : FX_ANIMS.electric.key;
 
     const positions = [{ x: event.originX, y: event.originY }, ...event.chainPositions];
 
@@ -364,7 +424,7 @@ export class ArenaScene extends Phaser.Scene {
         const to = positions[i + 1];
         if (!from || !to) return;
         this.drawLightningBolt(from.x, from.y, to.x, to.y, boltColor);
-        this.spawnFxSprite(to.x, to.y, fxAnim, 3.0);
+        this.spawnFxSprite(to.x, to.y, fxAnim, 0.6);
       });
     }
   }
@@ -372,37 +432,44 @@ export class ArenaScene extends Phaser.Scene {
   private animateAreaExplosion(event: SpellVisualEvent): void {
     const isFire = event.tags.includes("Fire");
     const isCold = event.tags.includes("Cold");
+    const isLightning = event.tags.includes("Lightning");
     const target = event.chainPositions[0];
     if (!target) return;
 
-    const fxAnim = isCold ? FX_ANIMS.ice.key : isFire ? FX_ANIMS.fire.key : FX_ANIMS.electric.key;
-    const boltColor = isFire ? 0xf97316 : isCold ? 0x38bdf8 : 0xa78bfa;
     const radius = Math.max(event.areaRadius, 30);
 
-    // Sprite effect at center
-    this.spawnFxSprite(target.x, target.y, fxAnim, 4.0);
-
-    // Procedural ring to show actual area radius
-    const gfx = this.add.graphics().setDepth(12);
-    gfx.lineStyle(2, boltColor, 0.7);
-    gfx.strokeCircle(target.x, target.y, radius);
-    gfx.fillStyle(boltColor, 0.1);
-    gfx.fillCircle(target.x, target.y, radius);
-    this.tweens.add({
-      targets: gfx,
-      alpha: 0,
-      duration: 500,
-      ease: "Quad.easeIn",
-      onComplete: () => { gfx.destroy(); }
-    });
+    if (isCold) {
+      // Cold: ring only
+      const gfx = this.add.graphics().setDepth(12);
+      gfx.lineStyle(2, 0x38bdf8, 0.85);
+      gfx.strokeCircle(target.x, target.y, radius);
+      gfx.fillStyle(0x38bdf8, 0.08);
+      gfx.fillCircle(target.x, target.y, radius);
+      this.tweens.add({
+        targets: gfx,
+        alpha: 0,
+        duration: 600,
+        ease: "Quad.easeIn",
+        onComplete: () => { gfx.destroy(); }
+      });
+    } else {
+      // Fire / Lightning: sprite only, scaled to radius
+      const fxAnim = isFire ? FX_ANIMS.fireWave.key : isLightning ? FX_ANIMS.electric.key : FX_ANIMS.fire.key;
+      const fxScale = Math.max(0.6, radius / 32);
+      this.spawnFxSprite(target.x, target.y, fxAnim, fxScale);
+    }
   }
 
   // Spawns a one-shot effect sprite that destroys itself when the animation ends
   private spawnFxSprite(x: number, y: number, animKey: string, scale: number): void {
     if (!this.anims.exists(animKey)) return;
 
+    // Find the sheet key for this animation
+    const anim = Object.values(FX_ANIMS).find(a => a.key === animKey) as any;
+    const sheetKey = anim?.sheet || Object.values(FX_SHEETS)[0].key; // Fallback to first sheet
+
     const sprite = this.add
-      .sprite(x, y, FX_SHEET.key, 0)
+      .sprite(x, y, sheetKey, 0)
       .setScale(scale)
       .setDepth(15)
       .setBlendMode(Phaser.BlendModes.ADD);

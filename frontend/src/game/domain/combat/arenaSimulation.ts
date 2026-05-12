@@ -41,8 +41,10 @@ import type {
   MapEnhancementInstance,
   MonsterRarity,
   DamageType,
-  SpellVisualEvent
+  SpellVisualEvent,
+  MonsterSpellVisualEvent
 } from "../../../shared/types/saveTypes";
+import { spellConfig } from "../../config/spellConfig";
 const defaultAutoSellSettings: AutoSellSettings = {
   Normal: false,
   Magic: false,
@@ -114,6 +116,7 @@ interface InternalEnemyState extends ArenaEnemyState {
     Lightning: number;
   };
   lastContactDamageAt: number;
+  lastSpellCastAt: number;
   isKeyGuardian: boolean;
 }
 
@@ -250,14 +253,21 @@ const createEnemy = (
   rarity: MonsterRarity,
   packId: PackId,
   x: number,
-  y: number
+  y: number,
+  forcedDefinition?: typeof monsterDefinitions[number]
 ): InternalEnemyState => {
   const tierBalance = getMapBalanceByTier(map.tier);
+  const isBossMap = map.id.startsWith("bossTier");
   const eligibleMonsters = monsterDefinitions.filter(
-    (monster) => monster.rarity === rarity && (monster.minTier === undefined || monster.minTier <= map.tier)
+    (monster) =>
+      monster.rarity === rarity &&
+      (isBossMap || !monster.isBossOnly) &&
+      (monster.minTier === undefined || monster.minTier <= map.tier)
   );
   const monsterDefinition =
-    eligibleMonsters[Math.floor(Math.random() * eligibleMonsters.length)] ?? monsterDefinitions[0];
+    forcedDefinition ??
+    eligibleMonsters[Math.floor(Math.random() * eligibleMonsters.length)] ??
+    monsterDefinitions[0];
   const rarityHealthMultiplier =
     rarity === "Rare"
       ? monsterBalance.rareHealthMultiplier
@@ -313,6 +323,7 @@ const createEnemy = (
       Lightning: resolveResistance("Lightning")
     },
     lastContactDamageAt: 0,
+    lastSpellCastAt: -999999,
     isKeyGuardian: false
   };
 };
@@ -404,6 +415,21 @@ const createMonsterPacks = (
       }
 
       enemies.push(createEnemy(map, rarity, packId, x, y));
+    }
+
+    if (!isBossMap && Math.random() < 0.20) {
+      const eligibleSpellcasters = monsterDefinitions.filter(
+        (m) => m.spellId && !m.isBossOnly && (m.minTier === undefined || m.minTier <= map.tier)
+      );
+      if (eligibleSpellcasters.length > 0) {
+        const def = eligibleSpellcasters[Math.floor(Math.random() * eligibleSpellcasters.length)];
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 14 + Math.random() * (packRadius - 14);
+        const x = clamp(centerX + Math.cos(angle) * radius, 40, ARENA_WIDTH - 40);
+        const y = clamp(centerY + Math.sin(angle) * radius, 40, ARENA_HEIGHT - 40);
+        rareMonstersSpawned += 1;
+        enemies.push(createEnemy(map, "Rare", packId, x, y, def));
+      }
     }
   }
 
@@ -812,6 +838,7 @@ export const createArenaRuntime = (
       floatingTexts: [],
       lootEvents: [],
       spellEvents: [],
+      monsterSpellEvents: [],
       groundLoot: [],
       isComplete: packsResult.enemies.length === 0
     },
@@ -856,6 +883,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   const floatingTexts: FloatingTextState[] = [];
   const lootEvents: LootEntry[] = [];
   const spellEvents: SpellVisualEvent[] = [];
+  const monsterSpellEvents: MonsterSpellVisualEvent[] = [];
   let lastCastAtMs = state.lastCastAtMs;
   let lastPlayerDamageAtMs = state.lastPlayerDamageAtMs;
   const mapTier = state.mapTier;
@@ -1053,6 +1081,70 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
       ...enemy,
       lastContactDamageAt: nextTime
     };
+  });
+
+  nextEnemies = nextEnemies.map((enemy) => {
+    const monsterDef = monsterDefinitions.find((m) => m.id === enemy.monsterTypeId);
+    if (!monsterDef?.spellId || !monsterDef.spellRange) return enemy;
+    const dist = distance(enemy.x, enemy.y, playerX, playerY);
+    if (dist > monsterDef.spellRange) return enemy;
+    const cooldown = monsterDef.spellCooldownMs ?? 2000;
+    if (nextTime - enemy.lastSpellCastAt < cooldown) return enemy;
+
+    const spell = spellConfig[monsterDef.spellId as keyof typeof spellConfig];
+    if (!spell) return enemy;
+
+    const rawDamage = Math.round(
+      spell.baseDamage * (monsterBalance.baseDamage / 10)
+    );
+    const preventedByResistance =
+      spell.tags.includes("Fire")
+        ? rawDamage * clampPlayerResistance(nextPlayer.derivedStats.resistances.Fire)
+        : spell.tags.includes("Cold")
+          ? rawDamage * clampPlayerResistance(nextPlayer.derivedStats.resistances.Cold)
+          : spell.tags.includes("Lightning")
+            ? rawDamage * clampPlayerResistance(nextPlayer.derivedStats.resistances.Lightning)
+            : 0;
+    const afterResistance = Math.round(rawDamage - preventedByResistance);
+    const { appliedDamage: appliedSpellDamage, preventedByArmor } = applyArmorMitigation(
+      afterResistance,
+      nextPlayer.derivedStats.armor,
+      false
+    );
+
+    if (appliedSpellDamage > 0) {
+      nextPlayer = {
+        ...nextPlayer,
+        currentHealth: Math.max(0, nextPlayer.currentHealth - appliedSpellDamage)
+      };
+      telemetry = {
+        ...telemetry,
+        hitsTaken: telemetry.hitsTaken + 1,
+        damageDealtToPlayer: telemetry.damageDealtToPlayer + appliedSpellDamage,
+        damagePreventedByResistance: telemetry.damagePreventedByResistance + Math.round(preventedByResistance),
+        damagePreventedByArmor: telemetry.damagePreventedByArmor + preventedByArmor
+      };
+      lastPlayerDamageAtMs = nextTime;
+      floatingTexts.push({
+        id: `${enemy.id}-spell-${nextTime}`,
+        x: playerX - 14,
+        y: playerY - 26,
+        text: `-${appliedSpellDamage}`
+      });
+    }
+
+    monsterSpellEvents.push({
+      id: `mspell-${enemy.id}-${nextTime}`,
+      spellId: spell.id,
+      tags: spell.tags,
+      originX: enemy.x,
+      originY: enemy.y,
+      targetX: playerX,
+      targetY: playerY,
+      areaRadius: spell.areaRadius
+    });
+
+    return { ...enemy, lastSpellCastAt: nextTime };
   });
 
   const activeLoadout = nextPlayer.spellLoadout[0];
@@ -1271,6 +1363,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
     floatingTexts,
     lootEvents,
     spellEvents,
+    monsterSpellEvents,
     groundLoot: nextGroundLoot.map((entry) => {
       const kind = entry.payload.kind;
       const name =

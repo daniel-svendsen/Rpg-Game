@@ -189,6 +189,17 @@ export interface ArenaEnemyState {
   damageType: DamageType;
 }
 
+export interface MonsterSpellVisualEvent {
+  id: string;
+  spellId: string;
+  tags: string[];
+  originX: number;
+  originY: number;
+  targetX: number;
+  targetY: number;
+  areaRadius: number;
+}
+
 export interface SpellVisualEvent {
   id: string;
   spellId: string;
@@ -224,5 +235,6 @@ export interface ArenaSnapshot {
     name: string;
   }>;
   spellEvents: SpellVisualEvent[];
+  monsterSpellEvents: MonsterSpellVisualEvent[];
   isComplete: boolean;
 }

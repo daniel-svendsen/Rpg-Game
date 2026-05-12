@@ -159,6 +159,86 @@ export const spellConfig: Record<string, SpellDefinition> = {
       areaRadiusPerLevel: 6,
       critChancePerLevel: 0.008
     }
+  },
+  monsterSlash: {
+    id: "monsterSlash",
+    name: "Monster Slash",
+    tags: ["Physical", "Projectile", "SpellDamage"],
+    description: "A physical melee slash.",
+    baseDamage: 20,
+    cooldownMs: 1200,
+    projectileCount: 1,
+    chainCount: 0,
+    chainRange: 0,
+    areaRadius: 0,
+    criticalBonus: 0.03,
+    levelScaling: {
+      damageMultiplierPerLevel: 0.15,
+      cooldownMultiplierStep: 0.02,
+      chainRangePerLevel: 0,
+      areaRadiusPerLevel: 0,
+      critChancePerLevel: 0.003
+    }
+  },
+  monsterFireBurst: {
+    id: "monsterFireBurst",
+    name: "Monster Fire Burst",
+    tags: ["Fire", "Area", "Explosion", "SpellDamage"],
+    description: "A fiery explosion that engulfs nearby enemies.",
+    baseDamage: 18,
+    cooldownMs: 1300,
+    projectileCount: 0,
+    chainCount: 0,
+    chainRange: 0,
+    areaRadius: 35,
+    criticalBonus: 0.02,
+    levelScaling: {
+      damageMultiplierPerLevel: 0.18,
+      cooldownMultiplierStep: 0.025,
+      chainRangePerLevel: 0,
+      areaRadiusPerLevel: 3,
+      critChancePerLevel: 0.003
+    }
+  },
+  monsterFrostBolt: {
+    id: "monsterFrostBolt",
+    name: "Monster Frost Bolt",
+    tags: ["Cold", "Area", "Critical", "SpellDamage"],
+    description: "A blast of freezing cold.",
+    baseDamage: 16,
+    cooldownMs: 1200,
+    projectileCount: 0,
+    chainCount: 0,
+    chainRange: 0,
+    areaRadius: 40,
+    criticalBonus: 0.05,
+    levelScaling: {
+      damageMultiplierPerLevel: 0.16,
+      cooldownMultiplierStep: 0.02,
+      chainRangePerLevel: 0,
+      areaRadiusPerLevel: 4,
+      critChancePerLevel: 0.004
+    }
+  },
+  monsterLightningStrike: {
+    id: "monsterLightningStrike",
+    name: "Monster Lightning Strike",
+    tags: ["Lightning", "Projectile", "Chain", "SpellDamage"],
+    description: "Lightning that arcs between enemies.",
+    baseDamage: 15,
+    cooldownMs: 1100,
+    projectileCount: 1,
+    chainCount: 1,
+    chainRange: 100,
+    areaRadius: 0,
+    criticalBonus: 0.03,
+    levelScaling: {
+      damageMultiplierPerLevel: 0.14,
+      cooldownMultiplierStep: 0.03,
+      chainRangePerLevel: 8,
+      areaRadiusPerLevel: 0,
+      critChancePerLevel: 0.004
+    }
   }
 };
 
