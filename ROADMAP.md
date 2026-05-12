@@ -480,3 +480,4 @@ Implemented (continued):
 Still planned (next major domain work):
 - Item stat roll UI: expose roll distributions to players (min/max per stat, tier label on item card).
 - Add stronger boss crafting/material rewards and a fuller long-term chase structure beyond the current tier-specific unique pools.
+- Secondary spell effects from first impact: support item bonuses that trigger an additional effect (projectile, chain, or area) originating from the primary impact point rather than from the player. Currently all targets are resolved in a single pass at cast time; this requires a second targeting pass after primary hit resolution.

@@ -367,10 +367,10 @@ export class ArenaScene extends Phaser.Scene {
 
     if (isArea) {
       const fxAnim = isCold ? FX_ANIMS.iceWave.key : isFire ? FX_ANIMS.fireWave.key : FX_ANIMS.electric.key;
-      this.spawnFxSprite(event.targetX, event.targetY, fxAnim, 1.5);
+      this.spawnFxSprite(event.targetX, event.targetY, fxAnim, this.fxScale(event.areaRadius, 1.0));
     } else {
       const fxAnim = isLightning ? FX_ANIMS.electricArc.key : isCold ? FX_ANIMS.ice.key : FX_ANIMS.fire.key;
-      this.spawnFxSprite(event.targetX, event.targetY, fxAnim, 1.2);
+      this.spawnFxSprite(event.targetX, event.targetY, fxAnim, this.fxScale(event.areaRadius, 1.0));
     }
   }
 
@@ -406,7 +406,7 @@ export class ArenaScene extends Phaser.Scene {
     });
 
     const fxAnim = isLightning ? FX_ANIMS.electricArc.key : isCold ? FX_ANIMS.ice.key : FX_ANIMS.fire.key;
-    this.spawnFxSprite(target.x, target.y, fxAnim, 1.5);
+    this.spawnFxSprite(target.x, target.y, fxAnim, this.fxScale(event.areaRadius, 1.0));
   }
 
   private animateLightningChain(event: SpellVisualEvent): void {
@@ -424,7 +424,7 @@ export class ArenaScene extends Phaser.Scene {
         const to = positions[i + 1];
         if (!from || !to) return;
         this.drawLightningBolt(from.x, from.y, to.x, to.y, boltColor);
-        this.spawnFxSprite(to.x, to.y, fxAnim, 0.6);
+        this.spawnFxSprite(to.x, to.y, fxAnim, this.fxScale(event.areaRadius, 0.6));
       });
     }
   }
@@ -455,9 +455,14 @@ export class ArenaScene extends Phaser.Scene {
     } else {
       // Fire / Lightning: sprite only, scaled to radius
       const fxAnim = isFire ? FX_ANIMS.fireWave.key : isLightning ? FX_ANIMS.electric.key : FX_ANIMS.fire.key;
-      const fxScale = Math.max(0.6, radius / 32);
-      this.spawnFxSprite(target.x, target.y, fxAnim, fxScale);
+      this.spawnFxSprite(target.x, target.y, fxAnim, this.fxScale(event.areaRadius, 1.0));
     }
+  }
+
+  // Returns FX sprite scale: if the spell has an area radius, size the sprite to match it.
+  // For projectiles/chain with no area, uses the provided fallback scale.
+  private fxScale(areaRadius: number, fallback: number): number {
+    return areaRadius > 0 ? Math.max(0.6, areaRadius / 32) : fallback;
   }
 
   // Spawns a one-shot effect sprite that destroys itself when the animation ends

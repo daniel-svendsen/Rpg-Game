@@ -1169,7 +1169,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
 
       const targetedEnemyIds =
         resolvedSpell.areaRadius > 0 && primaryTarget
-          ? sortedEnemies
+          ? nextEnemies
               .filter(
                 (enemy) =>
                   distance(enemy.x, enemy.y, primaryTarget.x, primaryTarget.y) <= resolvedSpell.areaRadius
