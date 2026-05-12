@@ -11,6 +11,13 @@ interface BossRunSummaryInput {
   nextClearedBossTiers: number[];
 }
 
+export interface RunSummaryLootCounts {
+  unique: number;
+  rare: number;
+  magic: number;
+  bossKeys: number;
+}
+
 export const buildBossRunCompletionNotes = ({
   mapId,
   wasDefeated,
@@ -60,6 +67,22 @@ export const advanceRunBatch = (batch: RunBatchState | null, loot: LootEntry[]):
     loot: [...batch.loot, ...loot]
   };
 };
+
+export const countRunSummaryLoot = (loot: LootEntry[]): RunSummaryLootCounts =>
+  loot.reduce<RunSummaryLootCounts>(
+    (counts, entry) => ({
+      unique: counts.unique + (entry.rarity?.toLowerCase() === "unique" ? 1 : 0),
+      rare: counts.rare + (entry.rarity?.toLowerCase() === "rare" ? 1 : 0),
+      magic: counts.magic + (entry.rarity?.toLowerCase() === "magic" ? 1 : 0),
+      bossKeys: counts.bossKeys + (entry.kind === "Map" && entry.name.startsWith("Boss Key") ? 1 : 0)
+    }),
+    {
+      unique: 0,
+      rare: 0,
+      magic: 0,
+      bossKeys: 0
+    }
+  );
 
 export const buildRunSummaryData = (
   mapName: string,

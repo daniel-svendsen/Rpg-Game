@@ -1,5 +1,6 @@
 import { ItemSlotIcon } from "./ItemSlotIcon";
 import type { RunSummaryData } from "./appTypes";
+import { countRunSummaryLoot } from "./runSummaryHelpers";
 
 interface RunSummaryScreenProps {
   summaryData: RunSummaryData;
@@ -10,10 +11,7 @@ interface RunSummaryScreenProps {
 export const RunSummaryScreen = ({ summaryData, onKeepFarming, onReturnToHub }: RunSummaryScreenProps) => {
   const { mapName, wasDefeated, loot, completedMaps, completionNotes } = summaryData;
   const summaryTitle = completedMaps > 1 ? `${completedMaps} Maps Complete` : mapName;
-
-  const uniqueCount = loot.filter((l) => l.rarity?.toLowerCase() === "unique").length;
-  const rareCount = loot.filter((l) => l.rarity?.toLowerCase() === "rare").length;
-  const magicCount = loot.filter((l) => l.rarity?.toLowerCase() === "magic").length;
+  const { unique: uniqueCount, rare: rareCount, magic: magicCount, bossKeys: bossKeyCount } = countRunSummaryLoot(loot);
 
   return (
     <div className="content run-summary-screen">
@@ -59,8 +57,13 @@ export const RunSummaryScreen = ({ summaryData, onKeepFarming, onReturnToHub }: 
           <p className="status-text">No loot found this run.</p>
         ) : (
           <>
-            {(uniqueCount > 0 || rareCount > 0 || magicCount > 0) && (
+            {(uniqueCount > 0 || rareCount > 0 || magicCount > 0 || bossKeyCount > 0) && (
               <div className="run-summary-loot-counts">
+                {bossKeyCount > 0 && (
+                  <span className="summary-loot-chip summary-loot-chip--unique">
+                    {bossKeyCount} Key{bossKeyCount === 1 ? "" : "s"}
+                  </span>
+                )}
                 {uniqueCount > 0 && (
                   <span className="summary-loot-chip summary-loot-chip--unique">
                     {uniqueCount} Unique

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { LootEntry } from "../shared/types/saveTypes";
-import { advanceRunBatch, buildBossRunCompletionNotes, buildRunSummaryData } from "./runSummaryHelpers";
+import { advanceRunBatch, buildBossRunCompletionNotes, buildRunSummaryData, countRunSummaryLoot } from "./runSummaryHelpers";
 
 const createLootEntry = (id: string, rarity: "Magic" | "Rare"): LootEntry => ({
   id,
@@ -55,5 +55,26 @@ describe("runSummaryHelpers", () => {
       "Tier 2 maps unlocked.",
       "Awarded 3 Tier 2 maps."
     ]);
+  });
+
+  it("counts boss keys separately from item rarities in the run summary", () => {
+    const loot: LootEntry[] = [
+      createLootEntry("magic-1", "Magic"),
+      createLootEntry("rare-1", "Rare"),
+      {
+        id: "boss-key-10",
+        kind: "Map",
+        name: "Boss Key (Tier 10)",
+        details: [],
+        isUpgrade: true
+      }
+    ];
+
+    expect(countRunSummaryLoot(loot)).toEqual({
+      unique: 0,
+      rare: 1,
+      magic: 1,
+      bossKeys: 1
+    });
   });
 });
