@@ -1,6 +1,6 @@
 # Visual System Guide
 
-How to add and modify sprites, animations, and spell effects in Shardborne.
+How to add and modify monster sprites, player sprites, and spell effects in the current Shardborne runtime.
 
 ---
 
@@ -25,12 +25,13 @@ Domain tick -> ArenaSnapshot.spellEvents[] -> ArenaScene.animateSpellEvent()
 
 It exports:
 
-- `MONSTER_SPRITE_CONFIG` — maps `monsterTypeId` to sprite metadata
-- `PLAYER_SPRITE_CONFIG` — player sprite metadata
-- `FALLBACK_MONSTER_CONFIG` — used when a monster has no explicit config
-- `FX_SHEET` — the spell effect spritesheet path and frame size
-- `FX_ANIMS` — named animation ranges inside the effect sheet
-- `SPRITE_BASE_PATH` — root path for the 0x72 dungeon frame files
+- `MONSTER_SPRITE_CONFIG` -> maps `monsterTypeId` to runtime sprite metadata
+- `PLAYER_SPRITE_CONFIG` -> player runtime sprite metadata
+- `FALLBACK_MONSTER_CONFIG` -> used when a monster has no explicit config
+- `FX_SHEETS` -> spell effect sheet paths and frame sizes
+- `FX_ANIMS` -> named animation ranges inside the effect sheets
+
+The current runtime uses numbered spritesheets from `frontend/public/assets/monsters/` and `frontend/public/assets/spelleffects/`.
 
 ---
 
@@ -38,46 +39,20 @@ It exports:
 
 | Asset pack | Location |
 |---|---|
-| Monster and player frame files | `frontend/public/assets/0x72_DungeonTilesetII_v1.7/frames/` |
-| Custom generated monster sheets | `frontend/public/assets/monstersprites/` |
-| Effect spritesheet | `frontend/public/assets/Gizmo Pixel Art - Effect pack/sheets/32x32.png` |
+| Monster spritesheets | `frontend/public/assets/monsters/` |
+| Spell effect spritesheets | `frontend/public/assets/spelleffects/` |
 
-### 0x72 frame naming convention
+Notes:
 
-The 0x72 assets are individual PNG files with four idle frames:
-
-```text
-{name}_idle_anim_f0.png
-{name}_idle_anim_f1.png
-{name}_idle_anim_f2.png
-{name}_idle_anim_f3.png
-```
-
-Common names include `goblin`, `imp`, `chort`, `wogol`, `masked_orc`, `big_demon`, `big_zombie`, `skelet`, `orc_warrior`, `orc_shaman`, and `pumpkin_dude`.
-
-Frame sizes vary. Measure the PNG before wiring it:
-
-- Small sprites: `16x16`
-- Medium sprites: `16x23`
-- Large sprites: `32x36`
-
-### Gizmo effect sheet layout
-
-The bundled effect sheet is `192x352`, arranged as `6` columns by `11` rows. Each frame is `32x32`. Frame index uses `row * 6 + col`.
-
-| Effect | Row | Frames | `startFrame` | `frameCount` |
-|---|---|---|---|---|
-| Fire | 2 | 12-17 | 12 | 6 |
-| Electric | 3 | 18-21 | 18 | 4 |
-| Ice | 4 | 24-26 | 24 | 3 |
-
-To add a new effect row, extend `FX_ANIMS` in `spriteConfig.ts`. `ArenaScene.createAnimations()` registers every entry automatically.
+- Monster sprites are currently loaded as numbered `80x80` spritesheets such as `02.png`, `24.png`, and `30.png`.
+- Spell effects are currently loaded as numbered `64x64` spritesheets such as `1010.png`, `1011.png`, and `1020.png`.
+- Older experimental asset paths such as `monstersprites/` are not part of the active runtime.
 
 ---
 
 ## How to add a new enemy type
 
-### Step 1 — Define the monster in game config
+### Step 1 -> Define the monster in game config
 
 Add an entry to `frontend/src/game/config/monsterConfig.ts`:
 
@@ -93,54 +68,70 @@ Add an entry to `frontend/src/game/config/monsterConfig.ts`:
 }
 ```
 
-### Step 2 — Assign a sprite in `spriteConfig.ts`
+### Step 2 -> Assign a runtime sprite in `spriteConfig.ts`
 
 Add a matching entry to `MONSTER_SPRITE_CONFIG` using the same `id`:
 
 ```typescript
 ashWalker: {
-  spriteName: "pumpkin_dude",
-  frameWidth: 16,
-  frameHeight: 16,
-  scale: 2.5,
-  idleFrameCount: 4,
-  healthBarOffsetY: -26
+  spriteName: "31",
+  frameWidth: 80,
+  frameHeight: 80,
+  scale: 1.2,
+  idleFrameCount: 5,
+  healthBarOffsetY: -28
 },
 ```
 
-That is enough for normal 0x72 frame-file monsters. `ArenaScene.preload()` iterates the config and loads the frames automatically.
+That is enough for the current runtime. `ArenaScene.preload()` will load `/assets/monsters/31.png` automatically.
 
 If you omit the `spriteConfig.ts` entry, the monster falls back to `FALLBACK_MONSTER_CONFIG` so it still renders.
 
-### Optional — Use a custom generated spritesheet
+### Choosing a monster sheet
 
-If a monster uses one horizontal spritesheet instead of the built-in 0x72 frame files, point the config at a custom PNG with `assetPath`:
+Before assigning a new numbered sheet:
+
+- check `docs/ASSET_MAPPING.md`
+- avoid boss-reserved sheets for regular monsters
+- make sure the silhouette matches the monster role, not just the color theme
+
+Current boss-reserved monster sheets are:
+
+- `01`, `04`, `07`, `09`, `11`, `16`, `17`, `18`, `21`, `25`
+
+Do not assign those to regular monsters.
+
+---
+
+## How to add or swap the player sprite
+
+Update `PLAYER_SPRITE_CONFIG` in `frontend/src/game/phaser/spriteConfig.ts`:
 
 ```typescript
-scrapCrawler: {
-  spriteName: "scrap-crawler-custom",
-  assetPath: "/assets/monstersprites/scrap_crawler_clean.png",
-  frameWidth: 1032,
-  frameHeight: 1024,
-  scale: 0.04,
-  idleFrameCount: 4,
-  healthBarOffsetY: -26
-},
+export const PLAYER_SPRITE_CONFIG: PlayerSpriteConfig = {
+  spriteName: "30",
+  frameWidth: 80,
+  frameHeight: 80,
+  scale: 1.0,
+  idleFrameCount: 5,
+  monsterSheet: true
+};
 ```
 
-Notes:
+The current player sprite is loaded from `/assets/monsters/30.png`.
 
-- `frameWidth` is one frame width inside the sheet, not the full image width.
-- Keep the sheet as one PNG with all idle frames in a single horizontal row.
-- For generation prompts, prefer a single removable chroma-key background color instead of asking the model for transparency directly.
-- The final in-game asset must still use real alpha transparency. If the image model bakes in a checkerboard preview or flat background color, clean it before using it in-game.
-- Use `docs/PIXEL_ART_PROMPTS.md` for the current master prompts and asset data blocks when generating new monster or spell art externally.
+If you change it, keep an eye on:
+
+- `frameWidth`
+- `frameHeight`
+- `scale`
+- whether it should still use `monsterSheet: true`
 
 ---
 
 ## How to add a new spell
 
-### Step 1 — Define the spell in game config
+### Step 1 -> Define the spell in game config
 
 Add the spell to `frontend/src/game/config/spellConfig.ts`. The `tags` array controls both gameplay and visual routing.
 
@@ -148,10 +139,10 @@ Add the spell to `frontend/src/game/config/spellConfig.ts`. The `tags` array con
 |---|---|
 | `"Projectile"` | Straight beam animation unless `"Chain"` is also present |
 | `"Chain"` | Jagged bolt hopping between enemies |
-| `"Area"` | Explosion circle plus sprite at the center |
-| `"Fire"` | Fire FX sprite plus orange-red color |
-| `"Cold"` | Ice FX sprite plus blue color |
-| `"Lightning"` | Electric FX sprite plus yellow-violet color |
+| `"Area"` | Area explosion logic |
+| `"Fire"` | Fire-colored FX routing |
+| `"Cold"` | Ice-colored FX routing |
+| `"Lightning"` | Electric-colored FX routing |
 
 Example:
 
@@ -164,7 +155,7 @@ voidBeam: {
 }
 ```
 
-### Step 2 — Visual routing
+### Step 2 -> Visual routing
 
 `ArenaScene.animateSpellEvent()` routes visuals from the spell tags:
 
@@ -172,55 +163,71 @@ voidBeam: {
 const isArea = event.areaRadius > 0;
 const isProjectile = event.tags.includes("Projectile") && !event.tags.includes("Chain");
 
-if (isArea) animateAreaExplosion(event);
-else if (isProjectile) animateProjectileLance(event);
-else animateLightningChain(event);
+if (isArea) {
+  animateAreaExplosion(event);
+} else if (isProjectile) {
+  animateProjectileLance(event);
+} else {
+  animateLightningChain(event);
+}
 ```
 
 If none of the three visual families fits, add a new `animate*()` method in `ArenaScene.ts` and extend the router.
 
-### Step 3 — Color and FX customization
+### Step 3 -> FX sheet wiring
 
-Inside the animation methods, the element color and effect animation are selected from the spell tags:
+Spell effect sheets are registered in `FX_SHEETS` and animation ranges are defined in `FX_ANIMS`.
 
-```typescript
-const isFire = event.tags.includes("Fire");
-const isCold = event.tags.includes("Cold");
-const fxAnim = isCold ? FX_ANIMS.ice.key : isFire ? FX_ANIMS.fire.key : FX_ANIMS.electric.key;
-const color = isFire ? 0xf97316 : isCold ? 0x38bdf8 : 0xa78bfa;
-```
+Current runtime sheet setup:
 
-To add a new element such as poison, add a `poison` entry to `FX_ANIMS`, a `"Poison"` tag in spell config, and matching selection logic in the Phaser animation methods.
+- `1010.png` -> impact-style effects
+- `1011.png` -> star / lightning-style effects
+- `1012.png` -> spray / splash effects
+- `1013.png` -> wave / area effects
+- `1020.png` -> arc projectile effects
+
+All current FX sheets use `64x64` frames.
+
+To add a new effect:
+
+1. add a new sheet entry in `FX_SHEETS` if needed
+2. add a named animation range in `FX_ANIMS`
+3. route the spell tags to that animation inside `ArenaScene`
 
 ---
 
-## How to swap an existing sprite
+## How to swap an existing monster sprite
 
 Open `frontend/src/game/phaser/spriteConfig.ts` and update the monster entry:
 
 ```typescript
 // Before
-scrapCrawler: { spriteName: "goblin", ... }
+blazeWarden: {
+  spriteName: "24",
+  frameWidth: 80,
+  frameHeight: 80,
+  scale: 1.2,
+  idleFrameCount: 5,
+  healthBarOffsetY: -28
+}
 
 // After
-scrapCrawler: {
-  spriteName: "skelet",
-  frameWidth: 16,
-  frameHeight: 16,
-  scale: 2.5,
-  idleFrameCount: 4,
-  healthBarOffsetY: -26
-},
+blazeWarden: {
+  spriteName: "15",
+  frameWidth: 80,
+  frameHeight: 80,
+  scale: 1.2,
+  idleFrameCount: 5,
+  healthBarOffsetY: -28
+}
 ```
 
 When changing the asset, also review:
 
-- `frameWidth`
-- `frameHeight`
+- whether the sheet is boss-reserved
+- whether the silhouette still matches the monster role
 - `scale`
 - `healthBarOffsetY`
-
-To swap the player, update `PLAYER_SPRITE_CONFIG.spriteName`.
 
 ---
 
@@ -228,25 +235,28 @@ To swap the player, update `PLAYER_SPRITE_CONFIG.spriteName`.
 
 ### Monsters
 
-| Monster ID | Sprite | Size | Rarity |
-|---|---|---|---|
-| `scrapCrawler` | custom `scrap_crawler_clean.png` sheet | `1032x1024` per frame, scaled to `0.04` | Normal |
-| `cinderGrub` | custom `cinder_grub_clean.png` sheet | `1032x1024` per frame, scaled to `0.04` | Normal |
-| `frostSprite` | custom `frost_sprite_2_clean.png` sheet | `1032x1024` per frame, scaled to `0.04` | Normal |
-| `stormHound` | custom `storm_hound_clean.png` sheet | `1032x1024` per frame, scaled to `0.04` | Normal |
-| `voidStalker` | custom `void_stalker_clean.png` sheet | `1032x1024` per frame, scaled to `0.04` | Rare |
-| `blazeWarden` | `big_demon` | `32x36` | Rare |
+For the current recommended mapping set, use:
+
+- `docs/ASSET_MAPPING.md`
+
+That file is the maintained reference for:
+
+- regular monster sheet choices
+- boss-reserved sheet assignments
+- recommended fallback candidates
 
 ### Spells
 
+Current visual families:
+
 | Spell ID | Tags | Visual |
 |---|---|---|
-| `stormChain` | Lightning, Projectile, Chain | Jagged lightning bolt that hops between enemies |
+| `stormChain` | Lightning, Projectile, Chain | Jagged lightning bolt hopping between enemies |
 | `arcLance` | Lightning, Projectile | Straight beam with electric impact |
-| `emberBurst` | Fire, Area, Explosion | Fire sprite plus orange ring at radius |
-| `ashenOrbit` | Fire, Area, Explosion | Fire sprite plus orange ring at radius |
-| `glacierNova` | Cold, Area, Critical | Ice sprite plus blue ring at radius |
-| `tempestBloom` | Lightning, Cold, Area, Chain | Area explosion using cold FX plus blue ring |
+| `emberBurst` | Fire, Area, Explosion | Fire-themed area impact |
+| `ashenOrbit` | Fire, Area, Explosion | Fire-themed area impact |
+| `glacierNova` | Cold, Area, Critical | Cold ring / ice impact |
+| `tempestBloom` | Lightning, Cold, Area, Chain | Cold-leaning area impact with chained logic underneath |
 
 ---
 
@@ -261,4 +271,4 @@ To swap the player, update `PLAYER_SPRITE_CONFIG.spriteName`.
 | `frontend/src/shared/types/saveTypes.ts` | `SpellVisualEvent` and arena visual types |
 | `frontend/src/game/domain/combat/arenaSimulation.ts` | Emits `SpellVisualEvent` when spells fire |
 | `frontend/src/app/useArenaSession.ts` | Forwards snapshots and bypasses throttle when spell events exist |
-| `docs/PIXEL_ART_PROMPTS.md` | Prompt templates and current asset data blocks for generated art |
+| `docs/ASSET_MAPPING.md` | Current runtime monster and spell-effect mapping reference |

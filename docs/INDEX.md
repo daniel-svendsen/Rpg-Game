@@ -7,7 +7,7 @@ This folder collects longer-form project documentation that would otherwise bloa
 - [Command Reference](COMMANDS.md)
 - [System Flowcharts](SYSTEM_FLOWCHARTS.md)
 - [Visual System Guide](VISUALS.md)
-- [Pixel Art Prompt Library](PIXEL_ART_PROMPTS.md)
+- [Asset Mapping Reference](ASSET_MAPPING.md)
 - [Balance Pass - 2026-05-09](BALANCE_PASS_2026-05-09.md)
 
 Notes:

@@ -42,6 +42,8 @@ That file covers:
 - [docs/SIMULATION.md](docs/SIMULATION.md)
 - [docs/COMMANDS.md](docs/COMMANDS.md)
 - [docs/SYSTEM_FLOWCHARTS.md](docs/SYSTEM_FLOWCHARTS.md)
+- [docs/VISUALS.md](docs/VISUALS.md)
+- [docs/ASSET_MAPPING.md](docs/ASSET_MAPPING.md)
 
 ## Project Structure
 

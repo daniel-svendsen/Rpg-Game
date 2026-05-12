@@ -28,9 +28,9 @@ Keep three layers separate:
 
 ## Current Phase
 
-- Current phase: `Phase 2 - Balance Infrastructure`
+- Current phase: `Phase 3 - UI Readability And Gameplay Clarity`
 - Status: `In progress`
-- Exit rule: do not drift into broad UI or Phaser rollout work before the headless balance loop is actively informing repeatable tuning decisions with useful output and override-driven comparisons.
+- Exit rule: improve player-facing clarity, mobile readability, and comparison feedback without turning the phase into broad feature sprawl or speculative new systems.
 
 ## Guiding Principles
 
@@ -103,7 +103,7 @@ Post-acceptance fixes:
 
 ## Phase 2 - Balance Infrastructure
 
-Status: `Current`
+Status: `Accepted`
 
 Goal:
 
@@ -290,7 +290,7 @@ Simulator reporting (minimum):
 
 ## Phase 3 - UI Readability And Gameplay Clarity
 
-Status: `Planned`
+Status: `Current`
 
 Goal:
 
@@ -308,7 +308,7 @@ Candidate tasks:
 - [x] Show item rarity color in the equipment/gear view (not only inventory/loot/shop).
 - [x] Unify stat display format across all surfaces: whole-number percentages, no raw decimals on resistances, crit, or spell power; consistent between item cards, character sheet, and spell detail chips.
 - [x] Equipment view redesigned as an RPG-style doll grid (Helmet / Amulet+Body+Weapon / Ring+Belt+Ring / Gloves+Boots) with weapon pixel art sprites and rarity-colored slot borders.
-- [ ] Simplify item comparison UI: remove "Compared to X" and rely on power delta (+/-).
+- [ ] Simplify item comparison UI: keep concise upgrade feedback, but expose a clearer and more consistent power delta (+/-) across inventory, gear, and shop.
 - [ ] Map pacing: maps currently feel short; brainstorm and tune levers (monster count, arena size, spawn cadence, movement speed, pack density).
 - [ ] Fix mobile horizontal scrolling/overflow where content extends beyond the viewport.
 
@@ -374,7 +374,7 @@ Success criteria:
 
 ## Next Recommended Step
 
-- Shard tier upgrade implemented: selecting a Tier N map now shows a "Craft 1 Tier N map (N×5 shards)" button in Map Crafting. Next candidates: Phase 3 UI readability work (item comparison simplification, mobile overflow fixes) or declaring Phase 2 accepted and beginning Phase 3.
+- Continue `Phase 3` by tightening item comparison clarity and verifying remaining mobile overflow issues in the live UI. Keep map pacing follow-up simulator-driven and avoid reopening broad Phaser or asset experiments unless they directly support readability.
 
 ## Planned Workstreams
 
@@ -398,7 +398,7 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 - [x] Improve login/register error handling so the UI shows clear causes such as wrong password, invalid email, existing account, missing fields, short password, and backend/API failures.
 - [x] Show total gold value before confirming `Sell all`.
 - [x] Add rarity-specific inventory selling and pickup auto-sell controls (`Sell Normal/Magic/Rare`, `Auto-sell Normal/Magic/Rare`) while keeping uniques protected.
-- [ ] Hide, move, or replace low-value `Active spell` and `Map state` panels during map runs.
+- [x] Replace low-value run-state panels with a compact arena HUD focused on map name, enemy count / completion state, HP, flask charges, and loot.
 
 ### Map pacing and sustain
 
@@ -468,14 +468,13 @@ Implemented (continued):
 - Armor mitigation validated in benchmark: body armor uses `armor` stat (T4: 35 → T9: 235) so the `min(0.50, armor/(armor + rawDmg×5))` formula is exercised in every benchmark run; previously all benchmark defense was evasion-only
 
 - Phaser visuals (first pass, out-of-phase early delivery):
-  - All monsters now render with real 0x72 DungeonTileset II idle sprite animations, each mapped to a named spriteName in `frontend/src/game/phaser/spriteConfig.ts`.
-  - Phaser now also supports custom horizontal spritesheets via `assetPath`, piloted with a cleaned `Scrap Crawler` sheet in `frontend/public/assets/monstersprites/`.
-  - Player character renders as an animated wizard sprite (wizzard_m) with camera follow.
-  - Spell effects use the Gizmo Effect pack spritesheet (32x32): fire, electric, and ice animations routed per spell tags.
+  - Monsters now render from numbered `80x80` runtime spritesheets in `frontend/public/assets/monsters/`, mapped by monster id in `frontend/src/game/phaser/spriteConfig.ts`.
+  - Player character renders from the same runtime sprite-sheet set (`30.png`) with camera follow.
+  - Spell effects use `64x64` runtime sheets in `frontend/public/assets/spelleffects/`, registered through `FX_SHEETS` / `FX_ANIMS`.
   - Three visual animation types: `animateLightningChain` (jagged bolt hopping between enemies), `animateProjectileLance` (straight beam), `animateAreaExplosion` (ring + impact sprite at radius).
   - `SpellVisualEvent` added to `ArenaSnapshot`; domain emits one event per cast; Phaser processes each event exactly once via `processedSpellEventIds`.
   - Snapshot throttle in `useArenaSession` bypassed when spell events are present so no cast is silently dropped.
-  - `docs/VISUALS.md` and `docs/PIXEL_ART_PROMPTS.md` now document both visual wiring and external sprite-prompt workflows.
+  - `docs/VISUALS.md` and `docs/ASSET_MAPPING.md` document the current runtime sprite / FX setup.
 
 Still planned (next major domain work):
 - Item stat roll UI: expose roll distributions to players (min/max per stat, tier label on item card).

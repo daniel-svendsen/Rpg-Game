@@ -41,6 +41,11 @@ export const MONSTER_SPRITE_CONFIG: Record<string, MonsterSpriteConfig> = {
     frameWidth: 80, frameHeight: 80, scale: 1.2,
     idleFrameCount: 5, healthBarOffsetY: -28
   },
+  blazeWarden: {
+    spriteName: "24",
+    frameWidth: 80, frameHeight: 80, scale: 1.2,
+    idleFrameCount: 5, healthBarOffsetY: -28
+  },
   // Spellcaster monsters (Rare)
   fireElemental: {
     spriteName: "10",
