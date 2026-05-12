@@ -15,8 +15,10 @@ import type { ArenaSnapshot, CharacterRecord, MapEnhancementInstance } from "../
 import type { RunBatchState, ScreenMode, SelectedMapTarget } from "./appTypes";
 import {
   buildOwnedMapRunQueue,
+  createUnlockedTierSelection,
   getCurrencyAmount,
   getPreferredMapSelection,
+  getUnlockedTierSelection,
   updateCurrency
 } from "./mapFlow";
 
@@ -60,8 +62,11 @@ export const useMapActions = ({
     runBatch: RunBatchState | null = null
   ): boolean => {
     let nextCharacter = normalizeCharacterRecord(sourceCharacter);
+    const selectedUnlockedTier = getUnlockedTierSelection(mapTarget);
     const ownedMapStack =
-      mapTarget !== "trainingGrounds" ? getOwnedMapStack(nextCharacter.mapProgress, mapTarget) : null;
+      mapTarget !== "trainingGrounds" && selectedUnlockedTier === null
+        ? getOwnedMapStack(nextCharacter.mapProgress, mapTarget)
+        : null;
     const directMapId =
       mapTarget !== "trainingGrounds" && !ownedMapStack && mapConfig[mapTarget] ? mapTarget : null;
     const mapId = ownedMapStack?.mapId ?? directMapId ?? "trainingGrounds";
@@ -99,6 +104,7 @@ export const useMapActions = ({
 
       if (ownedMapStack && !isBossMap) {
         nextCharacter = consumeOwnedMap(nextCharacter, mapTarget);
+        setSelectedMapTarget(getPreferredMapSelection(nextCharacter, mapTarget, ownedMapStack.mapId, ownedMapStack.tier));
       }
     }
 
@@ -256,8 +262,10 @@ export const useMapActions = ({
 
     let nextCharacter = updateCurrency(character, "mapShard", -shardCost);
     nextCharacter = addOwnedMap(nextCharacter, `tier${tier}Map`, tier);
+    const craftedEntry = getOwnedMapStackBySignature(nextCharacter.mapProgress, `tier${tier}Map`, tier, []);
 
     commitCharacter(nextCharacter);
+    setSelectedMapTarget(craftedEntry?.stackId ?? createUnlockedTierSelection(tier));
     void persistCharacterNow(nextCharacter, "Map crafting save failed. Try saving manually before refreshing.");
     setStatusMessage(`Crafted 1 Tier ${tier} map.`);
   };

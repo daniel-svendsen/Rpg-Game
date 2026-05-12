@@ -4,6 +4,20 @@ import type { CharacterRecord, MapEnhancementInstance } from "../shared/types/sa
 import { getOwnedMapStack } from "../game/domain/maps/mapProgress";
 import type { SelectedMapTarget } from "./appTypes";
 
+const unlockedTierSelectionPrefix = "unlocked-tier:";
+
+export const createUnlockedTierSelection = (tier: number): SelectedMapTarget =>
+  `${unlockedTierSelectionPrefix}${tier}`;
+
+export const getUnlockedTierSelection = (target: SelectedMapTarget): number | null => {
+  if (!target.startsWith(unlockedTierSelectionPrefix)) {
+    return null;
+  }
+
+  const parsedTier = Number.parseInt(target.slice(unlockedTierSelectionPrefix.length), 10);
+  return Number.isInteger(parsedTier) && parsedTier > 0 ? parsedTier : null;
+};
+
 export const getCurrencyAmount = (character: CharacterRecord, code: string): number =>
   character.currencies.find((entry) => entry.code === code)?.amount ?? 0;
 
@@ -72,10 +86,22 @@ export const buildOwnedMapRunQueue = (
 export const getPreferredMapSelection = (
   character: CharacterRecord,
   previousTarget: SelectedMapTarget,
-  preferredMapId?: string
+  preferredMapId?: string,
+  preferredTier?: number
 ): SelectedMapTarget => {
   if (previousTarget === "trainingGrounds") {
     return character.mapProgress.consumableMaps[0]?.stackId ?? "trainingGrounds";
+  }
+
+  const selectedUnlockedTier = getUnlockedTierSelection(previousTarget);
+
+  if (selectedUnlockedTier !== null) {
+    if (selectedUnlockedTier > character.mapProgress.highestUnlockedTier) {
+      return character.mapProgress.consumableMaps[0]?.stackId ?? "trainingGrounds";
+    }
+
+    const matchingTierEntry = character.mapProgress.consumableMaps.find((entry) => entry.tier === selectedUnlockedTier);
+    return matchingTierEntry?.stackId ?? createUnlockedTierSelection(selectedUnlockedTier);
   }
 
   if (getOwnedMapStack(character.mapProgress, previousTarget)) {
@@ -85,8 +111,15 @@ export const getPreferredMapSelection = (
   const matchingMapEntry = preferredMapId
     ? character.mapProgress.consumableMaps.find((entry) => entry.mapId === preferredMapId)
     : null;
+  const matchingTierEntry = preferredTier
+    ? character.mapProgress.consumableMaps.find((entry) => entry.tier === preferredTier)
+    : null;
 
-  return matchingMapEntry?.stackId ?? character.mapProgress.consumableMaps[0]?.stackId ?? "trainingGrounds";
+  if (!matchingMapEntry && !matchingTierEntry && preferredTier && preferredTier <= character.mapProgress.highestUnlockedTier) {
+    return createUnlockedTierSelection(preferredTier);
+  }
+
+  return matchingMapEntry?.stackId ?? matchingTierEntry?.stackId ?? character.mapProgress.consumableMaps[0]?.stackId ?? "trainingGrounds";
 };
 
 export const getMapVariantLabel = (enhancementCount: number): string =>

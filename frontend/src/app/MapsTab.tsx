@@ -9,6 +9,7 @@ import type {
   OwnedMapStack
 } from "../shared/types/saveTypes";
 import type { SelectedMapTarget } from "./appTypes";
+import { createUnlockedTierSelection, getUnlockedTierSelection } from "./mapFlow";
 
 interface MapsTabProps {
   topBar: ReactNode;
@@ -52,12 +53,17 @@ export const MapsTab = ({
   const selectedMap = mapConfig[selectedMapId];
   const consumableMapEntries = character?.mapProgress.consumableMaps ?? [];
   const highestUnlockedTier = character?.mapProgress.highestUnlockedTier ?? 1;
+  const selectedUnlockedTier = getUnlockedTierSelection(selectedMapTarget);
   const selectedTier = selectedMap?.tier ?? 0;
   const isSelectedMapLocked = selectedMapTarget !== "trainingGrounds" && selectedTier > highestUnlockedTier;
+  const hasSelectedOwnedMap = selectedMapTarget === "trainingGrounds" || selectedMapEntry !== null;
   const craftTier = selectedMapTarget !== "trainingGrounds" ? selectedTier : 0;
   const craftCost = craftTier > 0 ? balanceConfig.mapCrafting.shardCraftCostPerTier * craftTier : 0;
   const canAffordCraft = craftTier > 0 && mapShardAmount >= craftCost;
   const selectedResolvedMap = resolveMapInstance(selectedMap, selectedMapEnhancements);
+  const unlockedEmptyTiers = Array.from({ length: highestUnlockedTier }, (_, index) => index + 1).filter(
+    (tier) => !consumableMapEntries.some((entry) => entry.tier === tier)
+  );
   const nextEnhancementCost =
     selectedMapTarget !== "trainingGrounds" && selectedMapEntry
       ? getEnhancementShardCost(selectedMapEntry.enhancements.length)
@@ -70,16 +76,24 @@ export const MapsTab = ({
       <section className="panel stack">
         <h4>Maps</h4>
         <div className="actions">
-          <button className="primary-button" disabled={isSelectedMapLocked} onClick={onStartMap}>
+          <button className="primary-button" disabled={isSelectedMapLocked || !hasSelectedOwnedMap} onClick={onStartMap}>
             Start
           </button>
           {selectedMapTarget !== "trainingGrounds" ? (
-            <button className="secondary-button" disabled={isSelectedMapLocked} onClick={onRunAllMaps}>
+            <button
+              className="secondary-button"
+              disabled={isSelectedMapLocked || !selectedMapEntry}
+              onClick={onRunAllMaps}
+            >
               Run all maps in this tier
             </button>
           ) : null}
           {selectedMapTarget !== "trainingGrounds" ? (
-            <button className="secondary-button" disabled={isSelectedMapLocked} onClick={onEnhanceSelectedMap}>
+            <button
+              className="secondary-button"
+              disabled={isSelectedMapLocked || !selectedMapEntry}
+              onClick={onEnhanceSelectedMap}
+            >
               Enhance ({nextEnhancementCost} shards)
             </button>
           ) : null}
@@ -89,12 +103,18 @@ export const MapsTab = ({
             Locked. Unlocked by defeating the Tier {Math.max(1, selectedTier - 1)} boss.
           </p>
         ) : null}
-        {selectedMapTarget !== "trainingGrounds" ? (
+        {selectedMapTarget !== "trainingGrounds" && selectedMapEntry ? (
           <div className="status-text">
             {getMapDisplayName(selectedMapId, selectedMapEnhancements.length)} | {getMapVariantLabel(selectedMapEnhancements.length)}{" "}
             | Enhancements {selectedMapEnhancements.length}/{balanceConfig.mapCrafting.maxEnhancementsPerMap} | Monsters{" "}
             {selectedResolvedMap.monsterCount}
           </div>
+        ) : null}
+        {selectedMapTarget !== "trainingGrounds" && !selectedMapEntry && selectedUnlockedTier !== null ? (
+          <p className="status-text">
+            Tier {selectedUnlockedTier} is unlocked, but you do not currently own any Tier {selectedUnlockedTier} maps.
+            Craft one with shards to run it.
+          </p>
         ) : null}
         {queuedMapCount > 0 ? (
           <p className="status-text">
@@ -143,6 +163,28 @@ export const MapsTab = ({
                     {isSelected ? "Selected" : "Select"}
                   </button>
                 </div>
+              </div>
+            </div>
+          );
+        })}
+        {unlockedEmptyTiers.map((tier) => {
+          const virtualSelection = createUnlockedTierSelection(tier);
+          const isSelected = selectedMapTarget === virtualSelection;
+          const cardClass = `map-card map-card--tier-${tier}${isSelected ? " selected-map-card" : ""}`;
+          return (
+            <div key={virtualSelection} className={cardClass}>
+              <div className="inventory-row">
+                <div>
+                  <div className="item-name-row">
+                    <strong>Tier {tier} Map</strong>
+                    <span className={`map-tier-badge map-tier-badge--${tier}`}>T{tier}</span>
+                  </div>
+                  <div className="status-text">Qty 0 • Unmodified</div>
+                  <div className="status-text">Unlocked. Craftable with {tier * balanceConfig.mapCrafting.shardCraftCostPerTier} shards.</div>
+                </div>
+                <button className="secondary-button" onClick={() => onSelectMap(virtualSelection)}>
+                  {isSelected ? "Selected" : "Select"}
+                </button>
               </div>
             </div>
           );

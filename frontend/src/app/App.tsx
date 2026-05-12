@@ -19,7 +19,7 @@ import {
   type ShopItemState
 } from "./appUiHelpers";
 import { resolveManualSaveCharacter } from "./characterPersistence";
-import { getPreferredMapSelection } from "./mapFlow";
+import { getPreferredMapSelection, getUnlockedTierSelection } from "./mapFlow";
 import { CharacterCreationScreen } from "./CharacterCreationScreen";
 import { useArenaSession } from "./useArenaSession";
 import { useHubActions } from "./useHubActions";
@@ -106,10 +106,11 @@ export const App = () => {
   );
 
   const selectedMapEntry =
-    character && selectedMapTarget !== "trainingGrounds"
+    character && selectedMapTarget !== "trainingGrounds" && getUnlockedTierSelection(selectedMapTarget) === null
       ? getOwnedMapStack(character.mapProgress, selectedMapTarget)
       : null;
-  const selectedMapId = selectedMapEntry?.mapId ?? "trainingGrounds";
+  const selectedUnlockedTier = getUnlockedTierSelection(selectedMapTarget);
+  const selectedMapId = selectedMapEntry?.mapId ?? (selectedUnlockedTier ? `tier${selectedUnlockedTier}Map` : "trainingGrounds");
   const selectedMapEnhancements = selectedMapEntry?.enhancements ?? [];
   const {
     startMapRun,
@@ -235,6 +236,16 @@ export const App = () => {
 
   useEffect(() => {
     if (!character || selectedMapTarget === "trainingGrounds") {
+      return;
+    }
+
+    const selectedTier = getUnlockedTierSelection(selectedMapTarget);
+
+    if (selectedTier !== null) {
+      if (selectedTier > character.mapProgress.highestUnlockedTier) {
+        setSelectedMapTarget(getPreferredMapSelection(character, selectedMapTarget));
+      }
+
       return;
     }
 
