@@ -40,7 +40,8 @@ describe("spellEngine unique item effects", () => {
       pyrelordCrown: "pyrelordCrown",
       winterwakeDiadem: "winterwakeDiadem",
       stormfangRing: "stormfangRing",
-      tempestHelm: "tempestHelm"
+      tempestHelm: "tempestHelm",
+      throneOfRuin: "throneOfRuin"
     } as const;
 
     Object.entries(expectedEffectIds).forEach(([itemId, effectId]) => {
@@ -104,5 +105,20 @@ describe("spellEngine unique item effects", () => {
 
     expect(withResolved.projectileCount).toBe(withoutResolved.projectileCount + 1);
     expect(withResolved.cooldownMs).toBeLessThan(withoutResolved.cooldownMs);
+  });
+
+  it("makes Throne of Ruin visibly amplify projectile spells", () => {
+    const withEffect = buildEquippedUniqueCharacter("throneOfRuin", true);
+    const withoutEffect = buildEquippedUniqueCharacter("throneOfRuin", false);
+
+    const withResolved = resolveSpell(withEffect, "arcLance", []);
+    const withoutResolved = resolveSpell(withoutEffect, "arcLance", []);
+
+    expect(withResolved.projectileCount).toBe(withoutResolved.projectileCount + 1);
+    expect(withResolved.damage).toBeGreaterThan(withoutResolved.damage);
+    expect(withResolved.critChance).toBeGreaterThan(withoutResolved.critChance);
+    expect(withResolved.resistancePenetration.Lightning).toBeGreaterThan(
+      withoutResolved.resistancePenetration.Lightning
+    );
   });
 });

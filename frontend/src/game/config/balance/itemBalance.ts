@@ -650,6 +650,70 @@ export const itemBalance = {
         critChance: 0.13,
         spellPowerMultiplier: 0.28
       }
+    },
+    {
+      id: "riftwakeLoop",
+      name: "Riftwake Loop",
+      slot: "Ring",
+      minTier: 10,
+      dropWeight: 0,
+      uniqueTier: 1,
+      tags: ["Critical", "SpellDamage", "Unique"],
+      statBonuses: {
+        strength: 14,
+        agility: 14,
+        vitality: 14,
+        dexterity: 14,
+        fireResistance: 0.2,
+        coldResistance: 0.2,
+        lightningResistance: 0.2,
+        maxHealth: 96,
+        critChance: 0.09,
+        spellPowerMultiplier: 0.18
+      }
+    },
+    {
+      id: "obsidianEpoch",
+      name: "Obsidian Epoch",
+      slot: "BodyArmor",
+      minTier: 10,
+      dropWeight: 0,
+      uniqueTier: 2,
+      tags: ["Physical", "SpellDamage", "Unique"],
+      statBonuses: {
+        vitality: 20,
+        armor: 108,
+        evasion: 84,
+        fireResistance: 0.22,
+        coldResistance: 0.22,
+        lightningResistance: 0.22,
+        maxHealth: 128,
+        spellPowerMultiplier: 0.2
+      }
+    },
+    {
+      id: "throneOfRuin",
+      name: "Throne of Ruin",
+      slot: "Helmet",
+      minTier: 10,
+      dropWeight: 0,
+      uniqueTier: 3,
+      tags: ["Critical", "SpellDamage", "Fire", "Lightning", "Cold", "Unique"],
+      uniqueEffectId: "throneOfRuin",
+      uniqueEffectDescription: "All spells deal 35% more damage, gain +18% crit chance, penetrate 25% elemental resistances, and projectile spells fire +1 extra.",
+      statBonuses: {
+        strength: 16,
+        agility: 16,
+        vitality: 16,
+        dexterity: 16,
+        armor: 60,
+        fireResistance: 0.24,
+        coldResistance: 0.24,
+        lightningResistance: 0.24,
+        maxHealth: 136,
+        critChance: 0.14,
+        spellPowerMultiplier: 0.32
+      }
     }
   ] satisfies UniqueItemDefinition[],
   bossUniquePools: {
@@ -661,6 +725,7 @@ export const itemBalance = {
     6: { common1: "shadowstepBoots", common2: "nightglassBand", chase: "voidmantleHood" },
     7: { common1: "starcoilRing", common2: "astralHarness", chase: "kingsfallCrown" },
     8: { common1: "bloodwakeSash", common2: "doomplate", chase: "cataclysmHelm" },
-    9: { common1: "worldheartBand", common2: "apexMantle", chase: "eternityCrown" }
+    9: { common1: "worldheartBand", common2: "apexMantle", chase: "eternityCrown" },
+    10: { common1: "riftwakeLoop", common2: "obsidianEpoch", chase: "throneOfRuin" }
   } as const
 } as const;

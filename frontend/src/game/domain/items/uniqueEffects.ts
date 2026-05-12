@@ -173,6 +173,14 @@ const applyUniqueEffect = (
         bonusCritChanceForSpells: modifiers.bonusCritChanceForSpells + 0.15,
         resistancePenetrationForAllSpells: modifiers.resistancePenetrationForAllSpells + 0.20
       };
+    case "throneOfRuin":
+      return {
+        ...modifiers,
+        moreDamageForSpells: modifiers.moreDamageForSpells + 0.35,
+        bonusCritChanceForSpells: modifiers.bonusCritChanceForSpells + 0.18,
+        resistancePenetrationForAllSpells: modifiers.resistancePenetrationForAllSpells + 0.25,
+        bonusProjectilesForProjectileSpells: modifiers.bonusProjectilesForProjectileSpells + 1
+      };
     default:
       return modifiers;
   }
