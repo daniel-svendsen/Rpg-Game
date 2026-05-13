@@ -19,6 +19,10 @@ dev.local.properties
 frontend/vite.config.js
 frontend/vite.config.d.ts
 frontend/sim-profiles/benchmark-tier*.json
+frontend/sim-overrides/*.json
+frontend/sim-profiles/benchmark-endgame-high.json
+frontend/sim-profiles/svendsen110-current.json
+docs/tmp_character_*.json
 .claude/
 frontend/CLAUDE.md
 backend/CLAUDE.md
