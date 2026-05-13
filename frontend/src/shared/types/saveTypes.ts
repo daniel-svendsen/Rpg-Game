@@ -1,4 +1,6 @@
 export type Tag =
+  | "Spell"
+  | "Attack"
   | "Cold"
   | "Lightning"
   | "Fire"

@@ -1,9 +1,12 @@
-import type { ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { getEquipmentSlotLabel, getItemSlotLabel } from "../game/config/itemConfig";
 import { ItemSlotIcon } from "./ItemSlotIcon";
 import { getItemPowerScore, getPowerChangeForCharacterItem } from "../game/domain/items/itemPower";
-import { getItemStatEntries } from "../game/domain/items/itemStats";
 import type { CharacterRecord, EquipmentSlot, InventoryItem } from "../shared/types/saveTypes";
+import { ItemStatBlock } from "./ItemStatBlock";
+import { useItemComparison } from "./useItemComparison";
+import { summarizeComparison } from "./itemComparison";
+import { toChipModel } from "./comparisonChipUi";
 
 // ── Weapon sprite mapping ─────────────────────────────────────────────────────
 
@@ -98,6 +101,8 @@ export const GearTab = ({
   onSelectEquipmentSlot,
   onOpenEquipmentPicker
 }: GearTabProps) => {
+  const getComparison = useItemComparison(character);
+  const [selectedInventoryItemId, setSelectedInventoryItemId] = useState<string | null>(null);
   const sortedInventory = [...(character?.inventory ?? [])].sort((left, right) => {
     const powerDelta = getItemPowerScore(right) - getItemPowerScore(left);
     if (powerDelta !== 0) {
@@ -112,6 +117,11 @@ export const GearTab = ({
 
     return left.name.localeCompare(right.name);
   });
+  const selectedInventoryItem = useMemo(
+    () => sortedInventory.find((item) => item.id === selectedInventoryItemId) ?? null,
+    [selectedInventoryItemId, sortedInventory]
+  );
+  const selectedComparison = selectedInventoryItem ? getComparison(selectedInventoryItem) : null;
 
   return (
     <div className="content stack mobile-content">
@@ -159,6 +169,16 @@ export const GearTab = ({
               </div>
             );
           })}
+        {selectedInventoryItem && selectedComparison?.equippedItem ? (
+          <div className="panel stack compare-overlay-panel">
+            <div className="inventory-row">
+              <strong>Compare Overlay</strong>
+              <span className="status-text">{selectedInventoryItem.name}</span>
+            </div>
+            <div className="status-text">Against equipped: {selectedComparison.equippedItem.name}</div>
+            <ItemStatBlock item={selectedComparison.equippedItem} comparison={selectedComparison} />
+          </div>
+        ) : null}
       </section>
       <section className="panel stack">
         <div className="inventory-row">
@@ -167,8 +187,15 @@ export const GearTab = ({
         {sortedInventory.length === 0 ? (
           <p className="status-text">Your inventory is empty. Run a map to collect loot.</p>
         ) : null}
-        {sortedInventory.map((item) => (
-        <div key={item.id} className={`loot-entry rarity-card rarity-${item.rarity.toLowerCase()}`}>
+        {sortedInventory.map((item) => {
+          const summary = summarizeComparison(character, item);
+          const chipModel = toChipModel(summary);
+          return (
+        <div
+          key={item.id}
+          className={`loot-entry rarity-card rarity-${item.rarity.toLowerCase()}${selectedInventoryItemId === item.id ? " selected-comparison-item" : ""}`}
+          onClick={() => setSelectedInventoryItemId(item.id)}
+        >
           <div className="inventory-row">
             <div className="item-name-row">
               {item.slot ? <ItemSlotIcon slot={item.slot} /> : null}
@@ -185,23 +212,17 @@ export const GearTab = ({
             ) : null}
           </div>
           <div className="status-text">Sell price {getItemSellPrice(item)} gold</div>
-          {getItemStatEntries(item).filter((e) => e.isBase).map((entry) => (
-            <div key={`${item.id}-${entry.label}`} className="stat-line">
-              <span className="stat-label">{entry.label}</span>
-              <span className="stat-value">{entry.formattedValue}</span>
+          {chipModel ? (
+            <div className="delta-chip-row">
+              <span className={`delta-chip ${chipModel.damageClass}`}>
+                Damage {chipModel.damageText}
+              </span>
+              <span className={`delta-chip ${chipModel.survivalClass}`}>
+                Survival {chipModel.survivalText}
+              </span>
             </div>
-          ))}
-          <div className="item-divider" />
-          {getItemStatEntries(item).filter((e) => !e.isBase).map((entry) => (
-            <div
-              key={`${item.id}-${entry.label}`}
-              className={`stat-line${entry.tier !== null ? ` stat-tier-${entry.tier}` : ""}`}
-            >
-              {entry.tier !== null && <span className="stat-tier-dot" />}
-              <span className="stat-label">{entry.label}</span>
-              <span className="stat-value">{entry.formattedValue}</span>
-            </div>
-          ))}
+          ) : null}
+          <ItemStatBlock item={item} comparison={getComparison(item)} />
           {item.uniqueEffectDescription ? (
             <div className="unique-effect-line">{item.uniqueEffectDescription}</div>
           ) : null}
@@ -238,7 +259,8 @@ export const GearTab = ({
             return pc !== null && pc > 0 ? <div className="upgrade-text">Possible upgrade</div> : null;
           })()}
         </div>
-        ))}
+          );
+        })}
       </section>
     </div>
   );

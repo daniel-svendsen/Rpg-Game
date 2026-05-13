@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
 import { getItemPowerScore, getPowerChangeForCharacterItem } from "../game/domain/items/itemPower";
-import { getItemStatEntries } from "../game/domain/items/itemStats";
 import { getItemSlotLabel } from "../game/config/itemConfig";
 import { ItemSlotIcon } from "./ItemSlotIcon";
+import { ItemStatBlock } from "./ItemStatBlock";
+import { useItemComparison } from "./useItemComparison";
+import { summarizeComparison } from "./itemComparison";
+import { toChipModel } from "./comparisonChipUi";
 import type { CharacterRecord, EquipmentSlot } from "../shared/types/saveTypes";
 import { LootPanel } from "./LootPanel";
 
@@ -24,14 +27,21 @@ export const InventoryTab = ({
   onSellItem,
   onEquipItem,
   onSelectEquipmentSlot
-}: InventoryTabProps) => (
-  <div className="content stack mobile-content">
+}: InventoryTabProps) => {
+  const getComparison = useItemComparison(character);
+
+  return (
+    <div className="content stack mobile-content">
     {topBar}
     <section className="panel stack">
       <div className="inventory-row">
         <h4>Inventory</h4>
       </div>
       {(character?.inventory ?? []).map((item) => (
+        (() => {
+          const summary = summarizeComparison(character, item);
+          const chipModel = toChipModel(summary);
+          return (
         <div key={item.id} className={`loot-entry rarity-card rarity-${item.rarity.toLowerCase()}`}>
           <div className="inventory-row">
             <div className="item-name-row">
@@ -44,23 +54,17 @@ export const InventoryTab = ({
             <div className="status-text">Power {getItemPowerScore(item).toFixed(0)}</div>
             <div className="status-text">Sell price {getItemSellPrice(item)} gold</div>
           </div>
-          {getItemStatEntries(item).filter((e) => e.isBase).map((entry) => (
-            <div key={`${item.id}-${entry.label}`} className="stat-line">
-              <span className="stat-label">{entry.label}</span>
-              <span className="stat-value">{entry.formattedValue}</span>
+          {chipModel ? (
+            <div className="delta-chip-row">
+              <span className={`delta-chip ${chipModel.damageClass}`}>
+                Damage {chipModel.damageText}
+              </span>
+              <span className={`delta-chip ${chipModel.survivalClass}`}>
+                Survival {chipModel.survivalText}
+              </span>
             </div>
-          ))}
-          <div className="item-divider" />
-          {getItemStatEntries(item).filter((e) => !e.isBase).map((entry) => (
-            <div
-              key={`${item.id}-${entry.label}`}
-              className={`stat-line${entry.tier !== null ? ` stat-tier-${entry.tier}` : ""}`}
-            >
-              {entry.tier !== null && <span className="stat-tier-dot" />}
-              <span className="stat-label">{entry.label}</span>
-              <span className="stat-value">{entry.formattedValue}</span>
-            </div>
-          ))}
+          ) : null}
+          <ItemStatBlock item={item} comparison={getComparison(item)} />
           {item.uniqueEffectDescription ? (
             <div className="unique-effect-line">{item.uniqueEffectDescription}</div>
           ) : null}
@@ -97,8 +101,11 @@ export const InventoryTab = ({
             return pc !== null && pc > 0 ? <div className="upgrade-text">Possible upgrade</div> : null;
           })()}
         </div>
+          );
+        })()
       ))}
     </section>
     <LootPanel recentLoot={recentLoot} />
-  </div>
-);
+    </div>
+  );
+};

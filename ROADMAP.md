@@ -308,10 +308,10 @@ Candidate tasks:
 - [x] Show item rarity color in the equipment/gear view (not only inventory/loot/shop).
 - [x] Unify stat display format across all surfaces: whole-number percentages, no raw decimals on resistances, crit, or spell power; consistent between item cards, character sheet, and spell detail chips.
 - [x] Equipment view redesigned as an RPG-style doll grid (Helmet / Amulet+Body+Weapon / Ring+Belt+Ring / Gloves+Boots) with weapon pixel art sprites and rarity-colored slot borders.
-- [ ] Simplify item comparison UI: keep concise upgrade feedback, but expose a clearer and more consistent power delta (+/-) across inventory, gear, and shop.
-- [ ] Add a differential tooltip for item comparison so hovered or selected items show the net stat change versus the currently equipped item, reducing head-math across armor, evasion, resistances, crit stats, penetration, and similar mixed affixes.
-- [ ] Add lightweight build-synergy tags or highlights in item tooltips so affixes that directly match the currently active spell or support profile stand out from generically strong but lower-synergy stats.
-- [ ] Add affix tier pips or similar compact roll-quality indicators in item tooltips so players can quickly tell whether an affix is a strong or weak roll within its tier range without memorizing hidden stat spans.
+- [x] Simplify item comparison UI: keep concise upgrade feedback, but expose a clearer and more consistent power delta (+/-) across inventory, gear, and shop.
+- [x] Add a differential tooltip for item comparison so hovered or selected items show the net stat change versus the currently equipped item, reducing head-math across armor, evasion, resistances, crit stats, penetration, and similar mixed affixes.
+- [x] Add lightweight build-synergy tags or highlights in item tooltips so affixes that directly match the currently active spell or support profile stand out from generically strong but lower-synergy stats.
+- [x] Add affix tier pips or similar compact roll-quality indicators in item tooltips so players can quickly tell whether an affix is a strong or weak roll within its tier range without memorizing hidden stat spans.
 - [ ] Add a spell `Final Output` panel in the spell/support UI so linked supports immediately show the resolved result from the same domain-driven spell calculation used by combat, exposing concrete player-facing values such as projectile count, chain count, area, cooldown/cast-speed impact, crit chance, and similar derived spell stats.
 - [ ] Show effective mitigation in the character sheet for current or recent map tier context, so raw armor, evasion, and similar defense stats are paired with an estimated real combat outcome instead of standing alone as opaque numbers.
 - [ ] Add a minimalist death recap in the run summary that shows the killing enemy and damage type, giving players a compact explanation for deaths without turning the screen into a full combat log.
@@ -430,9 +430,9 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 - [x] Centralize item rarity colors so equipped gear, inventory, loot, shop, and item cards use the same visual rules.
 - [x] Remove misleading unique flavor text from item cards when no gameplay effect exists; show concrete stats only.
 - [x] Make `Normal` items roll zero affixes so rarity lines up with item complexity (`Magic` = 1–2, `Rare` = 3+).
-- [ ] Add a differential item tooltip that compares a candidate item against the currently equipped item and shows the net stat change directly on the card, especially for mixed defensive and offensive affixes where manual comparison is currently too opaque.
-- [ ] Add build-synergy highlights in item cards so affixes that align with the active spell/support setup are visibly called out, helping players distinguish true build upgrades from high-power-score but low-relevance drops.
-- [ ] Add compact affix tier pips or roll-quality markers in item cards so players can see whether a stat roll is near the low, middle, or high end of its allowed range without needing external tier-range knowledge.
+- [x] Add a differential item tooltip that compares a candidate item against the currently equipped item and shows the net stat change directly on the card, especially for mixed defensive and offensive affixes where manual comparison is currently too opaque.
+- [x] Add build-synergy highlights in item cards so affixes that align with the active spell/support setup are visibly called out, helping players distinguish true build upgrades from high-power-score but low-relevance drops.
+- [x] Add compact affix tier pips or roll-quality markers in item cards so players can see whether a stat roll is near the low, middle, or high end of its allowed range without needing external tier-range knowledge.
 - [ ] Rework key unique items so their effects are directly visible or clearly felt in combat, not only reflected in UI stats or hidden math.
 - [ ] Keep unique item descriptions, shared domain logic, simulator behavior, and runtime combat behavior aligned.
 - [ ] Add more varied map backgrounds driven by config, with room for tier-specific and random variants.

@@ -43,7 +43,7 @@ export const spellConfig: Record<string, SpellDefinition> = {
   stormChain: {
     id: "stormChain",
     name: "Storm Chain",
-    tags: ["Lightning", "Projectile", "Chain", "SpellDamage"],
+    tags: ["Spell", "Lightning", "Projectile", "Chain", "SpellDamage"],
     description: "Launches a lightning arc that jumps between nearby enemies.",
     baseDamage: 16,
     cooldownMs: 900,
@@ -63,7 +63,7 @@ export const spellConfig: Record<string, SpellDefinition> = {
   emberBurst: {
     id: "emberBurst",
     name: "Ember Burst",
-    tags: ["Fire", "Area", "Explosion", "SpellDamage"],
+    tags: ["Spell", "Fire", "Area", "Explosion", "SpellDamage"],
     description: "Detonates around the target and burns clustered enemies.",
     baseDamage: 22,
     cooldownMs: 1400,
@@ -83,7 +83,7 @@ export const spellConfig: Record<string, SpellDefinition> = {
   glacierNova: {
     id: "glacierNova",
     name: "Glacier Nova",
-    tags: ["Cold", "Area", "Critical", "SpellDamage"],
+    tags: ["Spell", "Cold", "Area", "Critical", "SpellDamage"],
     description: "Releases a larger cold blast with stronger critical scaling.",
     baseDamage: 18,
     cooldownMs: 1250,
@@ -103,7 +103,7 @@ export const spellConfig: Record<string, SpellDefinition> = {
   arcLance: {
     id: "arcLance",
     name: "Arc Lance",
-    tags: ["Lightning", "Projectile", "Critical", "SpellDamage"],
+    tags: ["Spell", "Lightning", "Projectile", "Critical", "SpellDamage"],
     description: "Fires a focused lightning spear with high critical scaling.",
     baseDamage: 28,
     cooldownMs: 1500,
@@ -123,7 +123,7 @@ export const spellConfig: Record<string, SpellDefinition> = {
   ashenOrbit: {
     id: "ashenOrbit",
     name: "Ashen Orbit",
-    tags: ["Fire", "Area", "Explosion", "SpellDamage"],
+    tags: ["Spell", "Fire", "Area", "Explosion", "SpellDamage"],
     description: "Ignites a wider blast with heavy damage and slower cadence.",
     baseDamage: 36,
     cooldownMs: 1800,
@@ -143,7 +143,7 @@ export const spellConfig: Record<string, SpellDefinition> = {
   tempestBloom: {
     id: "tempestBloom",
     name: "Tempest Bloom",
-    tags: ["Lightning", "Cold", "Area", "Chain", "SpellDamage"],
+    tags: ["Spell", "Lightning", "Cold", "Area", "Chain", "SpellDamage"],
     description: "Detonates into a storm bloom that shocks clustered enemies.",
     baseDamage: 42,
     cooldownMs: 1950,
@@ -163,7 +163,7 @@ export const spellConfig: Record<string, SpellDefinition> = {
   monsterSlash: {
     id: "monsterSlash",
     name: "Monster Slash",
-    tags: ["Physical", "Projectile", "SpellDamage"],
+    tags: ["Spell", "Physical", "Projectile", "SpellDamage"],
     description: "A physical melee slash.",
     baseDamage: 20,
     cooldownMs: 1200,
@@ -183,7 +183,7 @@ export const spellConfig: Record<string, SpellDefinition> = {
   monsterFireBurst: {
     id: "monsterFireBurst",
     name: "Monster Fire Burst",
-    tags: ["Fire", "Area", "Explosion", "SpellDamage"],
+    tags: ["Spell", "Fire", "Area", "Explosion", "SpellDamage"],
     description: "A fiery explosion that engulfs nearby enemies.",
     baseDamage: 18,
     cooldownMs: 1300,
@@ -203,7 +203,7 @@ export const spellConfig: Record<string, SpellDefinition> = {
   monsterFrostBolt: {
     id: "monsterFrostBolt",
     name: "Monster Frost Bolt",
-    tags: ["Cold", "Area", "Critical", "SpellDamage"],
+    tags: ["Spell", "Cold", "Area", "Critical", "SpellDamage"],
     description: "A blast of freezing cold.",
     baseDamage: 16,
     cooldownMs: 1200,
@@ -223,7 +223,7 @@ export const spellConfig: Record<string, SpellDefinition> = {
   monsterLightningStrike: {
     id: "monsterLightningStrike",
     name: "Monster Lightning Strike",
-    tags: ["Lightning", "Projectile", "Chain", "SpellDamage"],
+    tags: ["Spell", "Lightning", "Projectile", "Chain", "SpellDamage"],
     description: "Lightning that arcs between enemies.",
     baseDamage: 15,
     cooldownMs: 1100,

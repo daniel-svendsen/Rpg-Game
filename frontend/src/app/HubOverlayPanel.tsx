@@ -3,10 +3,13 @@ import { getEquipmentSlotLabel } from "../game/config/itemConfig";
 import { ItemSlotIcon } from "./ItemSlotIcon";
 import { supportSpellConfig } from "../game/config/spellConfig";
 import { getItemPowerScore, getPowerChangeForCharacterItem } from "../game/domain/items/itemPower";
-import { getItemStatEntries } from "../game/domain/items/itemStats";
 import { getSpellDescription, getSpellName } from "../game/domain/spells/spellDrops";
 import type { CharacterRecord, EquipmentSlot } from "../shared/types/saveTypes";
 import type { OverlayPanel } from "./appTypes";
+import { ItemStatBlock } from "./ItemStatBlock";
+import { useItemComparison } from "./useItemComparison";
+import { summarizeComparison } from "./itemComparison";
+import { toChipModel } from "./comparisonChipUi";
 
 interface HubOverlayPanelProps {
   character: CharacterRecord | null;
@@ -39,6 +42,8 @@ export const HubOverlayPanel = ({
   onSelectMainSpell,
   onSelectSupportSpell
 }: HubOverlayPanelProps) => {
+  const getComparison = useItemComparison(character);
+
   if (!character || !overlayPanel) {
     return null;
   }
@@ -50,8 +55,17 @@ export const HubOverlayPanel = ({
       actionLabel?: string;
       onAction?: () => void;
       badge?: string;
+      equippedComparisonItem?: CharacterRecord["inventory"][number] | null;
+      showDeltas?: boolean;
+      includeMissingComparedStats?: boolean;
+      showSummary?: boolean;
     }
   ) => (
+    (() => {
+      const comparison = getComparison(item, options?.equippedComparisonItem);
+      const summary = summarizeComparison(character, item, options?.equippedComparisonItem);
+      const chipModel = toChipModel(summary);
+      return (
     <div key={item.id} className={`loot-entry rarity-card rarity-${item.rarity.toLowerCase()}`}>
       <div className="inventory-row">
         <div className="item-name-row">
@@ -64,23 +78,22 @@ export const HubOverlayPanel = ({
       {typeof options?.powerChange !== "undefined" ? (
         <div className="status-text">{formatPowerChange(options.powerChange)}</div>
       ) : null}
-      {getItemStatEntries(item).filter((e) => e.isBase).map((entry) => (
-        <div key={`${item.id}-${entry.label}`} className="stat-line">
-          <span className="stat-label">{entry.label}</span>
-          <span className="stat-value">{entry.formattedValue}</span>
+      {(options?.showSummary ?? true) && chipModel ? (
+        <div className="delta-chip-row">
+          <span className={`delta-chip ${chipModel.damageClass}`}>
+            Damage {chipModel.damageText}
+          </span>
+          <span className={`delta-chip ${chipModel.survivalClass}`}>
+            Survival {chipModel.survivalText}
+          </span>
         </div>
-      ))}
-      <div className="item-divider" />
-      {getItemStatEntries(item).filter((e) => !e.isBase).map((entry) => (
-        <div
-          key={`${item.id}-${entry.label}`}
-          className={`stat-line${entry.tier !== null ? ` stat-tier-${entry.tier}` : ""}`}
-        >
-          {entry.tier !== null && <span className="stat-tier-dot" />}
-          <span className="stat-label">{entry.label}</span>
-          <span className="stat-value">{entry.formattedValue}</span>
-        </div>
-      ))}
+      ) : null}
+      <ItemStatBlock
+        item={item}
+        comparison={comparison}
+        showDeltas={options?.showDeltas ?? true}
+        includeMissingComparedStats={options?.includeMissingComparedStats ?? false}
+      />
       {item.uniqueEffectDescription ? (
         <div className="unique-effect-line">{item.uniqueEffectDescription}</div>
       ) : null}
@@ -90,6 +103,8 @@ export const HubOverlayPanel = ({
         </button>
       ) : null}
     </div>
+      );
+    })()
   );
 
   if (overlayPanel === "equipmentPicker") {
@@ -116,7 +131,9 @@ export const HubOverlayPanel = ({
               <div className="status-text">Currently equipped</div>
               {renderItemCard(currentlyEquippedItem, {
                 powerChange: 0,
-                badge: "This is the item currently in the slot."
+                badge: "This is the item currently in the slot.",
+                showDeltas: false,
+                showSummary: false
               })}
             </>
           ) : (
@@ -128,7 +145,9 @@ export const HubOverlayPanel = ({
             renderItemCard(item, {
               powerChange: item.slot ? getPowerChangeForCharacterItem(character, item) : null,
               actionLabel: "Equip",
-              onAction: () => onEquipItem(item.id, selectedEquipmentSlot)
+              onAction: () => onEquipItem(item.id, selectedEquipmentSlot),
+              equippedComparisonItem: currentlyEquippedItem ?? null,
+              includeMissingComparedStats: true
             })
           )}
         </div>

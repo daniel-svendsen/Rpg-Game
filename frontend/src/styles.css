@@ -448,6 +448,78 @@ button {
   font-variant-numeric: tabular-nums;
 }
 
+.delta-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.delta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: rgba(148, 163, 184, 0.08);
+  color: #dbe7f5;
+}
+
+.delta-chip--positive {
+  border-color: rgba(134, 239, 172, 0.35);
+  color: #86efac;
+  background: rgba(22, 101, 52, 0.16);
+}
+
+.delta-chip--negative {
+  border-color: rgba(252, 165, 165, 0.34);
+  color: #fca5a5;
+  background: rgba(127, 29, 29, 0.16);
+}
+
+.delta-chip--neutral {
+  border-color: rgba(148, 163, 184, 0.24);
+  color: #dbe7f5;
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.item-delta {
+  margin-left: auto;
+  min-width: 56px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8rem;
+}
+
+.item-delta--positive {
+  color: #86efac;
+}
+
+.item-delta--negative {
+  color: #fca5a5;
+}
+
+.item-delta--neutral {
+  color: #a8a29e;
+}
+
+.synergy-pill {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 214, 102, 0.4);
+  color: #fcd34d;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.selected-comparison-item {
+  border-color: rgba(134, 239, 172, 0.55);
+  box-shadow: 0 0 0 1px rgba(134, 239, 172, 0.22) inset, 0 10px 24px rgba(0, 0, 0, 0.22);
+}
+
 .stat-tier-1 .stat-tier-dot { background: #444; }
 .stat-tier-1 .stat-value { color: #777; }
 

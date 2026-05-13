@@ -3,10 +3,13 @@ import {
   getItemPowerScore,
   getPowerChangeForCharacterItem
 } from "../game/domain/items/itemPower";
-import { getItemStatEntries } from "../game/domain/items/itemStats";
 import { balanceConfig } from "../game/config/balanceConfig";
 import type { AutoSellRarity, AutoSellSettings, CharacterRecord, InventoryItem } from "../shared/types/saveTypes";
 import { ItemSlotIcon } from "./ItemSlotIcon";
+import { ItemStatBlock } from "./ItemStatBlock";
+import { useItemComparison } from "./useItemComparison";
+import { summarizeComparison } from "./itemComparison";
+import { toChipModel } from "./comparisonChipUi";
 
 type ShopItemState = InventoryItem & { price: number };
 
@@ -38,8 +41,11 @@ export const ShopTab = ({
   onSellItemsByRarity,
   onSetAutoSellSettings,
   onRefreshShop
-}: ShopTabProps) => (
-  <div className="content stack mobile-content">
+}: ShopTabProps) => {
+  const getComparison = useItemComparison(character);
+
+  return (
+    <div className="content stack mobile-content">
     {topBar}
     <section className="panel stack">
       <div className="inventory-row">
@@ -84,6 +90,8 @@ export const ShopTab = ({
       </section>
       {shopItems.map((item) => {
         const powerChange = character ? getPowerChangeForCharacterItem(character, item) : null;
+        const summary = summarizeComparison(character, item);
+        const chipModel = toChipModel(summary);
         const canAfford = (character?.gold ?? 0) >= item.price;
 
         return (
@@ -99,23 +107,17 @@ export const ShopTab = ({
               <div className="status-text">Power {getItemPowerScore(item).toFixed(0)}</div>
               {character ? <div className="status-text">{formatPowerChange(powerChange)}</div> : null}
             </div>
-            {getItemStatEntries(item).filter((e) => e.isBase).map((entry) => (
-              <div key={`${item.id}-${entry.label}`} className="stat-line">
-                <span className="stat-label">{entry.label}</span>
-                <span className="stat-value">{entry.formattedValue}</span>
+            {chipModel ? (
+              <div className="delta-chip-row">
+                <span className={`delta-chip ${chipModel.damageClass}`}>
+                  Damage {chipModel.damageText}
+                </span>
+                <span className={`delta-chip ${chipModel.survivalClass}`}>
+                  Survival {chipModel.survivalText}
+                </span>
               </div>
-            ))}
-            <div className="item-divider" />
-            {getItemStatEntries(item).filter((e) => !e.isBase).map((entry) => (
-              <div
-                key={`${item.id}-${entry.label}`}
-                className={`stat-line${entry.tier !== null ? ` stat-tier-${entry.tier}` : ""}`}
-              >
-                {entry.tier !== null && <span className="stat-tier-dot" />}
-                <span className="stat-label">{entry.label}</span>
-                <span className="stat-value">{entry.formattedValue}</span>
-              </div>
-            ))}
+            ) : null}
+            <ItemStatBlock item={item} comparison={getComparison(item)} />
             {item.uniqueEffectDescription ? (
               <div className="unique-effect-line">{item.uniqueEffectDescription}</div>
             ) : null}
@@ -132,5 +134,6 @@ export const ShopTab = ({
         Refresh shop ({balanceConfig.economy.shopRefreshGoldCost} gold)
       </button>
     </section>
-  </div>
-);
+    </div>
+  );
+};
