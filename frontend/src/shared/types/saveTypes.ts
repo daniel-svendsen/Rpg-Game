@@ -82,7 +82,7 @@ export interface InventoryItem {
 
 export interface LootEntry {
   id: string;
-  kind: "Item" | "Spell" | "Currency" | "Map";
+  kind: "Item" | "Spell" | "Support" | "Currency" | "Map";
   name: string;
   details: string[];
   isUpgrade: boolean;
@@ -96,6 +96,7 @@ export type GroundLootPayload =
   | { kind: "Item"; item: InventoryItem }
   | { kind: "Currency"; code: string; amount: number }
   | { kind: "Spell"; spellId: string }
+  | { kind: "Support"; supportSpellId: string }
   | { kind: "Map"; mapId: string; tier: number };
 
 export interface GroundLootState {
@@ -205,6 +206,7 @@ export interface MonsterSpellVisualEvent {
 
 export interface SpellVisualEvent {
   id: string;
+  stage: "primary" | "secondary";
   spellId: string;
   tags: string[];
   originX: number;

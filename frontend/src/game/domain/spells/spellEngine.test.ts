@@ -121,4 +121,37 @@ describe("spellEngine unique item effects", () => {
       withoutResolved.resistancePenetration.Lightning
     );
   });
+
+  it("applies the new support batch in resolved spell output", () => {
+    const character = createTestCharacter();
+    const baseline = resolveSpell(character, "stormChain", []);
+    const withNewSupports = resolveSpell(character, "stormChain", [
+      "precisionCriticalChance",
+      "focusedCooldownRecovery",
+      "overloadDamage"
+    ]);
+
+    expect(withNewSupports.critChance).toBeGreaterThan(baseline.critChance);
+    expect(withNewSupports.cooldownMs).toBeLessThan(baseline.cooldownMs);
+    expect(withNewSupports.damage).toBeGreaterThan(baseline.damage);
+  });
+
+  it("supports a projectile tradeoff support with less damage", () => {
+    const character = createTestCharacter();
+    const baseline = resolveSpell(character, "stormChain", []);
+    const withScattershot = resolveSpell(character, "stormChain", ["scattershotProjectiles"]);
+
+    expect(withScattershot.projectileCount).toBe(baseline.projectileCount + 1);
+    expect(withScattershot.damage).toBeLessThan(baseline.damage);
+  });
+
+  it("supports an impact cascade tradeoff for chain and area tuning", () => {
+    const character = createTestCharacter();
+    const baseline = resolveSpell(character, "stormChain", []);
+    const withCascade = resolveSpell(character, "stormChain", ["impactCascade"]);
+
+    expect(withCascade.chainCount).toBe(baseline.chainCount + 1);
+    expect(withCascade.areaRadius).toBeGreaterThanOrEqual(baseline.areaRadius + 14);
+    expect(withCascade.damage).toBeLessThan(baseline.damage);
+  });
 });

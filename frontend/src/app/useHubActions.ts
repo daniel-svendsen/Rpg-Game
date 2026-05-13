@@ -79,9 +79,20 @@ export const useHubActions = ({
     if (!character) {
       return;
     }
+    if (!character.unlockedSupportSpellIds.includes(supportSpellId)) {
+      setErrorMessage("Support not unlocked yet.");
+      return;
+    }
 
     const currentLoadout = character.spellLoadout[0];
     const nextSupportSpellIds = [...currentLoadout.supportSpellIds];
+    const duplicateIndex = nextSupportSpellIds.findIndex(
+      (id, index) => id === supportSpellId && index !== selectedSupportSlot
+    );
+
+    if (duplicateIndex >= 0) {
+      nextSupportSpellIds.splice(duplicateIndex, 1);
+    }
 
     if (nextSupportSpellIds[selectedSupportSlot] === supportSpellId) {
       nextSupportSpellIds.splice(selectedSupportSlot, 1);

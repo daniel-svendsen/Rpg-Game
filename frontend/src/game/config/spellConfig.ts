@@ -37,7 +37,14 @@ export interface SupportSpellDefinition {
 }
 
 export const starterSpellIds = ["stormChain", "emberBurst"] as const;
-export const starterSupportSpellIds = ["increasedCriticalChance", "fasterCasting", "moreDamage"] as const;
+export const starterSupportSpellIds = [
+  "increasedCriticalChance",
+  "fasterCasting",
+  "moreDamage",
+  "precisionCriticalChance",
+  "focusedCooldownRecovery",
+  "overloadDamage"
+] as const;
 
 export const spellConfig: Record<string, SpellDefinition> = {
   stormChain: {
@@ -283,12 +290,47 @@ export const supportSpellConfig: Record<string, SupportSpellDefinition> = {
       bonusAreaRadius: balanceConfig.supportSpellModifiers.areaSupport
     }
   },
-  projectileSupport: {
-    id: "projectileSupport",
-    name: "Projectile Support",
-    tags: ["Projectile"],
+  scattershotProjectiles: {
+    id: "scattershotProjectiles",
+    name: "Scattershot",
+    tags: ["Projectile", "SpellDamage"],
     apply: {
-      bonusProjectiles: balanceConfig.supportSpellModifiers.projectileSupport
+      bonusProjectiles: balanceConfig.supportSpellModifiers.scattershotProjectiles,
+      moreDamageMultiplier: balanceConfig.supportSpellModifiers.scattershotLessDamage
+    }
+  },
+  impactCascade: {
+    id: "impactCascade",
+    name: "Impact Cascade",
+    tags: ["Chain", "Area", "SpellDamage"],
+    apply: {
+      bonusChains: balanceConfig.supportSpellModifiers.impactCascadeChains,
+      bonusAreaRadius: balanceConfig.supportSpellModifiers.impactCascadeAreaRadius,
+      moreDamageMultiplier: balanceConfig.supportSpellModifiers.impactCascadeLessDamage
+    }
+  },
+  precisionCriticalChance: {
+    id: "precisionCriticalChance",
+    name: "Precision Focus",
+    tags: ["Critical"],
+    apply: {
+      criticalChanceBonus: balanceConfig.supportSpellModifiers.precisionCriticalChance
+    }
+  },
+  focusedCooldownRecovery: {
+    id: "focusedCooldownRecovery",
+    name: "Focused Recovery",
+    tags: ["CastSpeed"],
+    apply: {
+      castSpeedMultiplierBonus: balanceConfig.supportSpellModifiers.focusedCooldownRecovery
+    }
+  },
+  overloadDamage: {
+    id: "overloadDamage",
+    name: "Overload Core",
+    tags: ["SpellDamage"],
+    apply: {
+      moreDamageMultiplier: balanceConfig.supportSpellModifiers.overloadDamage
     }
   }
 };

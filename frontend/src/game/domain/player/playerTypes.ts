@@ -34,7 +34,8 @@ export const createNewCharacter = (name: string, baseStats: CharacterStats): Cha
     inventory: [],
     equippedItems: {},
     unlockedSpellIds: [...starterSpellIds],
-    unlockedSupportSpellIds: [...starterSupportSpellIds],
+    // Temporary testing mode: unlock all supports so drop-gated supports can be verified quickly.
+    unlockedSupportSpellIds: Object.keys(supportSpellConfig),
     spellProgress: createInitialSpellProgress(starterSpellIds),
     spellLoadout: [
       {
@@ -54,17 +55,28 @@ export const normalizeCharacterRecord = (character: CharacterRecord): CharacterR
     : [...starterSupportSpellIds];
   const validSupportIds = savedSupportIds.filter((supportSpellId) => supportSpellConfig[supportSpellId]);
   const normalizedUnlockedSupportSpellIds = [
-    ...new Set(validSupportIds.length > 0 ? validSupportIds : [...starterSupportSpellIds])
+    // Temporary testing mode: keep all supports unlocked for existing saves as well.
+    ...new Set([
+      ...(validSupportIds.length > 0 ? validSupportIds : []),
+      ...starterSupportSpellIds,
+      ...Object.keys(supportSpellConfig)
+    ])
   ];
+  const normalizedSpellLoadout = character.spellLoadout.map((link) => {
+    const uniqueSupportSpellIds = [...new Set(link.supportSpellIds.filter(Boolean))].slice(0, 2);
+
+    return {
+      ...link,
+      mainSpellId: normalizeSpellId(link.mainSpellId),
+      supportSpellIds: uniqueSupportSpellIds
+    };
+  });
 
   return applyEquipmentState({
     ...character,
     baseStats: normalizeBaseStats(character.baseStats),
     unlockedSpellIds: normalizedUnlockedSpellIds,
-    spellLoadout: character.spellLoadout.map((link) => ({
-      ...link,
-      mainSpellId: normalizeSpellId(link.mainSpellId)
-    })),
+    spellLoadout: normalizedSpellLoadout,
     unlockedSupportSpellIds: normalizedUnlockedSupportSpellIds,
     lifeFlask: normalizeLifeFlask(character.lifeFlask?.currentCharges),
     spellProgress: normalizeSpellProgress(character.spellProgress, normalizedUnlockedSpellIds),

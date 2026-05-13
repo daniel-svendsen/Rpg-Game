@@ -312,7 +312,8 @@ Candidate tasks:
 - [x] Add a differential tooltip for item comparison so hovered or selected items show the net stat change versus the currently equipped item, reducing head-math across armor, evasion, resistances, crit stats, penetration, and similar mixed affixes.
 - [x] Add lightweight build-synergy tags or highlights in item tooltips so affixes that directly match the currently active spell or support profile stand out from generically strong but lower-synergy stats.
 - [x] Add affix tier pips or similar compact roll-quality indicators in item tooltips so players can quickly tell whether an affix is a strong or weak roll within its tier range without memorizing hidden stat spans.
-- [ ] Add a spell `Final Output` panel in the spell/support UI so linked supports immediately show the resolved result from the same domain-driven spell calculation used by combat, exposing concrete player-facing values such as projectile count, chain count, area, cooldown/cast-speed impact, crit chance, and similar derived spell stats.
+- [x] Add a spell `Active Result` panel in the spell/support UI so linked supports immediately show the resolved result from the same domain-driven spell calculation used by combat, exposing concrete player-facing values such as projectile count, chain count, area, cooldown/cast-speed impact, crit chance, and similar derived spell stats.
+- [x] Lock spell visuals to a single per-spell impact animation plus elemental travel orb, and document sheet-specific frame mapping guardrails (`startFrame`/`frameCount` must be derived from each sheet's own column count) to prevent cross-row color bleed in FX.
 - [ ] Show effective mitigation in the character sheet for current or recent map tier context, so raw armor, evasion, and similar defense stats are paired with an estimated real combat outcome instead of standing alone as opaque numbers.
 - [ ] Add a minimalist death recap in the run summary that shows the killing enemy and damage type, giving players a compact explanation for deaths without turning the screen into a full combat log.
 - [ ] Map pacing: maps currently feel short; brainstorm and tune levers (monster count, arena size, spawn cadence, movement speed, pack density).
@@ -337,8 +338,8 @@ Acceptance targets:
 - supports expose additive visual modifiers where appropriate
 - uniques expose clear gameplay-to-visual hooks where appropriate
 - Phaser can consume these hooks without becoming the source of gameplay truth
-- [ ] Secondary spell effects resolve from the first impact point (not player origin) when supports or item effects trigger split/chain/projectile/area follow-up behavior, using a second targeting pass after primary hit resolution.
-- [ ] Spell visual events/sprites stay aligned with the same first-impact secondary resolution path so chaining/splitting visuals communicate the real gameplay outcome.
+- [x] Secondary spell effects resolve from the first impact point (not player origin) when supports or item effects trigger split/chain/projectile/area follow-up behavior, using a second targeting pass after primary hit resolution.
+- [x] Spell visual events/sprites stay aligned with the same first-impact secondary resolution path so chaining/splitting visuals communicate the real gameplay outcome.
 
 Examples of future-facing hooks:
 
@@ -408,7 +409,7 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 - [x] Show total gold value before confirming `Sell all`.
 - [x] Add rarity-specific inventory selling and pickup auto-sell controls (`Sell Normal/Magic/Rare`, `Auto-sell Normal/Magic/Rare`) while keeping uniques protected.
 - [x] Replace low-value run-state panels with a compact arena HUD focused on map name, enemy count / completion state, HP, flask charges, and loot.
-- [ ] Show resolved spell/support output directly in the spell screen using shared domain-derived spell stats, so players can see the final linked result without manually combining base values, support bonuses, and character-derived modifiers from elsewhere in the UI.
+- [x] Show resolved spell/support output directly in the spell screen using shared domain-derived spell stats, so players can see the final linked result without manually combining base values, support bonuses, and character-derived modifiers from elsewhere in the UI.
 - [ ] Show current-tier effective mitigation in the character sheet so players can see what their defense stats actually mean against present content, especially for armor, evasion, and elemental survivability.
 - [ ] Add a small guardian-target anticipation cue in the arena UI or runtime presentation when the current pursuit target is a key guardian, so boss-key progression gets a clearer mid-run tension spike.
 - [ ] Add a compact death recap to the run summary so players can immediately see what killed them and which damage type mattered most in the final hit, helping them connect deaths back to resistances and defense choices.
@@ -417,6 +418,7 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 
 - [ ] Add more support spells (in small curated batches) to expand build expression without flooding the current spell/support UI, and keep each new support simulator-checkable plus clearly communicated in spell detail output.
 - [ ] Add first-impact secondary-effect spell logic (split/chain/projectile/area follow-up) plus matching visual-event behavior so support-driven chaining originates from the actual first hit target and remains readable in runtime presentation.
+- [x] Add first-impact secondary-effect spell logic (split/chain/projectile/area follow-up) plus matching visual-event behavior so support-driven chaining originates from the actual first hit target and remains readable in runtime presentation.
 
 ### Map pacing and sustain
 

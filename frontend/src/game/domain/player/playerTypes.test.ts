@@ -100,6 +100,21 @@ describe("playerTypes", () => {
     expect(normalized.derivedStats.maxHealth).toBeGreaterThan(character.derivedStats.maxHealth);
   });
 
+  it("deduplicates linked supports in spell loadout during normalization", () => {
+    const character = createTestCharacter({
+      spellLoadout: [
+        {
+          mainSpellId: "stormChain",
+          supportSpellIds: ["moreDamage", "moreDamage"]
+        }
+      ]
+    });
+
+    const normalized = normalizeCharacterRecord(character);
+
+    expect(normalized.spellLoadout[0]?.supportSpellIds).toEqual(["moreDamage"]);
+  });
+
   it("defaults missing intelligence on legacy characters to prevent NaN derived stats", () => {
     const legacyCharacter = createTestCharacter({
       baseStats: ({

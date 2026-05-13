@@ -23,6 +23,13 @@ export const combatBalance = {
     moreDamage: 0.22,
     chainSupport: 1,
     areaSupport: 12,
-    projectileSupport: 1
+    scattershotProjectiles: 1,
+    scattershotLessDamage: -0.2,
+    impactCascadeChains: 1,
+    impactCascadeAreaRadius: 14,
+    impactCascadeLessDamage: -0.1,
+    precisionCriticalChance: 0.05,
+    focusedCooldownRecovery: 0.12,
+    overloadDamage: 0.14
   }
 } as const;

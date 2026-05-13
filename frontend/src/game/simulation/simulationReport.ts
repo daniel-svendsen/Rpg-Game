@@ -91,6 +91,7 @@ export const buildSimulationSummary = (
       lootByKind: {
         Item: summary.lootByKind.Item + run.lootByKind.Item,
         Spell: summary.lootByKind.Spell + run.lootByKind.Spell,
+        Support: summary.lootByKind.Support + run.lootByKind.Support,
         Currency: summary.lootByKind.Currency + run.lootByKind.Currency,
         Map: summary.lootByKind.Map + run.lootByKind.Map
       }
@@ -133,6 +134,7 @@ export const buildSimulationSummary = (
       lootByKind: {
         Item: 0,
         Spell: 0,
+        Support: 0,
         Currency: 0,
         Map: 0
       }
@@ -314,7 +316,7 @@ export const formatSimulationSummary = (summary: SimulationSummary): string => {
     `- Rare:        ${formatNumber(avgRare)}${itemPct(avgRare)}`,
     `- Exceptional: ${formatNumber(avgExc)}${itemPct(avgExc)}`,
     `- Unique:      ${formatNumber(avgUnique)}${itemPct(avgUnique)} (T1: ${formatNumber(avg.uniqueTier1ItemsDropped)}, T2: ${formatNumber(avg.uniqueTier2ItemsDropped)}, T3: ${formatNumber(avg.uniqueTier3ItemsDropped)})`,
-    `- Spells: ${formatNumber(avg.spellDrops)}  Maps: ${formatNumber(summary.totals.lootByKind.Map / Math.max(1, summary.runs))}  Currency pickups: ${formatNumber(summary.totals.lootByKind.Currency / Math.max(1, summary.runs))}`,
+    `- Spells: ${formatNumber(avg.spellDrops)}  Supports: ${formatNumber(summary.totals.lootByKind.Support / Math.max(1, summary.runs))}  Maps: ${formatNumber(summary.totals.lootByKind.Map / Math.max(1, summary.runs))}  Currency pickups: ${formatNumber(summary.totals.lootByKind.Currency / Math.max(1, summary.runs))}`,
     "",
     `Item rolls (${ir.itemsDropped} items total across all runs):`,
     `- By rarity: ${Object.entries(ir.byRarity).map(([k, v]) => `${k}=${v}`).join(", ") || "none"}`,

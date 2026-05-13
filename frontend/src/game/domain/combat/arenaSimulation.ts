@@ -23,6 +23,7 @@ import { resolveMapInstance, type ResolvedMapInstance } from "../maps/mapEnhance
 import { gainLifeFlaskCharges } from "../player/lifeFlask";
 import { applyExperience } from "../progression/progression";
 import { getSpellName, rollSpellDrop } from "../spells/spellDrops";
+import { rollSupportSpellDrop } from "../spells/supportSpellDrops";
 import { resolveSpell } from "../spells/spellEngine";
 import { getItemSlotLabel } from "../../config/itemConfig";
 import { uniqueItemDefinitions } from "../../config/itemConfig";
@@ -44,7 +45,7 @@ import type {
   SpellVisualEvent,
   MonsterSpellVisualEvent
 } from "../../../shared/types/saveTypes";
-import { spellConfig } from "../../config/spellConfig";
+import { spellConfig, supportSpellConfig } from "../../config/spellConfig";
 const defaultAutoSellSettings: AutoSellSettings = {
   Normal: false,
   Magic: false,
@@ -214,27 +215,38 @@ const createGuaranteedBossRewardDrops = (
   ];
 };
 
-const getChainTargetIds = (
+const getSecondaryTargetIdsFromImpact = (
   enemies: InternalEnemyState[],
-  firstEnemyId: string,
-  maxTargets: number,
-  chainRange: number
+  primaryTargetId: string,
+  maxAdditionalTargets: number,
+  secondaryRange: number
 ): string[] => {
-  const selectedIds = [firstEnemyId];
-  let currentEnemy = enemies.find((enemy) => enemy.id === firstEnemyId);
+  if (maxAdditionalTargets <= 0 || secondaryRange <= 0) {
+    return [];
+  }
 
-  while (currentEnemy && selectedIds.length < maxTargets) {
-    const chainSource = currentEnemy;
+  const primaryTarget = enemies.find((enemy) => enemy.id === primaryTargetId);
+
+  if (!primaryTarget) {
+    return [];
+  }
+
+  const selectedIds: string[] = [];
+  let currentX = primaryTarget.x;
+  let currentY = primaryTarget.y;
+
+  while (selectedIds.length < maxAdditionalTargets) {
     const nextEnemy = enemies
       .filter(
         (enemy) =>
+          enemy.id !== primaryTargetId &&
           !selectedIds.includes(enemy.id) &&
-          distance(enemy.x, enemy.y, chainSource.x, chainSource.y) <= chainRange
+          distance(enemy.x, enemy.y, currentX, currentY) <= secondaryRange
       )
       .sort(
         (left, right) =>
-          distance(left.x, left.y, chainSource.x, chainSource.y) -
-          distance(right.x, right.y, chainSource.x, chainSource.y)
+          distance(left.x, left.y, currentX, currentY) -
+          distance(right.x, right.y, currentX, currentY)
       )[0];
 
     if (!nextEnemy) {
@@ -242,7 +254,8 @@ const getChainTargetIds = (
     }
 
     selectedIds.push(nextEnemy.id);
-    currentEnemy = nextEnemy;
+    currentX = nextEnemy.x;
+    currentY = nextEnemy.y;
   }
 
   return selectedIds;
@@ -607,6 +620,24 @@ const applyGroundLootPickup = (
     };
   }
 
+  if (payload.kind === "Support") {
+    const nextCharacter = {
+      ...character,
+      unlockedSupportSpellIds: [...character.unlockedSupportSpellIds, payload.supportSpellId]
+    };
+
+    return {
+      character: nextCharacter,
+      lootEvent: {
+        id: `${entry.id}-picked`,
+        kind: "Support",
+        name: supportSpellConfig[payload.supportSpellId]?.name ?? payload.supportSpellId,
+        details: ["Unlocked permanently in your support inventory"],
+        isUpgrade: true
+      }
+    };
+  }
+
   const isBossKey = payload.mapId.startsWith("bossTier");
   const mapName = isBossKey ? `Boss Key (Tier ${payload.tier})` : `Tier ${payload.tier} Map`;
 
@@ -725,6 +756,26 @@ const rollGroundDrops = (
       payload: {
         kind: "Spell",
         spellId
+      }
+    });
+  }
+
+  const supportSpellId = rollSupportSpellDrop(
+    character,
+    mapTier,
+    rarity,
+    resolvedMap.enhancementEffects.itemDropRateMultiplier
+  );
+
+  if (supportSpellId) {
+    groundLoot.push({
+      id: `ground-support-${supportSpellId}-${createClientId()}`,
+      x: clamp(dropX + (Math.random() - 0.5) * 18, 40, ARENA_WIDTH - 40),
+      y: clamp(dropY + (Math.random() - 0.5) * 18, 40, ARENA_HEIGHT - 40),
+      createdAtMs,
+      payload: {
+        kind: "Support",
+        supportSpellId
       }
     });
   }
@@ -1168,38 +1219,70 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
       const primaryTarget = sortedEnemies[0];
 
       const targetedEnemyIds =
-        resolvedSpell.areaRadius > 0 && primaryTarget
-          ? nextEnemies
-              .filter(
-                (enemy) =>
-                  distance(enemy.x, enemy.y, primaryTarget.x, primaryTarget.y) <= resolvedSpell.areaRadius
-              )
-              .map((enemy) => enemy.id)
-          : primaryTarget
-            ? getChainTargetIds(
-                sortedEnemies,
+        primaryTarget
+          ? (() => {
+              const additionalTargetCount = Math.max(
+                0,
+                resolvedSpell.projectileCount + resolvedSpell.chainCount - 1
+              );
+
+              if (resolvedSpell.areaRadius > 0) {
+                const areaSecondaryIds = nextEnemies
+                  .filter(
+                    (enemy) =>
+                      enemy.id !== primaryTarget.id &&
+                      distance(enemy.x, enemy.y, primaryTarget.x, primaryTarget.y) <=
+                        resolvedSpell.areaRadius
+                  )
+                  .map((enemy) => enemy.id);
+                return [primaryTarget.id, ...areaSecondaryIds];
+              }
+
+              const secondaryRange = Math.max(resolvedSpell.chainRange, playerTargetingRange);
+              const secondaryIds = getSecondaryTargetIdsFromImpact(
+                nextEnemies,
                 primaryTarget.id,
-                Math.max(1, resolvedSpell.projectileCount + resolvedSpell.chainCount),
-                resolvedSpell.chainRange
-              )
-            : [];
+                additionalTargetCount,
+                secondaryRange
+              );
+              return [primaryTarget.id, ...secondaryIds];
+            })()
+          : [];
 
       if (targetedEnemyIds.length > 0) {
         telemetry = { ...telemetry, spellsCast: telemetry.spellsCast + 1 };
         const chainPositions = targetedEnemyIds
-          .map((id) => sortedEnemies.find((e) => e.id === id))
+          .map((id) => nextEnemies.find((e) => e.id === id))
           .filter((e): e is InternalEnemyState => e !== undefined)
           .map((e) => ({ x: e.x, y: e.y }));
+        const primaryImpact = chainPositions[0];
+        const secondaryChainPositions = chainPositions.slice(1);
 
-        spellEvents.push({
-          id: `spell-${resolvedSpell.id}-${nextTime}`,
-          spellId: resolvedSpell.id,
-          tags: resolvedSpell.tags,
-          originX: playerX,
-          originY: playerY,
-          chainPositions,
-          areaRadius: resolvedSpell.areaRadius
-        });
+        if (primaryImpact) {
+          spellEvents.push({
+            id: `spell-${resolvedSpell.id}-${nextTime}-primary`,
+            stage: "primary",
+            spellId: resolvedSpell.id,
+            tags: resolvedSpell.tags,
+            originX: playerX,
+            originY: playerY,
+            chainPositions: [primaryImpact],
+            areaRadius: resolvedSpell.areaRadius
+          });
+
+          if (secondaryChainPositions.length > 0) {
+            spellEvents.push({
+              id: `spell-${resolvedSpell.id}-${nextTime}-secondary`,
+              stage: "secondary",
+              spellId: resolvedSpell.id,
+              tags: resolvedSpell.tags,
+              originX: primaryImpact.x,
+              originY: primaryImpact.y,
+              chainPositions: secondaryChainPositions,
+              areaRadius: resolvedSpell.areaRadius
+            });
+          }
+        }
       }
 
       nextEnemies = nextEnemies.flatMap((enemy) => {
@@ -1373,6 +1456,8 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
               : entry.payload.code
             : kind === "Spell"
               ? getSpellName(entry.payload.spellId)
+              : kind === "Support"
+                ? supportSpellConfig[entry.payload.supportSpellId]?.name ?? entry.payload.supportSpellId
               : entry.payload.mapId.startsWith("bossTier")
                 ? `Boss Key (Tier ${entry.payload.tier})`
                 : `Tier ${entry.payload.tier} Map`;

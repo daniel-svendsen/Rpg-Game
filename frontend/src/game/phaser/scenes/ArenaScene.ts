@@ -326,137 +326,99 @@ export class ArenaScene extends Phaser.Scene {
 
   private animateSpellEvent(event: SpellVisualEvent): void {
     if (event.chainPositions.length === 0) return;
+    const impactAnim = this.getSpellFxAnim(event.spellId, event.tags);
+    const orbAnim = this.getOrbFxAnim(event.tags);
+    const impactScale = this.fxScale(event.areaRadius, 0.9);
 
-    const isArea = event.areaRadius > 0;
-    const isProjectile = event.tags.includes("Projectile") && !event.tags.includes("Chain");
-
-    if (isArea) {
-      this.animateAreaExplosion(event);
-    } else if (isProjectile) {
-      this.animateProjectileLance(event);
-    } else {
-      this.animateLightningChain(event);
+    if (event.stage === "primary") {
+      const primaryTarget = event.chainPositions[0];
+      if (!primaryTarget) return;
+      this.spawnTravelingFx(
+        event.originX,
+        event.originY,
+        primaryTarget.x,
+        primaryTarget.y,
+        orbAnim,
+        impactAnim,
+        impactScale,
+        0
+      );
+      return;
     }
+
+    let fromX = event.originX;
+    let fromY = event.originY;
+    event.chainPositions.forEach((target, index) => {
+      this.spawnTravelingFx(
+        fromX,
+        fromY,
+        target.x,
+        target.y,
+        orbAnim,
+        impactAnim,
+        impactScale,
+        index * 90
+      );
+      fromX = target.x;
+      fromY = target.y;
+    });
+  }
+
+  private getSpellFxAnim(spellId: string, tags: string[]): string {
+    const byId: Record<string, string> = {
+      stormChain: FX_ANIMS.stormChain.key,
+      emberBurst: FX_ANIMS.emberBurst.key,
+      glacierNova: FX_ANIMS.glacierNova.key,
+      arcLance: FX_ANIMS.arcLance.key,
+      ashenOrbit: FX_ANIMS.ashenOrbit.key,
+      tempestBloom: FX_ANIMS.tempestBloom.key,
+      monsterSlash: FX_ANIMS.monsterSlash.key,
+      monsterFireBurst: FX_ANIMS.monsterFireBurst.key,
+      monsterFrostBolt: FX_ANIMS.monsterFrostBolt.key,
+      monsterLightningStrike: FX_ANIMS.monsterLightningStrike.key
+    };
+    const fromId = byId[spellId];
+    if (fromId) return fromId;
+
+    const isLightning = tags.includes("Lightning");
+    const isCold = tags.includes("Cold");
+    const isFire = tags.includes("Fire");
+
+    if (isLightning) {
+      return FX_ANIMS.stormChain.key;
+    }
+
+    if (isCold) {
+      return FX_ANIMS.glacierNova.key;
+    }
+
+    if (isFire) {
+      return FX_ANIMS.emberBurst.key;
+    }
+
+    return FX_ANIMS.stormChain.key;
   }
 
   private animateMonsterSpellEvent(event: MonsterSpellVisualEvent): void {
-    const isArea = event.areaRadius > 0;
-    const isLightning = event.tags.includes("Lightning");
-    const isCold = event.tags.includes("Cold");
-    const isFire = event.tags.includes("Fire");
-    const color = isLightning ? 0xfbbf24 : isCold ? 0x38bdf8 : isFire ? 0xf97316 : 0xa78bfa;
-
-    const gfx = this.add.graphics().setDepth(12);
-    gfx.lineStyle(6, color, 0.12);
-    gfx.beginPath();
-    gfx.moveTo(event.originX, event.originY);
-    gfx.lineTo(event.targetX, event.targetY);
-    gfx.strokePath();
-    gfx.lineStyle(2.5, color, 0.65);
-    gfx.beginPath();
-    gfx.moveTo(event.originX, event.originY);
-    gfx.lineTo(event.targetX, event.targetY);
-    gfx.strokePath();
-    this.tweens.add({
-      targets: gfx,
-      alpha: 0,
-      duration: 250,
-      ease: "Quad.easeIn",
-      onComplete: () => { gfx.destroy(); }
-    });
-
-    if (isArea) {
-      const fxAnim = isCold ? FX_ANIMS.iceWave.key : isFire ? FX_ANIMS.fireWave.key : FX_ANIMS.electric.key;
-      this.spawnFxSprite(event.targetX, event.targetY, fxAnim, this.fxScale(event.areaRadius, 1.0));
-    } else {
-      const fxAnim = isLightning ? FX_ANIMS.electricArc.key : isCold ? FX_ANIMS.ice.key : FX_ANIMS.fire.key;
-      this.spawnFxSprite(event.targetX, event.targetY, fxAnim, this.fxScale(event.areaRadius, 1.0));
-    }
+    const impactAnim = this.getSpellFxAnim(event.spellId, event.tags);
+    const orbAnim = this.getOrbFxAnim(event.tags);
+    this.spawnTravelingFx(
+      event.originX,
+      event.originY,
+      event.targetX,
+      event.targetY,
+      orbAnim,
+      impactAnim,
+      this.fxScale(event.areaRadius, 1.0),
+      0
+    );
   }
 
-  private animateProjectileLance(event: SpellVisualEvent): void {
-    const target = event.chainPositions[0];
-    if (!target) return;
-
-    const isLightning = event.tags.includes("Lightning");
-    const isCold = event.tags.includes("Cold");
-    const isFire = event.tags.includes("Fire");
-    const color = isLightning ? 0xfbbf24 : isCold ? 0x38bdf8 : isFire ? 0xf97316 : 0xa78bfa;
-
-    const gfx = this.add.graphics().setDepth(12);
-
-    const drawLine = (width: number, col: number, alpha: number) => {
-      gfx.lineStyle(width, col, alpha);
-      gfx.beginPath();
-      gfx.moveTo(event.originX, event.originY);
-      gfx.lineTo(target.x, target.y);
-      gfx.strokePath();
-    };
-
-    drawLine(10, color, 0.15);
-    drawLine(4, color, 0.7);
-    drawLine(1.5, 0xffffff, 1.0);
-
-    this.tweens.add({
-      targets: gfx,
-      alpha: 0,
-      duration: 200,
-      ease: "Quad.easeIn",
-      onComplete: () => { gfx.destroy(); }
-    });
-
-    const fxAnim = isLightning ? FX_ANIMS.electricArc.key : isCold ? FX_ANIMS.ice.key : FX_ANIMS.fire.key;
-    this.spawnFxSprite(target.x, target.y, fxAnim, this.fxScale(event.areaRadius, 1.0));
-  }
-
-  private animateLightningChain(event: SpellVisualEvent): void {
-    const isLightning = event.tags.includes("Lightning");
-    const isCold = event.tags.includes("Cold");
-    const isFire = event.tags.includes("Fire");
-    const boltColor = isLightning ? 0xfbbf24 : isCold ? 0x38bdf8 : isFire ? 0xf97316 : 0xa78bfa;
-    const fxAnim = isCold ? FX_ANIMS.iceWave.key : isLightning ? FX_ANIMS.electric.key : isFire ? FX_ANIMS.fire.key : FX_ANIMS.electric.key;
-
-    const positions = [{ x: event.originX, y: event.originY }, ...event.chainPositions];
-
-    for (let i = 0; i < positions.length - 1; i++) {
-      this.time.delayedCall(i * 85, () => {
-        const from = positions[i];
-        const to = positions[i + 1];
-        if (!from || !to) return;
-        this.drawLightningBolt(from.x, from.y, to.x, to.y, boltColor);
-        this.spawnFxSprite(to.x, to.y, fxAnim, this.fxScale(event.areaRadius, 0.6));
-      });
-    }
-  }
-
-  private animateAreaExplosion(event: SpellVisualEvent): void {
-    const isFire = event.tags.includes("Fire");
-    const isCold = event.tags.includes("Cold");
-    const isLightning = event.tags.includes("Lightning");
-    const target = event.chainPositions[0];
-    if (!target) return;
-
-    const radius = Math.max(event.areaRadius, 30);
-
-    if (isCold) {
-      // Cold: ring only
-      const gfx = this.add.graphics().setDepth(12);
-      gfx.lineStyle(2, 0x38bdf8, 0.85);
-      gfx.strokeCircle(target.x, target.y, radius);
-      gfx.fillStyle(0x38bdf8, 0.08);
-      gfx.fillCircle(target.x, target.y, radius);
-      this.tweens.add({
-        targets: gfx,
-        alpha: 0,
-        duration: 600,
-        ease: "Quad.easeIn",
-        onComplete: () => { gfx.destroy(); }
-      });
-    } else {
-      // Fire / Lightning: sprite only, scaled to radius
-      const fxAnim = isFire ? FX_ANIMS.fireWave.key : isLightning ? FX_ANIMS.electric.key : FX_ANIMS.fire.key;
-      this.spawnFxSprite(target.x, target.y, fxAnim, this.fxScale(event.areaRadius, 1.0));
-    }
+  private getOrbFxAnim(tags: string[]): string {
+    if (tags.includes("Lightning")) return FX_ANIMS.orbLightning.key;
+    if (tags.includes("Cold")) return FX_ANIMS.orbCold.key;
+    if (tags.includes("Fire")) return FX_ANIMS.orbFire.key;
+    return FX_ANIMS.orbLightning.key;
   }
 
   // Returns FX sprite scale: if the spell has an area radius, size the sprite to match it.
@@ -465,64 +427,65 @@ export class ArenaScene extends Phaser.Scene {
     return areaRadius > 0 ? Math.max(0.6, areaRadius / 32) : fallback;
   }
 
-  // Spawns a one-shot effect sprite that destroys itself when the animation ends
-  private spawnFxSprite(x: number, y: number, animKey: string, scale: number): void {
+  private spawnTravelingFx(
+    fromX: number,
+    fromY: number,
+    toX: number,
+    toY: number,
+    orbAnimKey: string,
+    impactAnimKey: string,
+    impactScale: number,
+    delayMs: number
+  ): void {
+    this.time.delayedCall(delayMs, () => {
+      if (!this.anims.exists(orbAnimKey)) return;
+
+      const anim = Object.values(FX_ANIMS).find((entry) => entry.key === orbAnimKey) as any;
+      const sheetKey = anim?.sheet || Object.values(FX_SHEETS)[0].key;
+      const sprite = this.add
+        .sprite(fromX, fromY, sheetKey, 0)
+        .setScale(0.45)
+        .setDepth(15)
+        .setBlendMode(Phaser.BlendModes.ADD);
+
+      sprite.play(orbAnimKey);
+
+      const distanceToTarget = Phaser.Math.Distance.Between(fromX, fromY, toX, toY);
+      const travelDuration = Phaser.Math.Clamp(Math.round(distanceToTarget * 1.8), 90, 260);
+
+      this.tweens.add({
+        targets: sprite,
+        x: toX,
+        y: toY,
+        duration: travelDuration,
+        ease: "Quad.easeOut",
+        onComplete: () => {
+          if (sprite.active) {
+            sprite.destroy();
+          }
+          this.spawnImpactFx(toX, toY, impactAnimKey, impactScale);
+        }
+      });
+    });
+  }
+
+  private spawnImpactFx(x: number, y: number, animKey: string, scale: number): void {
     if (!this.anims.exists(animKey)) return;
 
-    // Find the sheet key for this animation
-    const anim = Object.values(FX_ANIMS).find(a => a.key === animKey) as any;
-    const sheetKey = anim?.sheet || Object.values(FX_SHEETS)[0].key; // Fallback to first sheet
-
+    const anim = Object.values(FX_ANIMS).find((entry) => entry.key === animKey) as any;
+    const sheetKey = anim?.sheet || Object.values(FX_SHEETS)[0].key;
     const sprite = this.add
       .sprite(x, y, sheetKey, 0)
       .setScale(scale)
-      .setDepth(15)
+      .setDepth(16)
       .setBlendMode(Phaser.BlendModes.ADD);
 
     sprite.play(animKey);
-    sprite.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => { sprite.destroy(); });
-  }
-
-  // Procedural jagged lightning bolt — kept intentionally to show chain path
-  private drawLightningBolt(x1: number, y1: number, x2: number, y2: number, color: number): void {
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-    const len = Math.sqrt(dx * dx + dy * dy);
-    if (len < 1) return;
-
-    const perpX = -dy / len;
-    const perpY = dx / len;
-    const maxOffset = Math.min(len * 0.22, 22);
-    const segments = 6;
-
-    const pts: Array<{ x: number; y: number }> = [{ x: x1, y: y1 }];
-    for (let i = 1; i < segments; i++) {
-      const t = i / segments;
-      const offset = (Math.random() - 0.5) * 2 * maxOffset;
-      pts.push({ x: x1 + dx * t + perpX * offset, y: y1 + dy * t + perpY * offset });
-    }
-    pts.push({ x: x2, y: y2 });
-
-    const gfx = this.add.graphics().setDepth(12);
-
-    const drawPath = (width: number, col: number, alpha: number) => {
-      gfx.lineStyle(width, col, alpha);
-      gfx.beginPath();
-      gfx.moveTo(pts[0].x, pts[0].y);
-      for (let i = 1; i < pts.length; i++) gfx.lineTo(pts[i].x, pts[i].y);
-      gfx.strokePath();
-    };
-
-    drawPath(7, color, 0.2);
-    drawPath(3, color, 0.6);
-    drawPath(1.5, 0xffffff, 1.0);
-
-    this.tweens.add({
-      targets: gfx,
-      alpha: 0,
-      duration: 380,
-      ease: "Quad.easeIn",
-      onComplete: () => { gfx.destroy(); }
+    sprite.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+      if (sprite.active) {
+        sprite.destroy();
+      }
     });
   }
+
 }

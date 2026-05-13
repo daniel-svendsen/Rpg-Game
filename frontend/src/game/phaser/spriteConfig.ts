@@ -152,52 +152,36 @@ export const FALLBACK_MONSTER_CONFIG: MonsterSpriteConfig = {
 
 export const SPRITE_BASE_PATH = "/assets/0x72_DungeonTilesetII_v1.7/frames";
 
-// New spell effect sheets (64x64 frame size)
+// Spell effect sheets (64x64 frame size)
 export const FX_SHEETS = {
-  impacts: {
-    key: "fx-impacts-64",
-    path: "/assets/spelleffects/1010.png",
-    frameWidth: 64,
-    frameHeight: 64,
-  },
-  stars: {
-    key: "fx-stars-64",
-    path: "/assets/spelleffects/1011.png",
-    frameWidth: 64,
-    frameHeight: 64,
-  },
-  spray: {
-    key: "fx-spray-64",
-    path: "/assets/spelleffects/1012.png",
-    frameWidth: 64,
-    frameHeight: 64,
-  },
-  waves: {
-    key: "fx-waves-64",
-    path: "/assets/spelleffects/1013.png",
-    frameWidth: 64,
-    frameHeight: 64,
-  },
-  arcs: {
-    key: "fx-arcs-64",
-    path: "/assets/spelleffects/1020.png",
-    frameWidth: 64,
-    frameHeight: 64,
-  },
+  s872: { key: "fx-sheet-872", path: "/assets/spelleffects/872.png", frameWidth: 64, frameHeight: 64 },
+  s838: { key: "fx-sheet-838", path: "/assets/spelleffects/838.png", frameWidth: 64, frameHeight: 64 },
+  s975: { key: "fx-sheet-975", path: "/assets/spelleffects/975.png", frameWidth: 64, frameHeight: 64 },
+  s884: { key: "fx-sheet-884", path: "/assets/spelleffects/884.png", frameWidth: 64, frameHeight: 64 },
+  s766: { key: "fx-sheet-766", path: "/assets/spelleffects/766.png", frameWidth: 64, frameHeight: 64 },
+  s835: { key: "fx-sheet-835", path: "/assets/spelleffects/835.png", frameWidth: 64, frameHeight: 64 },
+  s1263: { key: "fx-sheet-1263", path: "/assets/spelleffects/1263.png", frameWidth: 64, frameHeight: 64 },
+  s776: { key: "fx-sheet-776", path: "/assets/spelleffects/776.png", frameWidth: 64, frameHeight: 64 },
+  s928: { key: "fx-sheet-928", path: "/assets/spelleffects/928.png", frameWidth: 64, frameHeight: 64 },
+  s936: { key: "fx-sheet-936", path: "/assets/spelleffects/936.png", frameWidth: 64, frameHeight: 64 },
+  s1668: { key: "fx-sheet-1668", path: "/assets/spelleffects/1668.png", frameWidth: 64, frameHeight: 64 }
 } as const;
 
-// Frame ranges: sheets have 8 frames per row. Row index × 8 = startFrame.
-// Color row order per file:
-//   1010 (impacts): Red, Blue, Purple, Green, Brown, Gray, Pink, Orange
-//   1011 (stars):   Red, Purple, Blue, Green, Brown, Gray, Pink, Orange
-//   1012 (spray):   Red, Orange, Yellow, Purple, Blue, Green, Brown, Gray
-//   1013 (waves):   Red, Yellow, Purple, Blue, Green, Brown, Gray
-//   1020 (arcs):    Red, Orange, Purple, Blue, Green, Brown, Gray
+// Each sheet can have a different number of columns.
+// Start frame = (row - 1) * columns-in-that-sheet.
 export const FX_ANIMS = {
-  fire:        { key: "fx-fire",         sheet: "fx-impacts-64",  startFrame: 0,  frameCount: 8, frameRate: 12 }, // 1010 row 0 — Red
-  fireWave:    { key: "fx-fire-wave",    sheet: "fx-waves-64",    startFrame: 0,  frameCount: 8, frameRate: 12 }, // 1013 row 0 — Red
-  electric:    { key: "fx-electric",     sheet: "fx-stars-64",    startFrame: 8,  frameCount: 8, frameRate: 14 }, // 1011 row 1 — Purple
-  electricArc: { key: "fx-electric-arc", sheet: "fx-arcs-64",     startFrame: 24, frameCount: 8, frameRate: 14 }, // 1020 row 3 — Blue
-  ice:         { key: "fx-ice",          sheet: "fx-spray-64",    startFrame: 32, frameCount: 8, frameRate: 10 }, // 1012 row 4 — Blue
-  iceWave:     { key: "fx-ice-wave",     sheet: "fx-waves-64",    startFrame: 24, frameCount: 8, frameRate: 10 }, // 1013 row 3 — Blue
+  stormChain: { key: "fx-storm-chain", sheet: "fx-sheet-872", startFrame: 22, frameCount: 11, frameRate: 12 }, // 872 row 3 (11 cols)
+  emberBurst: { key: "fx-ember-burst", sheet: "fx-sheet-838", startFrame: 0, frameCount: 10, frameRate: 12 }, // 838 row 1
+  glacierNova: { key: "fx-glacier-nova", sheet: "fx-sheet-975", startFrame: 24, frameCount: 12, frameRate: 12 }, // 975 row 3 (12 cols)
+  arcLance: { key: "fx-arc-lance", sheet: "fx-sheet-884", startFrame: 22, frameCount: 11, frameRate: 12 }, // 884 row 3 (11 cols)
+  ashenOrbit: { key: "fx-ashen-orbit", sheet: "fx-sheet-766", startFrame: 40, frameCount: 8, frameRate: 12 }, // 766 row 6 (8 cols)
+  tempestBloom: { key: "fx-tempest-bloom", sheet: "fx-sheet-835", startFrame: 20, frameCount: 10, frameRate: 12 }, // 835 row 3
+  monsterSlash: { key: "fx-monster-slash", sheet: "fx-sheet-1263", startFrame: 20, frameCount: 10, frameRate: 12 }, // 1263 row 3
+  monsterFireBurst: { key: "fx-monster-fire-burst", sheet: "fx-sheet-776", startFrame: 0, frameCount: 8, frameRate: 12 }, // 776 row 1 (8 cols)
+  monsterFrostBolt: { key: "fx-monster-frost-bolt", sheet: "fx-sheet-928", startFrame: 24, frameCount: 12, frameRate: 12 }, // 928 row 3 (12 cols)
+  monsterLightningStrike: { key: "fx-monster-lightning-strike", sheet: "fx-sheet-936", startFrame: 24, frameCount: 12, frameRate: 12 }, // 936 row 3 (12 cols)
+  orbFire: { key: "fx-orb-fire", sheet: "fx-sheet-1668", startFrame: 0, frameCount: 14, frameRate: 14 }, // 1668 row 1 (14 cols)
+  orbCold: { key: "fx-orb-cold", sheet: "fx-sheet-1668", startFrame: 28, frameCount: 14, frameRate: 14 }, // 1668 row 3 (14 cols)
+  orbLightning: { key: "fx-orb-lightning", sheet: "fx-sheet-1668", startFrame: 70, frameCount: 14, frameRate: 14 } // 1668 row 6 (14 cols)
 } as const;
+

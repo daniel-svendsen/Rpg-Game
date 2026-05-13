@@ -42,6 +42,7 @@ const countLootKinds = (lootEvents: LootEntry[]): Record<LootEntry["kind"], numb
     {
       Item: 0,
       Spell: 0,
+      Support: 0,
       Currency: 0,
       Map: 0
     }
@@ -119,6 +120,7 @@ const runSingleSimulation = (
   let accumulatedLootByKind: Record<LootEntry["kind"], number> = {
     Item: 0,
     Spell: 0,
+    Support: 0,
     Currency: 0,
     Map: 0
   };
@@ -135,6 +137,7 @@ const runSingleSimulation = (
     accumulatedLootByKind = {
       Item: accumulatedLootByKind.Item + nextLootCounts.Item,
       Spell: accumulatedLootByKind.Spell + nextLootCounts.Spell,
+      Support: accumulatedLootByKind.Support + nextLootCounts.Support,
       Currency: accumulatedLootByKind.Currency + nextLootCounts.Currency,
       Map: accumulatedLootByKind.Map + nextLootCounts.Map
     };

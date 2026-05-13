@@ -12,9 +12,8 @@ Spell visuals are driven by `SpellVisualEvent` objects inside the snapshot. Each
 
 ```text
 Domain tick -> ArenaSnapshot.spellEvents[] -> ArenaScene.animateSpellEvent()
-                                            |- animateAreaExplosion()
-                                            |- animateProjectileLance()
-                                            `- animateLightningChain()
+                                            |- travel orb (elemental)
+                                            `- impact animation (spell-specific)
 ```
 
 ---
@@ -157,42 +156,47 @@ voidBeam: {
 
 ### Step 2 -> Visual routing
 
-`ArenaScene.animateSpellEvent()` routes visuals from the spell tags:
+Current runtime rule:
 
-```typescript
-const isArea = event.areaRadius > 0;
-const isProjectile = event.tags.includes("Projectile") && !event.tags.includes("Chain");
-
-if (isArea) {
-  animateAreaExplosion(event);
-} else if (isProjectile) {
-  animateProjectileLance(event);
-} else {
-  animateLightningChain(event);
-}
-```
-
-If none of the three visual families fits, add a new `animate*()` method in `ArenaScene.ts` and extend the router.
+- one spell id -> one impact animation
+- chain/projectile/secondary repeats that same impact animation
+- travel uses element orb by tag (`Lightning` / `Cold` / `Fire`)
+- no extra overlay lines, rings, or non-spell FX
 
 ### Step 3 -> FX sheet wiring
 
 Spell effect sheets are registered in `FX_SHEETS` and animation ranges are defined in `FX_ANIMS`.
 
-Current runtime sheet setup:
-
-- `1010.png` -> impact-style effects
-- `1011.png` -> star / lightning-style effects
-- `1012.png` -> spray / splash effects
-- `1013.png` -> wave / area effects
-- `1020.png` -> arc projectile effects
-
-All current FX sheets use `64x64` frames.
-
 To add a new effect:
 
 1. add a new sheet entry in `FX_SHEETS` if needed
 2. add a named animation range in `FX_ANIMS`
-3. route the spell tags to that animation inside `ArenaScene`
+3. map spell id to that animation in `ArenaScene.getSpellFxAnim()`
+
+---
+
+## Frame Mapping Guardrail (Important)
+
+Do not assume all sheets have the same number of columns.
+
+- frame size is `64x64`, but sheet widths vary
+- columns must be computed per sheet: `columns = imageWidth / 64`
+- start frame must be computed with sheet-specific columns:
+  - `startFrame = (row - 1) * columns`
+- frame count should normally match one full row:
+  - `frameCount = columns`
+
+If these are wrong, animations spill into the next row and can change color/theme (for example blue -> purple/green mid-animation).
+
+### Required validation before merging FX changes
+
+1. Check PNG dimensions and compute columns for each referenced sheet.
+2. Verify `startFrame` and `frameCount` in `FX_ANIMS` use that sheet's columns.
+3. In-game sanity pass for at least:
+- one cold spell
+- one lightning spell
+- one fire spell
+- one chain setup
 
 ---
 
