@@ -43,7 +43,7 @@ class CharacterProfileServiceTest {
         user.setEmail("player@example.com");
         entity.setUser(user);
 
-        CharacterStatsRequest baseStats = new CharacterStatsRequest(2, 3, 4, 5);
+        CharacterStatsRequest baseStats = new CharacterStatsRequest(2, 3, 4, 5, 0);
         Map<String, Object> derivedStats = Map.of(
                 "maxHealth", 200,
                 "castSpeedMultiplier", 1.045,
@@ -77,7 +77,8 @@ class CharacterProfileServiceTest {
                 "strength", 2,
                 "agility", 3,
                 "vitality", 4,
-                "dexterity", 5
+                "dexterity", 5,
+                "intelligence", 0
         ));
         when(characterStatCalculator.clampCurrentHealth(999, derivedStats)).thenReturn(200);
         when(characterProfileRepository.save(any(CharacterProfileEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -92,7 +93,8 @@ class CharacterProfileServiceTest {
                 "strength", 2,
                 "agility", 3,
                 "vitality", 4,
-                "dexterity", 5
+                "dexterity", 5,
+                "intelligence", 0
         ));
     }
 
@@ -103,7 +105,7 @@ class CharacterProfileServiceTest {
         user.setEmail("player@example.com");
         entity.setUser(user);
 
-        CharacterStatsRequest baseStats = new CharacterStatsRequest(1, 1, 1, 1);
+        CharacterStatsRequest baseStats = new CharacterStatsRequest(1, 1, 1, 1, 0);
         Map<String, Object> derivedStats = Map.of(
                 "maxHealth", 120,
                 "castSpeedMultiplier", 1.0,
@@ -148,7 +150,8 @@ class CharacterProfileServiceTest {
                 "strength", 1,
                 "agility", 1,
                 "vitality", 1,
-                "dexterity", 1
+                "dexterity", 1,
+                "intelligence", 0
         ));
         when(characterStatCalculator.clampCurrentHealth(100, derivedStats)).thenReturn(100);
         when(characterProfileRepository.save(any(CharacterProfileEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -212,7 +215,7 @@ class CharacterProfileServiceTest {
             return entity;
         });
 
-        CharacterStatsRequest createStats = new CharacterStatsRequest(2, 1, 3, 0);
+        CharacterStatsRequest createStats = new CharacterStatsRequest(2, 1, 3, 0, 0);
         Map<String, Object> initialDerivedStats = Map.of(
                 "maxHealth", 140,
                 "castSpeedMultiplier", 1.01,
@@ -224,7 +227,8 @@ class CharacterProfileServiceTest {
                 "strength", 2,
                 "agility", 1,
                 "vitality", 3,
-                "dexterity", 0
+                "dexterity", 0,
+                "intelligence", 0
         ));
 
         CharacterResponse created = characterProfileService.createCharacter(
@@ -236,7 +240,7 @@ class CharacterProfileServiceTest {
         assertThat(created.lifeFlask()).isEqualTo(new LifeFlaskState(18));
         assertThat(created.unlockedSpellIds()).containsExactly("stormChain", "emberBurst");
 
-        CharacterStatsRequest updatedStats = new CharacterStatsRequest(4, 3, 5, 2);
+        CharacterStatsRequest updatedStats = new CharacterStatsRequest(4, 3, 5, 2, 2);
         Map<String, Object> updatedDerivedStats = Map.of(
                 "maxHealth", 220,
                 "castSpeedMultiplier", 1.08,
@@ -248,7 +252,8 @@ class CharacterProfileServiceTest {
                 "strength", 4,
                 "agility", 3,
                 "vitality", 5,
-                "dexterity", 2
+                "dexterity", 2,
+                "intelligence", 2
         ));
         when(characterStatCalculator.clampCurrentHealth(999, updatedDerivedStats)).thenReturn(220);
 
@@ -306,6 +311,7 @@ class CharacterProfileServiceTest {
 
         assertThat(loaded.level()).isEqualTo(8);
         assertThat(loaded.currentHealth()).isEqualTo(220);
+        assertThat(loaded.baseStats()).containsEntry("intelligence", 2);
         assertThat(loaded.lifeFlask()).isEqualTo(new LifeFlaskState(7));
         assertThat(loaded.inventory()).containsExactly(
                 new InventoryItemData(

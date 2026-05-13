@@ -57,7 +57,8 @@ const statAffixes = {
   strength: prefix("brutal", "strength", 10),
   agility: prefix("nimble", "agility", 10),
   vitality: prefix("stout", "vitality", 10),
-  dexterity: prefix("keen", "dexterity", 10)
+  dexterity: prefix("keen", "dexterity", 10),
+  intelligence: prefix("wise", "intelligence", 10)
 } as const;
 
 const defenseAffixes = {
@@ -81,7 +82,7 @@ const movementAffixes = {
 
 export const itemAffixPoolsBySlot: Record<ItemSlot, ItemAffixPool> = {
   Weapon: {
-    prefixes: [spellAffixes.spellPowerMultiplier, statAffixes.dexterity, statAffixes.agility],
+    prefixes: [spellAffixes.spellPowerMultiplier, statAffixes.dexterity, statAffixes.agility, statAffixes.intelligence],
     suffixes: [spellAffixes.critChance, statAffixes.strength]
   },
   Helmet: {
@@ -113,19 +114,19 @@ export const itemAffixPoolsBySlot: Record<ItemSlot, ItemAffixPool> = {
     suffixes: [resistanceAffixes.fireResistance, resistanceAffixes.coldResistance, resistanceAffixes.lightningResistance, statAffixes.strength, statAffixes.agility]
   },
   Amulet: {
-    prefixes: [spellAffixes.spellPowerMultiplier, defenseAffixes.maxHealth, statAffixes.vitality],
+    prefixes: [spellAffixes.spellPowerMultiplier, defenseAffixes.maxHealth, statAffixes.vitality, statAffixes.intelligence],
     suffixes: [spellAffixes.critChance, resistanceAffixes.fireResistance, resistanceAffixes.coldResistance, resistanceAffixes.lightningResistance, statAffixes.dexterity, statAffixes.agility]
   },
   Ring: {
-    prefixes: [defenseAffixes.maxHealth, statAffixes.dexterity, statAffixes.agility],
+    prefixes: [defenseAffixes.maxHealth, statAffixes.dexterity, statAffixes.agility, statAffixes.intelligence],
     suffixes: [spellAffixes.critChance, resistanceAffixes.fireResistance, resistanceAffixes.coldResistance, resistanceAffixes.lightningResistance, statAffixes.strength, statAffixes.vitality]
   },
   Ring1: {
-    prefixes: [defenseAffixes.maxHealth, statAffixes.dexterity, statAffixes.agility],
+    prefixes: [defenseAffixes.maxHealth, statAffixes.dexterity, statAffixes.agility, statAffixes.intelligence],
     suffixes: [spellAffixes.critChance, resistanceAffixes.fireResistance, resistanceAffixes.coldResistance, resistanceAffixes.lightningResistance, statAffixes.strength, statAffixes.vitality]
   },
   Ring2: {
-    prefixes: [defenseAffixes.maxHealth, statAffixes.dexterity, statAffixes.agility],
+    prefixes: [defenseAffixes.maxHealth, statAffixes.dexterity, statAffixes.agility, statAffixes.intelligence],
     suffixes: [spellAffixes.critChance, resistanceAffixes.fireResistance, resistanceAffixes.coldResistance, resistanceAffixes.lightningResistance, statAffixes.strength, statAffixes.vitality]
   }
 } as const;

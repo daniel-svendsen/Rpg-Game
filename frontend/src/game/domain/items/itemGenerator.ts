@@ -59,6 +59,7 @@ const maybeCreateExceptionalRare = (
       agility: scaleStatBonus(item.statBonuses.agility, itemBalance.exceptionalRare.statMultiplier),
       vitality: scaleStatBonus(item.statBonuses.vitality, itemBalance.exceptionalRare.statMultiplier),
       dexterity: scaleStatBonus(item.statBonuses.dexterity, itemBalance.exceptionalRare.statMultiplier),
+      intelligence: scaleStatBonus(item.statBonuses.intelligence, itemBalance.exceptionalRare.statMultiplier),
       maxHealth: scaleStatBonus(item.statBonuses.maxHealth, itemBalance.exceptionalRare.statMultiplier),
       movementSpeedBonus: scaleStatBonus(
         item.statBonuses.movementSpeedBonus,
@@ -81,6 +82,7 @@ const statNameParts = {
   agility: ["Fleet", "Windstep", "Quickened"],
   vitality: ["Stalwart", "Ironheart", "Enduring"],
   dexterity: ["Deadeye", "Keen", "Surehand"],
+  intelligence: ["Sage", "Mindwoven", "Arcanum"],
   maxHealth: ["Bulwark", "Lifewoven", "Stout"],
   critChance: ["Razor", "Nightglass", "Precise"],
   spellPowerMultiplier: ["Runebound", "Arcanist", "Spellforged"]
@@ -108,6 +110,7 @@ const getPrimaryStatKey = (statBonuses: InventoryItem["statBonuses"]): keyof typ
     ["agility", (statBonuses.agility ?? 0) * 1.2],
     ["vitality", (statBonuses.vitality ?? 0) * 1.4],
     ["dexterity", (statBonuses.dexterity ?? 0) * 1.2],
+    ["intelligence", (statBonuses.intelligence ?? 0) * 1.2],
     ["maxHealth", (statBonuses.maxHealth ?? 0) * 0.2],
     ["critChance", (statBonuses.critChance ?? 0) * 120],
     ["spellPowerMultiplier", (statBonuses.spellPowerMultiplier ?? 0) * 100]
@@ -177,6 +180,7 @@ const isIntegerStatKey = (statKey: ItemStatKey): boolean =>
   statKey === "agility" ||
   statKey === "vitality" ||
   statKey === "dexterity" ||
+  statKey === "intelligence" ||
   statKey === "maxHealth";
 
 const rollAffixTier = (): AffixTier =>

@@ -7,6 +7,7 @@ export type ItemStatRangeSet = {
   agility: readonly [number, number];
   vitality: readonly [number, number];
   dexterity: readonly [number, number];
+  intelligence: readonly [number, number];
   maxHealth: readonly [number, number];
   fireResistance: readonly [number, number];
   coldResistance: readonly [number, number];
@@ -43,6 +44,7 @@ const createItemStatRanges = (tier: number): ItemStatRangeSet => ({
   agility: statRange(1 + (tier - 1), 3 + tier * 2),
   vitality: statRange(1 + tier, 4 + tier * 3),
   dexterity: statRange(1 + (tier - 1), 3 + tier * 2),
+  intelligence: statRange(1 + (tier - 1), 3 + tier * 2),
   maxHealth: statRange(6 + tier * 6, 16 + tier * 14),
   fireResistance: statRange(0.02 + tier * 0.004, 0.05 + tier * 0.008),
   coldResistance: statRange(0.02 + tier * 0.004, 0.05 + tier * 0.008),

@@ -86,7 +86,8 @@ class CharacterPersistenceIT {
                                     "strength": 2,
                                     "agility": 1,
                                     "vitality": 3,
-                                    "dexterity": 0
+                                    "dexterity": 0,
+                                    "intelligence": 0
                                   }
                                 }
                                 """))

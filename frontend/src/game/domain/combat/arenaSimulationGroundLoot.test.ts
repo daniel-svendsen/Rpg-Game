@@ -12,7 +12,7 @@ describe("arenaSimulation ground loot", () => {
         experience: 0,
         experienceToNextLevel: 100,
         unspentStatPoints: 0,
-        baseStats: { strength: 0, agility: 0, vitality: 0, dexterity: 0 },
+        baseStats: { strength: 0, agility: 0, vitality: 0, dexterity: 0, intelligence: 0 },
         derivedStats: {
           maxHealth: 100,
           castSpeedMultiplier: 1,
@@ -104,7 +104,7 @@ describe("arenaSimulation ground loot", () => {
         experience: 0,
         experienceToNextLevel: 100,
         unspentStatPoints: 0,
-        baseStats: { strength: 0, agility: 0, vitality: 0, dexterity: 0 },
+        baseStats: { strength: 0, agility: 0, vitality: 0, dexterity: 0, intelligence: 0 },
         derivedStats: {
           maxHealth: 100,
           castSpeedMultiplier: 1,
@@ -186,4 +186,5 @@ describe("arenaSimulation ground loot", () => {
     expect(stepped.player.mapProgress.clearedBossTiers ?? []).toEqual([]);
   });
 });
+
 

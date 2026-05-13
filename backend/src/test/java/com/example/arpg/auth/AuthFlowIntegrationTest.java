@@ -100,7 +100,7 @@ class AuthFlowIntegrationTest {
                 100,
                 75,
                 new LifeFlaskState(18),
-                Map.of("strength", 2, "agility", 2, "vitality", 2, "dexterity", 2),
+                Map.of("strength", 2, "agility", 2, "vitality", 2, "dexterity", 2, "intelligence", 2),
                 Map.of("maxHealth", 100, "castSpeedMultiplier", 1.0, "critChance", 0.01, "spellPowerMultiplier", 1.0),
                 List.of(),
                 Map.of(),

@@ -8,8 +8,17 @@ import { createInitialSpellProgress, normalizeSpellProgress } from "../spells/sp
 import { applyEquipmentState } from "./equipment";
 import { deriveStats } from "./statCalculation";
 
+const normalizeBaseStats = (baseStats: CharacterStats): CharacterStats => ({
+  strength: baseStats.strength ?? 0,
+  agility: baseStats.agility ?? 0,
+  vitality: baseStats.vitality ?? 0,
+  dexterity: baseStats.dexterity ?? 0,
+  intelligence: baseStats.intelligence ?? 0
+});
+
 export const createNewCharacter = (name: string, baseStats: CharacterStats): CharacterRecord => {
-  const derivedStats = deriveStats(baseStats);
+  const normalizedBaseStats = normalizeBaseStats(baseStats);
+  const derivedStats = deriveStats(normalizedBaseStats);
 
   return {
     name,
@@ -17,7 +26,7 @@ export const createNewCharacter = (name: string, baseStats: CharacterStats): Cha
     experience: 0,
     experienceToNextLevel: getExperienceRequiredForLevel(1),
     unspentStatPoints: 0,
-    baseStats,
+    baseStats: normalizedBaseStats,
     derivedStats,
     currentHealth: derivedStats.maxHealth,
     gold: 0,
@@ -50,6 +59,7 @@ export const normalizeCharacterRecord = (character: CharacterRecord): CharacterR
 
   return applyEquipmentState({
     ...character,
+    baseStats: normalizeBaseStats(character.baseStats),
     unlockedSpellIds: normalizedUnlockedSpellIds,
     spellLoadout: character.spellLoadout.map((link) => ({
       ...link,
@@ -70,9 +80,10 @@ export const spendLevelStatPoint = (
     return character;
   }
 
+  const normalizedBaseStats = normalizeBaseStats(character.baseStats);
   const nextBaseStats = {
-    ...character.baseStats,
-    [statKey]: character.baseStats[statKey] + 1
+    ...normalizedBaseStats,
+    [statKey]: normalizedBaseStats[statKey] + 1
   };
   return applyEquipmentState({
     ...character,

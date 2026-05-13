@@ -40,6 +40,7 @@ export interface CharacterStats {
   agility: number;
   vitality: number;
   dexterity: number;
+  intelligence: number;
 }
 
 export interface DerivedStats {

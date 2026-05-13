@@ -48,7 +48,8 @@ const initialStats: CharacterStats = {
   strength: 0,
   agility: 0,
   vitality: 0,
-  dexterity: 0
+  dexterity: 0,
+  intelligence: 0
 };
 
 export const App = () => {

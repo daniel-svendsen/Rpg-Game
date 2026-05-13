@@ -41,7 +41,8 @@ describe("playerTypes", () => {
         strength: 1,
         agility: 0,
         vitality: 0,
-        dexterity: 0
+        dexterity: 0,
+        intelligence: 0
       },
       unspentStatPoints: 1
     });
@@ -97,5 +98,22 @@ describe("playerTypes", () => {
     expect(normalized.equippedItems.BodyArmor?.uniqueEffectId).toBe("titanCarapace");
     expect(normalized.equippedItems.BodyArmor?.uniqueEffectDescription).toContain("14% less contact damage");
     expect(normalized.derivedStats.maxHealth).toBeGreaterThan(character.derivedStats.maxHealth);
+  });
+
+  it("defaults missing intelligence on legacy characters to prevent NaN derived stats", () => {
+    const legacyCharacter = createTestCharacter({
+      baseStats: ({
+        strength: 2,
+        agility: 1,
+        vitality: 3,
+        dexterity: 4
+      } as any)
+    });
+
+    const normalized = normalizeCharacterRecord(legacyCharacter);
+
+    expect(normalized.baseStats.intelligence).toBe(0);
+    expect(Number.isFinite(normalized.derivedStats.castSpeedMultiplier)).toBe(true);
+    expect(Number.isFinite(normalized.derivedStats.spellPowerMultiplier)).toBe(true);
   });
 });

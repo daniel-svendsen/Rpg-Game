@@ -8,10 +8,14 @@ export const progressionBalance = {
   },
   statScaling: {
     baseHealth: 100,
-    vitalityHealthMultiplier: 14,
-    agilityCastSpeedMultiplier: 0.015,
-    dexterityCritChanceMultiplier: 0.004,
-    strengthSpellPowerMultiplier: 0.025
+    vitalityHealthMultiplier: 8,
+    strengthPhysicalDamageMultiplier: 0.015,
+    strengthAttackSpeedMultiplier: 0.005,
+    agilityAttackSpeedMultiplier: 0.01,
+    dexterityCritChanceMultiplier: 0.0025,
+    critChanceCap: 0.75,
+    intelligenceSpellPowerMultiplier: 0.015,
+    intelligenceCastSpeedMultiplier: 0.005
   },
   rewards: {
     normalExperienceBase: 10,

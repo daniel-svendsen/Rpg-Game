@@ -5,6 +5,9 @@ type Summary = ReturnType<typeof summarizeComparison>;
 export const getDeltaChipClass = (
   value: number
 ): "delta-chip--positive" | "delta-chip--negative" | "delta-chip--neutral" => {
+  if (!Number.isFinite(value)) {
+    return "delta-chip--neutral";
+  }
   if (value > 0) {
     return "delta-chip--positive";
   }
@@ -14,7 +17,13 @@ export const getDeltaChipClass = (
   return "delta-chip--neutral";
 };
 
-export const formatSignedPercent = (value: number): string => `${value > 0 ? "+" : ""}${value}%`;
+export const formatSignedPercent = (value: number): string => {
+  if (!Number.isFinite(value)) {
+    return "0%";
+  }
+
+  return `${value > 0 ? "+" : ""}${value}%`;
+};
 
 export const toChipModel = (
   summary: Summary | null
@@ -28,10 +37,13 @@ export const toChipModel = (
     return null;
   }
 
+  const damagePercentDelta = Number.isFinite(summary.damagePercentDelta) ? summary.damagePercentDelta : 0;
+  const survivalPercentDelta = Number.isFinite(summary.survivalPercentDelta) ? summary.survivalPercentDelta : 0;
+
   return {
-    damageClass: getDeltaChipClass(summary.damagePercentDelta),
-    damageText: formatSignedPercent(summary.damagePercentDelta),
-    survivalClass: getDeltaChipClass(summary.survivalPercentDelta),
-    survivalText: formatSignedPercent(summary.survivalPercentDelta)
+    damageClass: getDeltaChipClass(damagePercentDelta),
+    damageText: formatSignedPercent(damagePercentDelta),
+    survivalClass: getDeltaChipClass(survivalPercentDelta),
+    survivalText: formatSignedPercent(survivalPercentDelta)
   };
 };

@@ -12,14 +12,15 @@ class CharacterStatCalculatorTest {
 
     @Test
     void deriveStatsUsesConfiguredScaling() {
-        CharacterStatsRequest baseStats = new CharacterStatsRequest(3, 4, 5, 6);
+        CharacterStatsRequest baseStats = new CharacterStatsRequest(3, 4, 5, 6, 7);
 
         Map<String, Object> derivedStats = calculator.deriveStats(baseStats);
 
-        assertThat(derivedStats).containsEntry("maxHealth", 170);
-        assertThat(derivedStats).containsEntry("castSpeedMultiplier", 1.06);
-        assertThat(derivedStats).containsEntry("critChance", 0.024);
-        assertThat(derivedStats).containsEntry("spellPowerMultiplier", 1.075);
+        assertThat(derivedStats).containsEntry("maxHealth", 140);
+        assertThat(derivedStats).containsEntry("castSpeedMultiplier", 1.035);
+        assertThat(derivedStats).containsEntry("attackSpeedMultiplier", 1.055);
+        assertThat(derivedStats).containsEntry("critChance", 0.015);
+        assertThat(derivedStats).containsEntry("spellPowerMultiplier", 1.105);
     }
 
     @Test

@@ -8,7 +8,7 @@ const baseCharacter: CharacterRecord = {
   experience: 0,
   experienceToNextLevel: 0,
   unspentStatPoints: 0,
-  baseStats: { strength: 0, agility: 0, vitality: 0, dexterity: 0 },
+  baseStats: { strength: 0, agility: 0, vitality: 0, dexterity: 0, intelligence: 0 },
   derivedStats: {
     maxHealth: 100,
     castSpeedMultiplier: 1,
@@ -58,4 +58,5 @@ describe("arenaSimulation map completion delay", () => {
     expect(afterDelay.snapshot.isComplete).toBe(true);
   });
 });
+
 

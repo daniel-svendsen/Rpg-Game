@@ -17,7 +17,8 @@ const applyEquipmentBonuses = (
       strength: total.strength + (item.statBonuses.strength ?? 0),
       agility: total.agility + (item.statBonuses.agility ?? 0),
       vitality: total.vitality + (item.statBonuses.vitality ?? 0),
-      dexterity: total.dexterity + (item.statBonuses.dexterity ?? 0)
+      dexterity: total.dexterity + (item.statBonuses.dexterity ?? 0),
+      intelligence: total.intelligence + (item.statBonuses.intelligence ?? 0)
     }),
     { ...baseStats }
   );
@@ -82,9 +83,11 @@ export const applyEquipmentState = (character: CharacterRecord): CharacterRecord
         Cold: clamp(derivedStats.resistances.Cold + coldResistanceBonus, -1, resistanceCap),
         Lightning: clamp(derivedStats.resistances.Lightning + lightningResistanceBonus, -1, resistanceCap)
       },
-      critChance:
+      critChance: Math.min(
+        balanceConfig.statScaling.critChanceCap,
         derivedStats.critChance +
-        Object.values(character.equippedItems).reduce((total, item) => total + (item?.statBonuses.critChance ?? 0), 0),
+          Object.values(character.equippedItems).reduce((total, item) => total + (item?.statBonuses.critChance ?? 0), 0)
+      ),
       critMultiplier: derivedStats.critMultiplier,
       spellPowerMultiplier:
         derivedStats.spellPowerMultiplier +

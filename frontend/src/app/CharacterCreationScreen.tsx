@@ -29,7 +29,7 @@ export const CharacterCreationScreen = ({
       <p>Distribute exactly {balanceConfig.progression.startingStatPoints} starting stat points.</p>
       {Object.entries(characterStats).map(([key, value]) => (
         <div className="stat-row" key={key}>
-          <span>{key}</span>
+          <span>{key.charAt(0).toUpperCase() + key.slice(1)}</span>
           <div className="stat-controls">
             <button className="secondary-button" onClick={() => onUpdateStat(key as keyof CharacterStats, -1)}>
               -

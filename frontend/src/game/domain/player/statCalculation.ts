@@ -5,8 +5,11 @@ export const deriveStats = (baseStats: CharacterStats): DerivedStats => ({
   maxHealth:
     balanceConfig.statScaling.baseHealth +
     baseStats.vitality * balanceConfig.statScaling.vitalityHealthMultiplier,
-  castSpeedMultiplier: 1 + baseStats.agility * balanceConfig.statScaling.agilityCastSpeedMultiplier,
-  attackSpeedMultiplier: 1,
+  castSpeedMultiplier: 1 + baseStats.intelligence * balanceConfig.statScaling.intelligenceCastSpeedMultiplier,
+  attackSpeedMultiplier:
+    1 +
+    baseStats.strength * balanceConfig.statScaling.strengthAttackSpeedMultiplier +
+    baseStats.agility * balanceConfig.statScaling.agilityAttackSpeedMultiplier,
   movementSpeedMultiplier: 1,
   armor: 0,
   evasion: 0,
@@ -15,7 +18,10 @@ export const deriveStats = (baseStats: CharacterStats): DerivedStats => ({
     Cold: 0,
     Lightning: 0
   },
-  critChance: baseStats.dexterity * balanceConfig.statScaling.dexterityCritChanceMultiplier,
+  critChance: Math.min(
+    balanceConfig.statScaling.critChanceCap,
+    baseStats.dexterity * balanceConfig.statScaling.dexterityCritChanceMultiplier
+  ),
   critMultiplier: 1.6,
-  spellPowerMultiplier: 1 + baseStats.strength * balanceConfig.statScaling.strengthSpellPowerMultiplier
+  spellPowerMultiplier: 1 + baseStats.intelligence * balanceConfig.statScaling.intelligenceSpellPowerMultiplier
 });

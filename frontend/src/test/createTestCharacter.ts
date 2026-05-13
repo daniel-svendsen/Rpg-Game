@@ -6,7 +6,8 @@ export const createTestCharacter = (overrides: Partial<CharacterRecord> = {}): C
     strength: 0,
     agility: 0,
     vitality: 0,
-    dexterity: 0
+    dexterity: 0,
+    intelligence: 0
   });
 
   return {

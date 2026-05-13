@@ -8,7 +8,7 @@ interface CharacterTabProps {
   accountEmail: string;
   character: CharacterRecord | null;
   onLogout: () => void;
-  onSpendStatPoint: (statKey: "strength" | "agility" | "vitality" | "dexterity") => void;
+  onSpendStatPoint: (statKey: "strength" | "agility" | "vitality" | "dexterity" | "intelligence") => void;
 }
 
 export const CharacterTab = ({
@@ -38,25 +38,25 @@ export const CharacterTab = ({
       </section>
       <section className="panel stack">
         <h4>Character Stats</h4>
-        <div className="status-text">Total damage: {combatSummary ? Math.round(combatSummary.totalDamage) : 0}</div>
-        <div className="status-text">Total survival: {combatSummary ? Math.round(combatSummary.totalSurvival) : 0}</div>
-        <div className="status-text">Max health: {character?.derivedStats.maxHealth ?? 0}</div>
+        <div className="status-text">Total Damage: {combatSummary ? Math.round(combatSummary.totalDamage) : 0}</div>
+        <div className="status-text">Total Survival: {combatSummary ? Math.round(combatSummary.totalSurvival) : 0}</div>
+        <div className="status-text">Max Health: {character?.derivedStats.maxHealth ?? 0}</div>
         <div className="status-text">Armor: {character?.derivedStats.armor ?? 0}</div>
         <div className="status-text">Evasion: {character?.derivedStats.evasion ?? 0}</div>
         <div className="status-text">
-          Cast speed: +{Math.round((character?.derivedStats.castSpeedMultiplier ?? 1) * 100 - 100)}%
+          Cast Speed: +{Math.round((character?.derivedStats.castSpeedMultiplier ?? 1) * 100 - 100)}%
         </div>
         <div className="status-text">
-          Attack speed: +{Math.round((character?.derivedStats.attackSpeedMultiplier ?? 1) * 100 - 100)}%
+          Attack Speed: +{Math.round((character?.derivedStats.attackSpeedMultiplier ?? 1) * 100 - 100)}%
         </div>
         <div className="status-text">
-          Movement speed: +{Math.round(((character?.derivedStats.movementSpeedMultiplier ?? 1) - 1) * 100)}%
+          Movement Speed: +{Math.round(((character?.derivedStats.movementSpeedMultiplier ?? 1) - 1) * 100)}%
         </div>
         <div className="status-text">
-          Crit chance: {Math.round((character?.derivedStats.critChance ?? 0) * 100)}%
+          Crit Chance: {Math.round((character?.derivedStats.critChance ?? 0) * 100)}%
         </div>
         <div className="status-text">
-          Spell power: +{Math.round(((character?.derivedStats.spellPowerMultiplier ?? 1) - 1) * 100)}%
+          Spell Damage: +{Math.round(((character?.derivedStats.spellPowerMultiplier ?? 1) - 1) * 100)}%
         </div>
         <div className="status-text">
           Resistances:{" "}
@@ -68,10 +68,10 @@ export const CharacterTab = ({
       <section className="panel stack">
         <h4>Level Up Stats</h4>
         <p className="status-text">Unspent points: {character?.unspentStatPoints ?? 0}</p>
-        {(["strength", "agility", "vitality", "dexterity"] as const).map((statKey) => (
+        {(["strength", "agility", "vitality", "dexterity", "intelligence"] as const).map((statKey) => (
           <div key={statKey} className="inventory-row">
             <span>
-              {statKey}: {character?.baseStats[statKey] ?? 0}
+              {statKey.charAt(0).toUpperCase() + statKey.slice(1)}: {character?.baseStats[statKey] ?? 0}
             </span>
             <button className="secondary-button" onClick={() => onSpendStatPoint(statKey)}>
               Add point
@@ -79,7 +79,8 @@ export const CharacterTab = ({
           </div>
         ))}
         <div className="status-text">
-          Strength improves spell power, Agility improves cast speed, Vitality improves life, Dexterity improves crit chance.
+          Strength improves physical damage and attack speed, Agility improves attack speed, Vitality improves life,
+          Dexterity improves crit chance, Intelligence improves spell damage and cast speed.
         </div>
         <div className="status-text">
           Healing: you refill to full when a new map starts and use a life flask that gains charges from kills.
