@@ -38,6 +38,7 @@ That file covers:
 ## Additional Docs
 
 - [docs/INDEX.md](docs/INDEX.md)
+- [docs/COMMIT_GUIDELINES.md](docs/COMMIT_GUIDELINES.md)
 - [docs/PROJECT_VISION.md](docs/PROJECT_VISION.md)
 - [docs/SIMULATION.md](docs/SIMULATION.md)
 - [docs/COMMANDS.md](docs/COMMANDS.md)

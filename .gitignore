@@ -20,4 +20,5 @@ frontend/vite.config.js
 frontend/vite.config.d.ts
 frontend/sim-profiles/benchmark-tier*.json
 .claude/
-CLAUDE.md
+frontend/CLAUDE.md
+backend/CLAUDE.md
