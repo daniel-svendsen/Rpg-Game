@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { getItemPowerScore, getPowerChangeForCharacterItem } from "../game/domain/items/itemPower";
 import { getItemSlotLabel } from "../game/config/itemConfig";
 import { ItemSlotIcon } from "./ItemSlotIcon";
 import { ItemStatBlock } from "./ItemStatBlock";
@@ -50,10 +49,7 @@ export const InventoryTab = ({
             </div>
             <span>{item.slot ? getItemSlotLabel(item.slot) : "Stored"}</span>
           </div>
-          <div className="inventory-row">
-            <div className="status-text">Power {getItemPowerScore(item).toFixed(0)}</div>
-            <div className="status-text">Sell price {getItemSellPrice(item)} gold</div>
-          </div>
+          <div className="status-text">Sell price {getItemSellPrice(item)} gold</div>
           {chipModel ? (
             <div className="delta-chip-row">
               <span className={`delta-chip ${chipModel.damageClass}`}>
@@ -96,10 +92,9 @@ export const InventoryTab = ({
               Sell for {getItemSellPrice(item)} gold
             </button>
           </div>
-          {(() => {
-            const pc = character ? getPowerChangeForCharacterItem(character, item) : null;
-            return pc !== null && pc > 0 ? <div className="upgrade-text">Possible upgrade</div> : null;
-          })()}
+          {summary && (summary.damagePercentDelta > 0 || summary.survivalPercentDelta > 0) ? (
+            <div className="upgrade-text">Possible upgrade</div>
+          ) : null}
         </div>
           );
         })()

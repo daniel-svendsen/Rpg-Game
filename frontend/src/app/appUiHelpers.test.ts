@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { getEquippedPowerTotal, getShopItemPrice } from "./appUiHelpers";
-import { getItemPowerScore } from "../game/domain/items/itemPower";
-import type { CharacterRecord, InventoryItem } from "../shared/types/saveTypes";
+import { getShopItemPrice } from "./appUiHelpers";
+import type { InventoryItem } from "../shared/types/saveTypes";
 
 const createItem = (overrides: Partial<InventoryItem>): InventoryItem => ({
   id: "item-1",
@@ -31,28 +30,5 @@ describe("getShopItemPrice", () => {
 
     expect(getShopItemPrice(rareItem)).toBeGreaterThan(1500);
     expect(getShopItemPrice(exceptionalRare)).toBeGreaterThan(getShopItemPrice(rareItem) * 2);
-  });
-});
-
-describe("getEquippedPowerTotal", () => {
-  it("adds the power of all equipped items into one compact summary value", () => {
-    const weapon = createItem({ id: "weapon-1" });
-    const helmet = createItem({
-      id: "helmet-1",
-      slot: "Helmet",
-      tier: 3,
-      statBonuses: {
-        vitality: 8,
-        maxHealth: 30
-      }
-    });
-    const character = {
-      equippedItems: {
-        Weapon: weapon,
-        Helmet: helmet
-      }
-    } as CharacterRecord;
-
-    expect(getEquippedPowerTotal(character)).toBe(Math.round(getItemPowerScore(weapon) + getItemPowerScore(helmet)));
   });
 });

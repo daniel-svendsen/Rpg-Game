@@ -11,8 +11,6 @@ import { SpellsTab } from "./SpellsTab";
 import { CharacterTab } from "./CharacterTab";
 import {
   equipmentSlots,
-  formatPowerChange,
-  getEquippedPowerTotal,
   getItemSellPrice,
   getSpellAccentClassName,
   getSupportAccentClassName,
@@ -171,12 +169,10 @@ export const HubScreen = ({
 
   const topBar = (
     <HubTopBar
-      activeTab={hubTab}
       level={character?.level}
       gold={character?.gold}
       mapShards={character ? getCurrencyAmount(character, "mapShard") : undefined}
       bossKeys={totalBossKeys}
-      totalPower={character ? getEquippedPowerTotal(character) : undefined}
       onSave={onSave}
     />
   );
@@ -227,7 +223,6 @@ export const HubScreen = ({
           character={character}
           equipmentSlots={equipmentSlots}
           getItemSellPrice={getItemSellPrice}
-          formatPowerChange={formatPowerChange}
           onSellItem={onSellItem}
           onEquipItem={onEquipItem}
           onSelectEquipmentSlot={onSelectEquipmentSlot}
@@ -254,7 +249,6 @@ export const HubScreen = ({
           autoSellSettings={autoSellSettings}
           sellAllValue={sellAllValue}
           sellValueByRarity={sellValueByRarity}
-          formatPowerChange={formatPowerChange}
           onBuyShopItem={onBuyShopItem}
           onSellAllItems={onSellAllItems}
           onSellItemsByRarity={onSellItemsByRarity}
@@ -280,7 +274,6 @@ export const HubScreen = ({
         selectedSupportSlot={selectedSupportSlot}
         getSpellAccentClassName={getSpellAccentClassName}
         getSupportAccentClassName={getSupportAccentClassName}
-        formatPowerChange={formatPowerChange}
         getSpellDetailLines={(spellId, supportSpellIds) => getSpellDetailLines(character, spellId, supportSpellIds)}
         renderSpellUpgradeActions={renderSpellUpgradeActions}
         onClose={onCloseOverlay}

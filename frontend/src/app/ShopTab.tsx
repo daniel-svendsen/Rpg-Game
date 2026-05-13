@@ -1,8 +1,4 @@
 import type { Dispatch, ReactNode, SetStateAction } from "react";
-import {
-  getItemPowerScore,
-  getPowerChangeForCharacterItem
-} from "../game/domain/items/itemPower";
 import { balanceConfig } from "../game/config/balanceConfig";
 import type { AutoSellRarity, AutoSellSettings, CharacterRecord, InventoryItem } from "../shared/types/saveTypes";
 import { ItemSlotIcon } from "./ItemSlotIcon";
@@ -20,7 +16,6 @@ interface ShopTabProps {
   autoSellSettings: AutoSellSettings;
   sellAllValue: number;
   sellValueByRarity: Record<AutoSellRarity, number>;
-  formatPowerChange: (powerChange: number | null) => string;
   onBuyShopItem: (itemId: string) => void;
   onSellAllItems: () => void;
   onSellItemsByRarity: (rarity: AutoSellRarity) => void;
@@ -35,7 +30,6 @@ export const ShopTab = ({
   autoSellSettings,
   sellAllValue,
   sellValueByRarity,
-  formatPowerChange,
   onBuyShopItem,
   onSellAllItems,
   onSellItemsByRarity,
@@ -89,7 +83,6 @@ export const ShopTab = ({
         ))}
       </section>
       {shopItems.map((item) => {
-        const powerChange = character ? getPowerChangeForCharacterItem(character, item) : null;
         const summary = summarizeComparison(character, item);
         const chipModel = toChipModel(summary);
         const canAfford = (character?.gold ?? 0) >= item.price;
@@ -102,10 +95,6 @@ export const ShopTab = ({
                 <strong>{item.name}</strong>
               </div>
               <span className={canAfford ? "shop-price--affordable" : "shop-price--unaffordable"}>{item.price}g</span>
-            </div>
-            <div className="inventory-row">
-              <div className="status-text">Power {getItemPowerScore(item).toFixed(0)}</div>
-              {character ? <div className="status-text">{formatPowerChange(powerChange)}</div> : null}
             </div>
             {chipModel ? (
               <div className="delta-chip-row">
@@ -121,7 +110,7 @@ export const ShopTab = ({
             {item.uniqueEffectDescription ? (
               <div className="unique-effect-line">{item.uniqueEffectDescription}</div>
             ) : null}
-            {powerChange !== null && powerChange > 0 ? (
+            {summary && (summary.damagePercentDelta > 0 || summary.survivalPercentDelta > 0) ? (
               <div className="upgrade-text">Possible upgrade</div>
             ) : null}
             <button className="secondary-button" disabled={!canAfford} onClick={() => onBuyShopItem(item.id)}>

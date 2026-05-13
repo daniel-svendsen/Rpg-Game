@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { getEquipmentSlotLabel } from "../game/config/itemConfig";
 import { ItemSlotIcon } from "./ItemSlotIcon";
 import { supportSpellConfig } from "../game/config/spellConfig";
-import { getItemPowerScore, getPowerChangeForCharacterItem } from "../game/domain/items/itemPower";
 import { getSpellDescription, getSpellName } from "../game/domain/spells/spellDrops";
 import type { CharacterRecord, EquipmentSlot } from "../shared/types/saveTypes";
 import type { OverlayPanel } from "./appTypes";
@@ -18,7 +17,6 @@ interface HubOverlayPanelProps {
   selectedSupportSlot: 0 | 1;
   getSpellAccentClassName: (spellId: string) => string;
   getSupportAccentClassName: (supportSpellId: string) => string;
-  formatPowerChange: (powerChange: number | null) => string;
   getSpellDetailLines: (spellId: string, supportSpellIds: string[]) => string[];
   renderSpellUpgradeActions: (spellId: string) => ReactNode;
   onClose: () => void;
@@ -34,7 +32,6 @@ export const HubOverlayPanel = ({
   selectedSupportSlot,
   getSpellAccentClassName,
   getSupportAccentClassName,
-  formatPowerChange,
   getSpellDetailLines,
   renderSpellUpgradeActions,
   onClose,
@@ -51,7 +48,6 @@ export const HubOverlayPanel = ({
   const renderItemCard = (
     item: CharacterRecord["inventory"][number],
     options?: {
-      powerChange?: number | null;
       actionLabel?: string;
       onAction?: () => void;
       badge?: string;
@@ -72,12 +68,8 @@ export const HubOverlayPanel = ({
           {item.slot ? <ItemSlotIcon slot={item.slot} /> : null}
           <strong>{item.name}</strong>
         </div>
-        <span>Power {getItemPowerScore(item).toFixed(0)}</span>
       </div>
       {options?.badge ? <div className="status-text">{options.badge}</div> : null}
-      {typeof options?.powerChange !== "undefined" ? (
-        <div className="status-text">{formatPowerChange(options.powerChange)}</div>
-      ) : null}
       {(options?.showSummary ?? true) && chipModel ? (
         <div className="delta-chip-row">
           <span className={`delta-chip ${chipModel.damageClass}`}>
@@ -115,7 +107,13 @@ export const HubOverlayPanel = ({
           ? item.slot === "Ring"
           : item.slot === selectedEquipmentSlot
       )
-      .sort((left, right) => getItemPowerScore(right) - getItemPowerScore(left));
+      .sort((left, right) => {
+        const leftSummary = summarizeComparison(character, left, currentlyEquippedItem ?? null);
+        const rightSummary = summarizeComparison(character, right, currentlyEquippedItem ?? null);
+        const leftScore = (leftSummary?.damagePercentDelta ?? 0) + (leftSummary?.survivalPercentDelta ?? 0);
+        const rightScore = (rightSummary?.damagePercentDelta ?? 0) + (rightSummary?.survivalPercentDelta ?? 0);
+        return rightScore - leftScore;
+      });
 
     return (
       <div className="mobile-overlay" onClick={onClose}>
@@ -130,7 +128,6 @@ export const HubOverlayPanel = ({
             <>
               <div className="status-text">Currently equipped</div>
               {renderItemCard(currentlyEquippedItem, {
-                powerChange: 0,
                 badge: "This is the item currently in the slot.",
                 showDeltas: false,
                 showSummary: false
@@ -143,7 +140,6 @@ export const HubOverlayPanel = ({
           {selectedSlotItems.length === 0 ? <p className="status-text">No items for this slot yet.</p> : null}
           {selectedSlotItems.map((item) =>
             renderItemCard(item, {
-              powerChange: item.slot ? getPowerChangeForCharacterItem(character, item) : null,
               actionLabel: "Equip",
               onAction: () => onEquipItem(item.id, selectedEquipmentSlot),
               equippedComparisonItem: currentlyEquippedItem ?? null,

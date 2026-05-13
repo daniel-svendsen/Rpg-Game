@@ -7,6 +7,8 @@ export const isExceptionalRare = (item: InventoryItem): boolean =>
 
 export const getItemPowerScore = (item: InventoryItem): number => {
   const bonuses = item.statBonuses;
+  const castSpeedBonus = (bonuses.castSpeedMultiplier ?? 1) - 1;
+  const attackSpeedBonus = (bonuses.attackSpeedMultiplier ?? 1) - 1;
 
   return (
     (bonuses.strength ?? 0) * 1.2 +
@@ -23,6 +25,8 @@ export const getItemPowerScore = (item: InventoryItem): number => {
     (bonuses.lightningResistance ?? 0) * 200 +
     (bonuses.critChance ?? 0) * 120 +
     (bonuses.spellPowerMultiplier ?? 0) * 100 +
+    castSpeedBonus * 100 +
+    attackSpeedBonus * 100 +
     item.tier * 6 +
     (isExceptionalRare(item) ? item.tier * 18 : 0)
   );

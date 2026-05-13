@@ -1,7 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { getEquipmentSlotLabel, getItemSlotLabel } from "../game/config/itemConfig";
 import { ItemSlotIcon } from "./ItemSlotIcon";
-import { getItemPowerScore, getPowerChangeForCharacterItem } from "../game/domain/items/itemPower";
 import type { CharacterRecord, EquipmentSlot, InventoryItem } from "../shared/types/saveTypes";
 import { ItemStatBlock } from "./ItemStatBlock";
 import { useItemComparison } from "./useItemComparison";
@@ -83,7 +82,6 @@ interface GearTabProps {
   character: CharacterRecord | null;
   equipmentSlots: EquipmentSlot[];
   getItemSellPrice: (item: CharacterRecord["inventory"][number]) => number;
-  formatPowerChange: (powerChange: number | null) => string;
   onSellItem: (itemId: string) => void;
   onEquipItem: (itemId: string, targetSlotOverride?: EquipmentSlot) => void;
   onSelectEquipmentSlot: (slot: EquipmentSlot) => void;
@@ -95,7 +93,6 @@ export const GearTab = ({
   character,
   equipmentSlots,
   getItemSellPrice,
-  formatPowerChange,
   onSellItem,
   onEquipItem,
   onSelectEquipmentSlot,
@@ -103,10 +100,17 @@ export const GearTab = ({
 }: GearTabProps) => {
   const getComparison = useItemComparison(character);
   const [selectedInventoryItemId, setSelectedInventoryItemId] = useState<string | null>(null);
+  const getComparisonScore = (item: InventoryItem): number => {
+    const summary = summarizeComparison(character, item);
+    if (!summary) {
+      return 0;
+    }
+    return summary.damagePercentDelta + summary.survivalPercentDelta;
+  };
   const sortedInventory = [...(character?.inventory ?? [])].sort((left, right) => {
-    const powerDelta = getItemPowerScore(right) - getItemPowerScore(left);
-    if (powerDelta !== 0) {
-      return powerDelta;
+    const scoreDelta = getComparisonScore(right) - getComparisonScore(left);
+    if (scoreDelta !== 0) {
+      return scoreDelta;
     }
 
     const rarityRank = { Unique: 3, Rare: 2, Magic: 1, Normal: 0 } as const;
@@ -203,14 +207,6 @@ export const GearTab = ({
             </div>
             <span>{item.slot ? getItemSlotLabel(item.slot) : "Stored"}</span>
           </div>
-          <div className="inventory-row">
-            <div className="status-text">Power {getItemPowerScore(item).toFixed(0)}</div>
-            {character ? (
-              <div className="status-text">
-                {formatPowerChange(item.slot ? getPowerChangeForCharacterItem(character, item) : null)}
-              </div>
-            ) : null}
-          </div>
           <div className="status-text">Sell price {getItemSellPrice(item)} gold</div>
           {chipModel ? (
             <div className="delta-chip-row">
@@ -254,10 +250,9 @@ export const GearTab = ({
               Sell for {getItemSellPrice(item)} gold
             </button>
           </div>
-          {(() => {
-            const pc = character ? getPowerChangeForCharacterItem(character, item) : null;
-            return pc !== null && pc > 0 ? <div className="upgrade-text">Possible upgrade</div> : null;
-          })()}
+          {summary && (summary.damagePercentDelta > 0 || summary.survivalPercentDelta > 0) ? (
+            <div className="upgrade-text">Possible upgrade</div>
+          ) : null}
         </div>
           );
         })}

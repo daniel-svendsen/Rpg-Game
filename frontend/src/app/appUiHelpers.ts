@@ -2,7 +2,7 @@ import { balanceConfig } from "../game/config/balanceConfig";
 import { spellConfig, supportSpellConfig } from "../game/config/spellConfig";
 import { getItemPowerScore } from "../game/domain/items/itemPower";
 import { createShopStock, getShopItemPrice } from "../game/domain/items/shopStock";
-import type { AutoSellRarity, AutoSellSettings, CharacterRecord, EquipmentSlot, InventoryItem } from "../shared/types/saveTypes";
+import type { AutoSellRarity, AutoSellSettings, EquipmentSlot, InventoryItem } from "../shared/types/saveTypes";
 
 export type ShopItemState = InventoryItem & { price: number };
 
@@ -86,13 +86,3 @@ export const getInventoryItemsByRarity = (
 
 export const getSellValueForRarity = (inventory: InventoryItem[], rarity: AutoSellRarity): number =>
   getInventoryItemsByRarity(inventory, rarity).reduce((total, item) => total + getItemSellPrice(item), 0);
-
-export const getEquippedPowerTotal = (character: CharacterRecord): number =>
-  Math.round(
-    Object.values(character.equippedItems).reduce((total, item) => total + (item ? getItemPowerScore(item) : 0), 0)
-  );
-
-export const formatPowerChange = (powerChange: number | null): string =>
-  powerChange === null
-    ? "Power change: New slot item"
-    : `Power change: ${powerChange > 0 ? "+" : ""}${powerChange.toFixed(0)}`;

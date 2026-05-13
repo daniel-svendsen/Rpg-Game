@@ -1,19 +1,15 @@
 import { useState } from "react";
-import type { HubTab } from "./appTypes";
 
 interface HubTopBarProps {
-  activeTab: HubTab;
   level: number | undefined;
   gold: number | undefined;
   mapShards: number | undefined;
   bossKeys: number | undefined;
-  totalPower: number | undefined;
   onSave: () => void;
 }
 
-export const HubTopBar = ({ activeTab, level, gold, mapShards, bossKeys, totalPower, onSave }: HubTopBarProps) => {
+export const HubTopBar = ({ level, gold, mapShards, bossKeys, onSave }: HubTopBarProps) => {
   const [justSaved, setJustSaved] = useState(false);
-  const showPower = (activeTab === "equipment" || activeTab === "shop") && typeof totalPower === "number";
 
   const handleSave = () => {
     onSave();
@@ -32,7 +28,6 @@ export const HubTopBar = ({ activeTab, level, gold, mapShards, bossKeys, totalPo
         {typeof bossKeys === "number" && bossKeys > 0 ? (
           <span className="summary-chip summary-chip--keys">{bossKeys} Keys</span>
         ) : null}
-        {showPower ? <span className="summary-chip">Power {totalPower}</span> : null}
       </div>
       <button className={justSaved ? "secondary-button save-btn--saved" : "secondary-button"} onClick={handleSave}>
         {justSaved ? "Saved ✓" : "Save"}
