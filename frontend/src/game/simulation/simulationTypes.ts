@@ -5,11 +5,20 @@ export interface SimulationBalanceOverrides {
   enemyBaseDamageMultiplier?: number;
   mapEnemyHealthMultiplier?: number;
   mapEnemyDamageMultiplier?: number;
+  mapEnemyHealthMultiplierByTier?: Record<number, number>;
+  mapEnemyDamageMultiplierByTier?: Record<number, number>;
+  mapEnemyHealthMultiplierByMap?: Record<string, number>;
+  mapEnemyDamageMultiplierByMap?: Record<string, number>;
   itemDropRateMultiplier?: number;
   mapShardDropRateMultiplier?: number;
   mapDropRateMultiplier?: number;
   spellDropChanceMultiplier?: number;
   rareMonsterChanceMultiplier?: number;
+  rareMonsterChanceMultiplierByTier?: Record<number, number>;
+  enemySpeedMultiplierByTier?: Record<number, number>;
+  enemyAggroRadiusMultiplier?: number;
+  enemyContactRangeMultiplier?: number;
+  enemyContactDamageIntervalMultiplier?: number;
 }
 
 export interface SingleRunSimulationMetrics {

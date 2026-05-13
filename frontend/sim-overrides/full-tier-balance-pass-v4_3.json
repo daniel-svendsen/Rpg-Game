@@ -1,0 +1,64 @@
+{
+  "enemyBaseHealthMultiplier": 1.05,
+  "enemyBaseDamageMultiplier": 1.05,
+  "mapEnemyHealthMultiplierByTier": {
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.03,
+    "4": 1.05,
+    "5": 1.08,
+    "6": 1.1,
+    "7": 1.12,
+    "8": 1.95,
+    "9": 2.7,
+    "10": 3.85
+  },
+  "mapEnemyDamageMultiplierByTier": {
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.03,
+    "4": 1.05,
+    "5": 1.08,
+    "6": 1.1,
+    "7": 1.12,
+    "8": 1.4,
+    "9": 1.85,
+    "10": 2.55
+  },
+  "rareMonsterChanceMultiplierByTier": {
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.01,
+    "5": 1.03,
+    "6": 1.05,
+    "7": 1.07,
+    "8": 1.13,
+    "9": 1.22,
+    "10": 1.35
+  },
+  "mapEnemyHealthMultiplierByMap": {
+    "bossTier1": 1.0,
+    "bossTier2": 1.0,
+    "bossTier3": 1.0,
+    "bossTier4": 1.0,
+    "bossTier5": 0.95,
+    "bossTier6": 1.0,
+    "bossTier7": 1.2,
+    "bossTier8": 2.05,
+    "bossTier9": 2.9,
+    "bossTier10": 3.95
+  },
+  "mapEnemyDamageMultiplierByMap": {
+    "bossTier1": 1.0,
+    "bossTier2": 1.0,
+    "bossTier3": 1.0,
+    "bossTier4": 1.0,
+    "bossTier5": 0.95,
+    "bossTier6": 1.0,
+    "bossTier7": 1.2,
+    "bossTier8": 1.6,
+    "bossTier9": 2.2,
+    "bossTier10": 3.05
+  }
+}
