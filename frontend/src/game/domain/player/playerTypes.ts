@@ -34,8 +34,7 @@ export const createNewCharacter = (name: string, baseStats: CharacterStats): Cha
     inventory: [],
     equippedItems: {},
     unlockedSpellIds: [...starterSpellIds],
-    // Temporary testing mode: unlock all supports so drop-gated supports can be verified quickly.
-    unlockedSupportSpellIds: Object.keys(supportSpellConfig),
+    unlockedSupportSpellIds: [...starterSupportSpellIds],
     spellProgress: createInitialSpellProgress(starterSpellIds),
     spellLoadout: [
       {
@@ -54,14 +53,10 @@ export const normalizeCharacterRecord = (character: CharacterRecord): CharacterR
     ? character.unlockedSupportSpellIds
     : [...starterSupportSpellIds];
   const validSupportIds = savedSupportIds.filter((supportSpellId) => supportSpellConfig[supportSpellId]);
-  const normalizedUnlockedSupportSpellIds = [
-    // Temporary testing mode: keep all supports unlocked for existing saves as well.
-    ...new Set([
-      ...(validSupportIds.length > 0 ? validSupportIds : []),
-      ...starterSupportSpellIds,
-      ...Object.keys(supportSpellConfig)
-    ])
-  ];
+  const normalizedUnlockedSupportSpellIds = [...new Set([
+    ...(validSupportIds.length > 0 ? validSupportIds : []),
+    ...starterSupportSpellIds
+  ])];
   const normalizedSpellLoadout = character.spellLoadout.map((link) => {
     const uniqueSupportSpellIds = [...new Set(link.supportSpellIds.filter(Boolean))].slice(0, 2);
 
