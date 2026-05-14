@@ -150,7 +150,8 @@ export const App = () => {
     handleRefreshShop,
     handleSellItem,
     handleSellAllItems,
-    handleSellItemsByRarity
+    handleSellItemsByRarity,
+    handleSellUniqueItems
   } = useShopActions({
     character,
     commitCharacter,
@@ -393,6 +394,7 @@ export const App = () => {
         onStartBossTier={handleStartBossTier}
         onSellAllItems={handleSellAllItems}
         onSellItemsByRarity={handleSellItemsByRarity}
+        onSellUniqueItems={handleSellUniqueItems}
         onSellItem={handleSellItem}
         onSpendStatPoint={handleSpendStatPoint}
         onStartMap={handleStartMap}

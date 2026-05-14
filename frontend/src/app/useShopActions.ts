@@ -133,11 +133,43 @@ export const useShopActions = ({
     setErrorMessage(null);
   };
 
+  const handleSellUniqueItems = (): void => {
+    if (!character) {
+      return;
+    }
+
+    const itemsToSell = character.inventory.filter((item) => item.rarity === "Unique");
+
+    if (itemsToSell.length === 0) {
+      setErrorMessage("No unique items to sell.");
+      return;
+    }
+
+    const totalGold = itemsToSell.reduce((total, item) => total + getItemSellPrice(item), 0);
+    const isConfirmed = window.confirm(
+      `Sell all unique items (${itemsToSell.length}) for ${totalGold} gold?`
+    );
+
+    if (!isConfirmed) {
+      return;
+    }
+
+    const soldIds = new Set(itemsToSell.map((item) => item.id));
+    commitCharacter({
+      ...character,
+      gold: character.gold + totalGold,
+      inventory: character.inventory.filter((item) => !soldIds.has(item.id))
+    });
+    setStatusMessage(`Sold ${itemsToSell.length} unique item${itemsToSell.length === 1 ? "" : "s"} for ${totalGold} gold.`);
+    setErrorMessage(null);
+  };
+
   return {
     handleBuyShopItem,
     handleRefreshShop,
     handleSellItem,
     handleSellAllItems,
-    handleSellItemsByRarity
+    handleSellItemsByRarity,
+    handleSellUniqueItems
   };
 };

@@ -17,9 +17,11 @@ interface ShopTabProps {
   autoSellSettings: AutoSellSettings;
   sellAllValue: number;
   sellValueByRarity: Record<AutoSellRarity, number>;
+  sellUniqueValue: number;
   onBuyShopItem: (itemId: string) => void;
   onSellAllItems: () => void;
   onSellItemsByRarity: (rarity: AutoSellRarity) => void;
+  onSellUniqueItems: () => void;
   onSetAutoSellSettings: Dispatch<SetStateAction<AutoSellSettings>>;
   onRefreshShop: () => void;
 }
@@ -31,9 +33,11 @@ export const ShopTab = ({
   autoSellSettings,
   sellAllValue,
   sellValueByRarity,
+  sellUniqueValue,
   onBuyShopItem,
   onSellAllItems,
   onSellItemsByRarity,
+  onSellUniqueItems,
   onSetAutoSellSettings,
   onRefreshShop
 }: ShopTabProps) => {
@@ -63,6 +67,14 @@ export const ShopTab = ({
               : `Sell ${rarity}`}
           </button>
         ))}
+        <button
+          className="secondary-button shop-sell-actions__button"
+          disabled={sellUniqueValue <= 0}
+          onClick={onSellUniqueItems}
+          type="button"
+        >
+          {sellUniqueValue > 0 ? `Sell Unique (+${sellUniqueValue}g)` : "Sell Unique"}
+        </button>
       </div>
       <section className="panel stack">
         <h4>Auto-sell</h4>

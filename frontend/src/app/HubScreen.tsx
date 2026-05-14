@@ -71,6 +71,7 @@ interface HubScreenProps {
   onSelectSupportSpell: (supportSpellId: string) => void;
   onSellAllItems: () => void;
   onSellItemsByRarity: (rarity: AutoSellRarity) => void;
+  onSellUniqueItems: () => void;
   onSellItem: (itemId: string) => void;
   onSpendStatPoint: (statKey: keyof CharacterRecord["baseStats"]) => void;
   onStartMap: () => void;
@@ -119,6 +120,7 @@ export const HubScreen = ({
   onStartBossTier,
   onSellAllItems,
   onSellItemsByRarity,
+  onSellUniqueItems,
   onSellItem,
   onSpendStatPoint,
   onStartMap,
@@ -156,6 +158,7 @@ export const HubScreen = ({
     Magic: character ? character.inventory.filter((item) => item.rarity === "Magic").reduce((total, item) => total + getItemSellPrice(item), 0) : 0,
     Rare: character ? character.inventory.filter((item) => item.rarity === "Rare").reduce((total, item) => total + getItemSellPrice(item), 0) : 0
   };
+  const sellUniqueValue = character ? character.inventory.filter((item) => item.rarity === "Unique").reduce((total, item) => total + getItemSellPrice(item), 0) : 0;
 
   return (
     <div className="hub-shell">
@@ -215,9 +218,11 @@ export const HubScreen = ({
           autoSellSettings={autoSellSettings}
           sellAllValue={sellAllValue}
           sellValueByRarity={sellValueByRarity}
+          sellUniqueValue={sellUniqueValue}
           onBuyShopItem={onBuyShopItem}
           onSellAllItems={onSellAllItems}
           onSellItemsByRarity={onSellItemsByRarity}
+          onSellUniqueItems={onSellUniqueItems}
           onSetAutoSellSettings={onSetAutoSellSettings}
           onRefreshShop={onRefreshShop}
         />
