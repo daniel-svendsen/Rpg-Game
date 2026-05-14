@@ -60,6 +60,7 @@ export const App = () => {
   const [queuedMapIds, setQueuedMapIds] = useState<string[]>([]);
   const [selectedEquipmentSlot, setSelectedEquipmentSlot] = useState<EquipmentSlot>("Weapon");
   const [selectedSupportSlot, setSelectedSupportSlot] = useState<0 | 1>(0);
+  const [selectedPassiveSlot, setSelectedPassiveSlot] = useState<0 | 1 | 2>(0);
   const [autoSellSettings, setAutoSellSettings] = useAutoSellSettings();
   const [runSummaryData, setRunSummaryData] = useState<RunSummaryData | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
@@ -132,10 +133,12 @@ export const App = () => {
     handleEquipItem,
     handleSelectMainSpell,
     handleSelectSupportSpell,
+    handleSelectPassiveSupport,
     handleUpgradeSpell
   } = useLoadoutActions({
     character,
     selectedSupportSlot,
+    selectedPassiveSlot,
     commitCharacter,
     setOverlayPanel,
     setStatusMessage,
@@ -357,6 +360,7 @@ export const App = () => {
         selectedMapId={selectedMapId}
         selectedMapTarget={selectedMapTarget}
         selectedSupportSlot={selectedSupportSlot}
+        selectedPassiveSlot={selectedPassiveSlot}
         shopItems={shopItems}
         onBuyShopItem={handleBuyShopItem}
         onCloseOverlay={() => setOverlayPanel(null)}
@@ -371,6 +375,11 @@ export const App = () => {
           setSelectedSupportSlot(slotIndex);
           setOverlayPanel("supportPicker");
         }}
+        onOpenPassivePicker={(slotIndex) => {
+          setSelectedPassiveSlot(slotIndex);
+          setOverlayPanel("passiveSupportPicker");
+        }}
+        onSelectPassiveSupport={handleSelectPassiveSupport}
         onRefreshShop={handleRefreshShop}
         onSetAutoSellSettings={setAutoSellSettings}
         onRunAllMaps={handleRunAllMaps}

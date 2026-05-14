@@ -1,5 +1,6 @@
 import type { CharacterRecord, CharacterStats, InventoryItem } from "../../../shared/types/saveTypes";
 import { balanceConfig } from "../../config/balanceConfig";
+import { supportSpellConfig } from "../../config/spellConfig";
 import { getItemPowerScore } from "../items/itemPower";
 import { getEquippedUniqueModifiers } from "../items/uniqueEffects";
 import { deriveStats } from "./statCalculation";
@@ -68,6 +69,16 @@ export const applyEquipmentState = (character: CharacterRecord): CharacterRecord
   const weaponAttackSpeedMultiplier = character.equippedItems.Weapon?.statBonuses.attackSpeedMultiplier ?? 1;
   const resistanceCap = balanceConfig.combat.resistances.playerCap;
 
+  const passiveIds = character.passiveSupportIds ?? [];
+  const passiveMovementSpeed = passiveIds.reduce((sum, id) => sum + (supportSpellConfig[id]?.applyPassive?.movementSpeedBonus ?? 0), 0);
+  const passiveArmor = passiveIds.reduce((sum, id) => sum + (supportSpellConfig[id]?.applyPassive?.armorBonus ?? 0), 0);
+  const passiveEvasion = passiveIds.reduce((sum, id) => sum + (supportSpellConfig[id]?.applyPassive?.evasionBonus ?? 0), 0);
+  const passiveFireRes = passiveIds.reduce((sum, id) => sum + (supportSpellConfig[id]?.applyPassive?.fireResistanceBonus ?? 0), 0);
+  const passiveColdRes = passiveIds.reduce((sum, id) => sum + (supportSpellConfig[id]?.applyPassive?.coldResistanceBonus ?? 0), 0);
+  const passiveLightningRes = passiveIds.reduce((sum, id) => sum + (supportSpellConfig[id]?.applyPassive?.lightningResistanceBonus ?? 0), 0);
+  const passiveCritChance = passiveIds.reduce((sum, id) => sum + (supportSpellConfig[id]?.applyPassive?.critChanceBonus ?? 0), 0);
+  const passiveSpellPower = passiveIds.reduce((sum, id) => sum + (supportSpellConfig[id]?.applyPassive?.spellPowerBonus ?? 0), 0);
+
   return {
     ...character,
     derivedStats: {
@@ -75,18 +86,19 @@ export const applyEquipmentState = (character: CharacterRecord): CharacterRecord
       maxHealth: nextMaxHealth,
       castSpeedMultiplier: derivedStats.castSpeedMultiplier * weaponCastSpeedMultiplier,
       attackSpeedMultiplier: derivedStats.attackSpeedMultiplier * weaponAttackSpeedMultiplier,
-      movementSpeedMultiplier: derivedStats.movementSpeedMultiplier + movementSpeedBonus,
-      armor: derivedStats.armor + armorBonus,
-      evasion: derivedStats.evasion + evasionBonus,
+      movementSpeedMultiplier: derivedStats.movementSpeedMultiplier + movementSpeedBonus + passiveMovementSpeed,
+      armor: derivedStats.armor + armorBonus + passiveArmor,
+      evasion: derivedStats.evasion + evasionBonus + passiveEvasion,
       resistances: {
-        Fire: clamp(derivedStats.resistances.Fire + fireResistanceBonus, -1, resistanceCap),
-        Cold: clamp(derivedStats.resistances.Cold + coldResistanceBonus, -1, resistanceCap),
-        Lightning: clamp(derivedStats.resistances.Lightning + lightningResistanceBonus, -1, resistanceCap)
+        Fire: clamp(derivedStats.resistances.Fire + fireResistanceBonus + passiveFireRes, -1, resistanceCap),
+        Cold: clamp(derivedStats.resistances.Cold + coldResistanceBonus + passiveColdRes, -1, resistanceCap),
+        Lightning: clamp(derivedStats.resistances.Lightning + lightningResistanceBonus + passiveLightningRes, -1, resistanceCap)
       },
       critChance: Math.min(
         balanceConfig.statScaling.critChanceCap,
         derivedStats.critChance +
-          Object.values(character.equippedItems).reduce((total, item) => total + (item?.statBonuses.critChance ?? 0), 0)
+          Object.values(character.equippedItems).reduce((total, item) => total + (item?.statBonuses.critChance ?? 0), 0) +
+          passiveCritChance
       ),
       critMultiplier: derivedStats.critMultiplier,
       spellPowerMultiplier:
@@ -94,7 +106,8 @@ export const applyEquipmentState = (character: CharacterRecord): CharacterRecord
         Object.values(character.equippedItems).reduce(
           (total, item) => total + (item?.statBonuses.spellPowerMultiplier ?? 0),
           0
-        )
+        ) +
+        passiveSpellPower
     },
     currentHealth: Math.max(1, Math.round(nextMaxHealth * healthRatio))
   };

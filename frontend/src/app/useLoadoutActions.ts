@@ -9,6 +9,7 @@ import type { OverlayPanel } from "./appTypes";
 interface UseLoadoutActionsParams {
   character: CharacterRecord | null;
   selectedSupportSlot: 0 | 1;
+  selectedPassiveSlot: 0 | 1 | 2;
   commitCharacter: (nextCharacter: CharacterRecord | null) => void;
   setOverlayPanel: Dispatch<SetStateAction<OverlayPanel>>;
   setStatusMessage: Dispatch<SetStateAction<string>>;
@@ -18,6 +19,7 @@ interface UseLoadoutActionsParams {
 export const useLoadoutActions = ({
   character,
   selectedSupportSlot,
+  selectedPassiveSlot,
   commitCharacter,
   setOverlayPanel,
   setStatusMessage,
@@ -108,10 +110,31 @@ export const useLoadoutActions = ({
     setErrorMessage(null);
   };
 
+  const handleSelectPassiveSupport = (supportSpellId: string): void => {
+    if (!character) return;
+    if (!character.unlockedSupportSpellIds.includes(supportSpellId)) {
+      setErrorMessage("Support not unlocked yet.");
+      return;
+    }
+    const currentPassive = [...(character.passiveSupportIds ?? [])];
+    if (currentPassive[selectedPassiveSlot] === supportSpellId) {
+      currentPassive.splice(selectedPassiveSlot, 1);
+    } else {
+      currentPassive[selectedPassiveSlot] = supportSpellId;
+    }
+    commitCharacter({
+      ...character,
+      passiveSupportIds: currentPassive.slice(0, 3)
+    });
+    setOverlayPanel(null);
+    setStatusMessage(`${supportSpellConfig[supportSpellId]?.name ?? supportSpellId} equipped in passive slot ${selectedPassiveSlot + 1}.`);
+  };
+
   return {
     handleEquipItem,
     handleSelectMainSpell,
     handleSelectSupportSpell,
+    handleSelectPassiveSupport,
     handleUpgradeSpell
   };
 };

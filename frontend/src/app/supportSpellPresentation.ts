@@ -30,6 +30,41 @@ export const getSupportEffectDetails = (supportSpellId: string): string[] => {
   return details;
 };
 
+export const getSupportPassiveDetails = (supportSpellId: string): string[] => {
+  const support = supportSpellConfig[supportSpellId];
+  if (!support?.applyPassive) {
+    return [];
+  }
+
+  const details: string[] = [];
+  const p = support.applyPassive;
+  if (p.movementSpeedBonus) {
+    details.push(`+${Math.round(p.movementSpeedBonus * 100)}% movement speed`);
+  }
+  if (p.armorBonus) {
+    details.push(`+${p.armorBonus} armor`);
+  }
+  if (p.evasionBonus) {
+    details.push(`+${p.evasionBonus} evasion`);
+  }
+  if (p.fireResistanceBonus) {
+    details.push(`+${Math.round(p.fireResistanceBonus * 100)}% fire resistance`);
+  }
+  if (p.coldResistanceBonus) {
+    details.push(`+${Math.round(p.coldResistanceBonus * 100)}% cold resistance`);
+  }
+  if (p.lightningResistanceBonus) {
+    details.push(`+${Math.round(p.lightningResistanceBonus * 100)}% lightning resistance`);
+  }
+  if (p.critChanceBonus) {
+    details.push(`+${Math.round(p.critChanceBonus * 100)}% crit chance`);
+  }
+  if (p.spellPowerBonus) {
+    details.push(`+${Math.round(p.spellPowerBonus * 100)}% spell power`);
+  }
+  return details;
+};
+
 export const getSupportRoleTags = (supportSpellId: string): string[] => {
   const support = supportSpellConfig[supportSpellId];
   if (!support) {

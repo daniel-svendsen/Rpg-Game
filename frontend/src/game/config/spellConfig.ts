@@ -34,6 +34,17 @@ export interface SupportSpellDefinition {
     bonusProjectiles?: number;
     bonusAreaRadius?: number;
   };
+  passiveOnly?: boolean;
+  applyPassive?: {
+    movementSpeedBonus?: number;
+    armorBonus?: number;
+    evasionBonus?: number;
+    fireResistanceBonus?: number;
+    coldResistanceBonus?: number;
+    lightningResistanceBonus?: number;
+    critChanceBonus?: number;
+    spellPowerBonus?: number;
+  };
 }
 
 export const starterSpellIds = ["stormChain", "emberBurst"] as const;
@@ -331,6 +342,59 @@ export const supportSpellConfig: Record<string, SupportSpellDefinition> = {
     tags: ["SpellDamage"],
     apply: {
       moreDamageMultiplier: balanceConfig.supportSpellModifiers.overloadDamage
+    }
+  },
+  concentratedEffect: {
+    id: "concentratedEffect",
+    name: "Concentrated Effect",
+    tags: ["SpellDamage", "Area"],
+    apply: {
+      moreDamageMultiplier: balanceConfig.supportSpellModifiers.concentratedEffect,
+      bonusAreaRadius: balanceConfig.supportSpellModifiers.concentratedEffectAreaPenalty
+    }
+  },
+  swiftnessAura: {
+    id: "swiftnessAura",
+    name: "Swiftness Aura",
+    tags: ["Aura"],
+    passiveOnly: true,
+    apply: {},
+    applyPassive: {
+      movementSpeedBonus: balanceConfig.supportSpellModifiers.swiftnessAura
+    }
+  },
+  wardingAura: {
+    id: "wardingAura",
+    name: "Warding Aura",
+    tags: ["Aura"],
+    passiveOnly: true,
+    apply: {},
+    applyPassive: {
+      fireResistanceBonus: balanceConfig.supportSpellModifiers.wardingAura,
+      coldResistanceBonus: balanceConfig.supportSpellModifiers.wardingAura,
+      lightningResistanceBonus: balanceConfig.supportSpellModifiers.wardingAura
+    }
+  },
+  ironSkinAura: {
+    id: "ironSkinAura",
+    name: "Iron Skin Aura",
+    tags: ["Aura"],
+    passiveOnly: true,
+    apply: {},
+    applyPassive: {
+      armorBonus: balanceConfig.supportSpellModifiers.ironSkinAuraArmor,
+      evasionBonus: balanceConfig.supportSpellModifiers.ironSkinAuraEvasion
+    }
+  },
+  arcaneResonance: {
+    id: "arcaneResonance",
+    name: "Arcane Resonance",
+    tags: ["Aura", "SpellDamage"],
+    passiveOnly: true,
+    apply: {},
+    applyPassive: {
+      spellPowerBonus: balanceConfig.supportSpellModifiers.arcaneResonanceSpellPower,
+      critChanceBonus: balanceConfig.supportSpellModifiers.arcaneResonanceCrit
     }
   }
 };

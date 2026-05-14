@@ -45,6 +45,7 @@ interface HubScreenProps {
   selectedMapId: string;
   selectedMapTarget: SelectedMapTarget;
   selectedSupportSlot: 0 | 1;
+  selectedPassiveSlot: 0 | 1 | 2;
   shopItems: ShopItemState[];
   onStartBossTier: (tier: number) => void;
   onBuyShopItem: (itemId: string) => void;
@@ -57,6 +58,8 @@ interface HubScreenProps {
   onOpenEquipmentPicker: () => void;
   onOpenMainSpellPicker: () => void;
   onOpenSupportPicker: (slotIndex: 0 | 1) => void;
+  onOpenPassivePicker: (slotIndex: 0 | 1 | 2) => void;
+  onSelectPassiveSupport: (id: string) => void;
   onRefreshShop: () => void;
   onSetAutoSellSettings: Dispatch<SetStateAction<AutoSellSettings>>;
   onRunAllMaps: () => void;
@@ -89,6 +92,7 @@ export const HubScreen = ({
   selectedMapId,
   selectedMapTarget,
   selectedSupportSlot,
+  selectedPassiveSlot,
   shopItems,
   onBuyShopItem,
   onCloseOverlay,
@@ -100,6 +104,8 @@ export const HubScreen = ({
   onOpenEquipmentPicker,
   onOpenMainSpellPicker,
   onOpenSupportPicker,
+  onOpenPassivePicker,
+  onSelectPassiveSupport,
   onRefreshShop,
   onSetAutoSellSettings,
   onRunAllMaps,
@@ -193,6 +199,7 @@ export const HubScreen = ({
           getSpellDetailLines={(spellId, supportSpellIds) => getSpellDetailLines(character, spellId, supportSpellIds)}
           onOpenMainSpellPicker={onOpenMainSpellPicker}
           onOpenSupportPicker={onOpenSupportPicker}
+          onOpenPassivePicker={onOpenPassivePicker}
           onUpgradeSpell={onUpgradeSpell}
         />
       ) : null}
@@ -227,11 +234,13 @@ export const HubScreen = ({
         overlayPanel={overlayPanel}
         selectedEquipmentSlot={selectedEquipmentSlot}
         selectedSupportSlot={selectedSupportSlot}
+        selectedPassiveSlot={selectedPassiveSlot}
         getSpellDetailLines={(spellId, supportSpellIds) => getSpellDetailLines(character, spellId, supportSpellIds)}
         onClose={onCloseOverlay}
         onEquipItem={onEquipItem}
         onSelectMainSpell={onSelectMainSpell}
         onSelectSupportSpell={onSelectSupportSpell}
+        onSelectPassiveSupport={onSelectPassiveSupport}
         onUpgradeSpell={onUpgradeSpell}
       />
     </div>

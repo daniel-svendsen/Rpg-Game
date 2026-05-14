@@ -67,12 +67,20 @@ export const normalizeCharacterRecord = (character: CharacterRecord): CharacterR
     };
   });
 
+  const normalizedPassiveSupportIds = (character.passiveSupportIds ?? [])
+    .filter((id) => {
+      const def = supportSpellConfig[id];
+      return def !== undefined && def.passiveOnly === true;
+    })
+    .slice(0, 3);
+
   return applyEquipmentState({
     ...character,
     baseStats: normalizeBaseStats(character.baseStats),
     unlockedSpellIds: normalizedUnlockedSpellIds,
     spellLoadout: normalizedSpellLoadout,
     unlockedSupportSpellIds: normalizedUnlockedSupportSpellIds,
+    passiveSupportIds: normalizedPassiveSupportIds,
     lifeFlask: normalizeLifeFlask(character.lifeFlask?.currentCharges),
     spellProgress: normalizeSpellProgress(character.spellProgress, normalizedUnlockedSpellIds),
     mapProgress: normalizeMapProgress(character.mapProgress)

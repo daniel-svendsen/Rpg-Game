@@ -30,6 +30,14 @@ export const combatBalance = {
     impactCascadeLessDamage: -0.1,
     precisionCriticalChance: 0.05,
     focusedCooldownRecovery: 0.12,
-    overloadDamage: 0.14
+    overloadDamage: 0.14,
+    concentratedEffect: 0.35,
+    concentratedEffectAreaPenalty: -0.25,
+    swiftnessAura: 0.20,
+    wardingAura: 0.08,
+    ironSkinAuraArmor: 50,
+    ironSkinAuraEvasion: 50,
+    arcaneResonanceSpellPower: 0.10,
+    arcaneResonanceCrit: 0.04,
   }
 } as const;

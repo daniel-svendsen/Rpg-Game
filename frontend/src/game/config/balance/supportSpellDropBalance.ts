@@ -27,7 +27,13 @@ export const supportSpellDropBalance = {
   pool: [
     { supportSpellId: "chainSupport", minTier: 2, weight: 8, dropCategory: "common" },
     { supportSpellId: "scattershotProjectiles", minTier: 3, weight: 3, dropCategory: "chase" },
-    { supportSpellId: "impactCascade", minTier: 5, weight: 2, dropCategory: "chase" }
+    { supportSpellId: "impactCascade", minTier: 5, weight: 2, dropCategory: "chase" },
+    { supportSpellId: "areaSupport", minTier: 1, weight: 7, dropCategory: "common" },
+    { supportSpellId: "concentratedEffect", minTier: 2, weight: 5, dropCategory: "common" },
+    { supportSpellId: "swiftnessAura", minTier: 1, weight: 5, dropCategory: "common" },
+    { supportSpellId: "wardingAura", minTier: 3, weight: 4, dropCategory: "common" },
+    { supportSpellId: "ironSkinAura", minTier: 4, weight: 3, dropCategory: "common" },
+    { supportSpellId: "arcaneResonance", minTier: 5, weight: 3, dropCategory: "chase" }
   ] satisfies DroppableSupportSpellEntry[]
 } as const;
 

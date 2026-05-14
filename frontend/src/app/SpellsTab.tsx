@@ -2,7 +2,7 @@ import { Fragment, type ReactNode } from "react";
 import { getSpellDescription, getSpellName } from "../game/domain/spells/spellDrops";
 import { spellConfig, supportSpellConfig } from "../game/config/spellConfig";
 import { resolveSpell } from "../game/domain/spells/spellEngine";
-import { getSupportEffectDetails, getSupportRoleTags } from "./supportSpellPresentation";
+import { getSupportEffectDetails, getSupportPassiveDetails, getSupportRoleTags } from "./supportSpellPresentation";
 import { getSpellAccentClassName, getSupportAccentClassName } from "./appUiHelpers";
 import { SpellUpgradeActions } from "./SpellUpgradeActions";
 
@@ -30,6 +30,7 @@ interface SpellsTabProps {
   getSpellDetailLines: (spellId: string, supportSpellIds: string[]) => string[];
   onOpenMainSpellPicker: () => void;
   onOpenSupportPicker: (slotIndex: 0 | 1) => void;
+  onOpenPassivePicker: (slotIndex: 0 | 1 | 2) => void;
   onUpgradeSpell: (spellId: string) => void;
 }
 
@@ -39,6 +40,7 @@ export const SpellsTab = ({
   getSpellDetailLines,
   onOpenMainSpellPicker,
   onOpenSupportPicker,
+  onOpenPassivePicker,
   onUpgradeSpell
 }: SpellsTabProps) => {
   const activeMainSpellId = character?.spellLoadout[0]?.mainSpellId ?? "";
@@ -66,6 +68,7 @@ export const SpellsTab = ({
     })
     .filter((row): row is { id: string; name: string; details: string; roleTags: string[] } => Boolean(row));
   const supplementalMainSpellLines = getSpellDetailLines(activeMainSpellId, activeSupportSpellIds);
+  const passiveSlots = character?.passiveSupportIds ?? [];
 
   return (
     <div className="content stack mobile-content">
@@ -118,6 +121,45 @@ export const SpellsTab = ({
             );
           })}
         </div>
+        <div className="materia-strip">
+          {([0, 1, 2] as const).map((slotIndex) => {
+            const passiveId = passiveSlots[slotIndex];
+            const passiveName = passiveId ? (supportSpellConfig[passiveId]?.name ?? passiveId) : null;
+            const passiveTags = passiveId ? (supportSpellConfig[passiveId]?.tags ?? []) : [];
+            const passiveSymbol = passiveId
+              ? (passiveTags.includes("CastSpeed") ? "⟳" : passiveTags.includes("Critical") ? "◆" : passiveTags.includes("Chain") || passiveTags.includes("Projectile") ? "➤" : passiveTags.includes("Area") ? "◉" : "✦")
+              : "◈";
+
+            return (
+              <div key={slotIndex} className="materia-node">
+                <button
+                  className={`materia-orb support-materia ${
+                    passiveId ? getSupportAccentClassName(passiveId) : "empty-materia"
+                  }`}
+                  onClick={() => onOpenPassivePicker(slotIndex)}
+                  type="button"
+                  title={passiveName ?? `Passive slot ${slotIndex + 1}`}
+                >
+                  <span className="materia-orb-icon">{passiveSymbol}</span>
+                </button>
+                <div className="materia-node-caption">
+                  {passiveName ?? `Passive ${slotIndex + 1}`}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {passiveSlots.filter(Boolean).length > 0 ? (
+          <div className="stack compact-stack">
+            {passiveSlots.filter(Boolean).map((passiveId) => {
+              const passiveDetails = getSupportPassiveDetails(passiveId).join(", ");
+              const passiveName = supportSpellConfig[passiveId]?.name ?? passiveId;
+              return passiveDetails ? (
+                <span key={passiveId} className="status-text">{passiveName}: {passiveDetails}</span>
+              ) : null;
+            })}
+          </div>
+        ) : null}
         {resolvedSpell ? (
           <section className="final-output-panel stack compact-stack">
             <h4>Active Result</h4>

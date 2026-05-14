@@ -16,7 +16,8 @@ export type Tag =
   | "Rare"
   | "Unique"
   | "Currency"
-  | "MapModifier";
+  | "MapModifier"
+  | "Aura";
 
 export type ItemRarity = "Normal" | "Magic" | "Rare" | "Unique";
 export type AutoSellRarity = Exclude<ItemRarity, "Unique">;
@@ -175,6 +176,7 @@ export interface CharacterRecord {
   equippedItems: Partial<Record<EquipmentSlot, InventoryItem>>;
   unlockedSpellIds: string[];
   unlockedSupportSpellIds: string[];
+  passiveSupportIds?: string[];
   spellProgress: SpellProgressState[];
   spellLoadout: SpellLinkState[];
   currencies: CurrencyStack[];
