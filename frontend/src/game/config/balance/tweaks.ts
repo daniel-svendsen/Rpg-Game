@@ -77,14 +77,14 @@ export const gameTweaks = {
   tierOverrides: {
     9: {} as TierBalanceTweaks,
     10: {
-      enemyHpMultiplier: 1.0,
-      enemyResistanceMultiplier: 1.0,
-      enemyDamageMultiplier: 1.5,
-      enemySpeedMultiplier: 1.5,
-      rareMonsterHpMultiplier: 1.5,
-      rareMonsterDamageMultiplier: 1.5,
-      bossResistanceMultiplier: 1.0,
-      spellcasterSpawnChance: 0.50,
+      enemyHpMultiplier: 1.3,
+      enemyResistanceMultiplier: 1.3,
+      enemyDamageMultiplier: 1.7,
+      enemySpeedMultiplier: 1.7,
+      rareMonsterHpMultiplier: 1.6,
+      rareMonsterDamageMultiplier: 1.6,
+      bossResistanceMultiplier: 1.5,
+      spellcasterSpawnChance: 0.60,
       spellcasterDamageMultiplier: 1.7,
       spellcasterCooldownMultiplier: 1.7,
       spellcasterRangeMultiplier: 1.7
