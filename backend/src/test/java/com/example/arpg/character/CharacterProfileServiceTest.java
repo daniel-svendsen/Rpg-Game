@@ -123,6 +123,7 @@ class CharacterProfileServiceTest {
                 List.of("Lightning", "Projectile", "Unique"),
                 "twinstarLoop",
                 "Projectile spells fire +2 projectiles but deal 10% less damage.",
+                null,
                 Map.of("dexterity", 4, "critChance", 0.03)
         );
         SaveCharacterProgressRequest request = new SaveCharacterProgressRequest(
@@ -174,6 +175,7 @@ class CharacterProfileServiceTest {
                         List.of("Lightning", "Projectile", "Unique"),
                         "twinstarLoop",
                         "Projectile spells fire +2 projectiles but deal 10% less damage.",
+                        null,
                         Map.of("dexterity", 4, "critChance", 0.03)
                 )
         );
@@ -188,6 +190,7 @@ class CharacterProfileServiceTest {
                         List.of("Lightning", "Projectile", "Unique"),
                         "twinstarLoop",
                         "Projectile spells fire +2 projectiles but deal 10% less damage.",
+                        null,
                         Map.of("dexterity", 4, "critChance", 0.03)
                 )
         );
@@ -270,6 +273,7 @@ class CharacterProfileServiceTest {
                 List.of("Physical", "Unique"),
                 "titanCarapace",
                 "14% less contact damage taken.",
+                null,
                 Map.of("vitality", 8, "maxHealth", 25)
         );
         SaveCharacterProgressRequest saveRequest = new SaveCharacterProgressRequest(
@@ -332,6 +336,7 @@ class CharacterProfileServiceTest {
                         List.of("Physical", "Unique"),
                         "titanCarapace",
                         "14% less contact damage taken.",
+                        null,
                         Map.of("vitality", 8, "maxHealth", 25)
                 )
         );
@@ -346,6 +351,7 @@ class CharacterProfileServiceTest {
                         List.of("Physical", "Unique"),
                         "titanCarapace",
                         "14% less contact damage taken.",
+                        null,
                         Map.of("vitality", 8, "maxHealth", 25)
                 )
         );
