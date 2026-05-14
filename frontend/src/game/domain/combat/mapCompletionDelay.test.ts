@@ -51,7 +51,7 @@ describe("arenaSimulation map completion delay", () => {
     expect(afterClear.snapshot.isComplete).toBe(false);
     expect(afterClear.completionDelayUntilMs).not.toBeNull();
 
-    const beforeDelay = stepArenaRuntime(afterClear, 999);
+    const beforeDelay = stepArenaRuntime(afterClear, 2499);
     expect(beforeDelay.snapshot.isComplete).toBe(false);
 
     const afterDelay = stepArenaRuntime(beforeDelay, 1);

@@ -54,7 +54,7 @@ describe("arenaSimulation boss keys", () => {
     };
 
     const afterClear = stepArenaRuntime(clearedRuntime, 0);
-    const completed = stepArenaRuntime(afterClear, 1000);
+    const completed = stepArenaRuntime(afterClear, 2500);
 
     expect(completed.snapshot.isComplete).toBe(true);
     expect(completed.player.mapProgress.consumableMaps.some((entry) => entry.mapId === "bossTier1")).toBe(false);
@@ -91,7 +91,7 @@ describe("arenaSimulation boss keys", () => {
     };
 
     const afterClear = stepArenaRuntime(clearedRuntime, 0);
-    const completed = stepArenaRuntime(afterClear, 1000);
+    const completed = stepArenaRuntime(afterClear, 2500);
 
     expect(completed.snapshot.isComplete).toBe(true);
     expect(completed.player.mapProgress.clearedBossTiers ?? []).toEqual([1]);
@@ -146,7 +146,7 @@ describe("arenaSimulation boss keys", () => {
     };
 
     const afterKill = stepArenaRuntime(seededRuntime, 50);
-    const afterPickup = stepArenaRuntime(afterKill, 50);
+    const afterPickup = stepArenaRuntime(afterKill, 650);
 
     expect(afterKill.groundLoot.some((entry) => entry.payload.kind === "Map" && entry.payload.mapId === "bossTier10")).toBe(true);
     expect(afterPickup.player.mapProgress.consumableMaps.find((entry) => entry.mapId === "bossTier10")?.quantity).toBe(1);
@@ -180,7 +180,7 @@ describe("arenaSimulation boss keys", () => {
     };
 
     const afterClear = stepArenaRuntime(clearedRuntime, 0);
-    const completed = stepArenaRuntime(afterClear, 1000);
+    const completed = stepArenaRuntime(afterClear, 2500);
 
     expect(completed.snapshot.isComplete).toBe(true);
     expect(completed.player.mapProgress.clearedBossTiers ?? []).toContain(10);
