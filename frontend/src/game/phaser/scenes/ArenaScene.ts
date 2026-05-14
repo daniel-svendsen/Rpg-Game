@@ -328,7 +328,7 @@ export class ArenaScene extends Phaser.Scene {
     if (event.chainPositions.length === 0) return;
     const impactAnim = this.getSpellFxAnim(event.spellId, event.tags);
     const orbAnim = this.getOrbFxAnim(event.tags);
-    const impactScale = this.fxScale(event.areaRadius, 0.9);
+    const impactScale = this.fxScale(event.areaRadius, 0.5);
 
     if (event.stage === "primary") {
       const primaryTarget = event.chainPositions[0];
@@ -357,7 +357,7 @@ export class ArenaScene extends Phaser.Scene {
         orbAnim,
         impactAnim,
         impactScale,
-        index * 90
+        index * 50
       );
       fromX = target.x;
       fromY = target.y;
@@ -409,7 +409,7 @@ export class ArenaScene extends Phaser.Scene {
       event.targetY,
       orbAnim,
       impactAnim,
-      this.fxScale(event.areaRadius, 1.0),
+      this.fxScale(event.areaRadius, 0.6),
       0
     );
   }
@@ -451,25 +451,26 @@ export class ArenaScene extends Phaser.Scene {
       sprite.play(orbAnimKey);
 
       const distanceToTarget = Phaser.Math.Distance.Between(fromX, fromY, toX, toY);
-      const travelDuration = Phaser.Math.Clamp(Math.round(distanceToTarget * 1.8), 90, 260);
+      const travelDuration = Phaser.Math.Clamp(Math.round(distanceToTarget * 1.2), 60, 180);
+      const angle = Math.atan2(toY - fromY, toX - fromX);
 
       this.tweens.add({
         targets: sprite,
         x: toX,
         y: toY,
         duration: travelDuration,
-        ease: "Quad.easeOut",
+        ease: "Linear",
         onComplete: () => {
           if (sprite.active) {
             sprite.destroy();
           }
-          this.spawnImpactFx(toX, toY, impactAnimKey, impactScale);
+          this.spawnImpactFx(toX, toY, impactAnimKey, impactScale, angle);
         }
       });
     });
   }
 
-  private spawnImpactFx(x: number, y: number, animKey: string, scale: number): void {
+  private spawnImpactFx(x: number, y: number, animKey: string, scale: number, angle = 0): void {
     if (!this.anims.exists(animKey)) return;
 
     const anim = Object.values(FX_ANIMS).find((entry) => entry.key === animKey) as any;
@@ -478,7 +479,8 @@ export class ArenaScene extends Phaser.Scene {
       .sprite(x, y, sheetKey, 0)
       .setScale(scale)
       .setDepth(16)
-      .setBlendMode(Phaser.BlendModes.ADD);
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setRotation(angle);
 
     sprite.play(animKey);
     sprite.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
