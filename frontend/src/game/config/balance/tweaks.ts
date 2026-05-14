@@ -28,9 +28,9 @@ export type TierBalanceTweaks = {
 
 export const gameTweaks = {
   // Enemy Stats
-  enemyHpMultiplier: 1.0,
-  enemyResistanceMultiplier: 1.0,
-  enemyDamageMultiplier: 1.0,
+  enemyHpMultiplier: 1.2,
+  enemyResistanceMultiplier: 1.3,
+  enemyDamageMultiplier: 1.3,
   enemySpeedMultiplier: 1.0,
 
   // Rare Monster Stats
@@ -40,9 +40,9 @@ export const gameTweaks = {
 
   // Boss Stats
   // Applied on top of the enemy multipliers above.
-  bossHpMultiplier: 1.0,
-  bossResistanceMultiplier: 1.0,
-  bossDamageMultiplier: 1.0,
+  bossHpMultiplier: 1.5,
+  bossResistanceMultiplier: 1.5,
+  bossDamageMultiplier: 1.3,
   // Multiplies the boss bonus currency roll chance. The guaranteed boss unique is always attempted.
   bossRewardDropMultiplier: 1.0,
 
@@ -55,13 +55,13 @@ export const gameTweaks = {
   rareSpawnMultiplier: 1.0,
 
   // Fraction of packs that include a spellcaster (0-1). Default: 0.20
-  spellcasterSpawnChance: 0.20,
+  spellcasterSpawnChance: 0.40,
 
   // Spellcaster Stats
   // Cooldown multiplier: 0.8 = casts 20% faster, 1.25 = casts 25% slower.
-  spellcasterDamageMultiplier: 1.0,
-  spellcasterCooldownMultiplier: 1.0,
-  spellcasterRangeMultiplier: 1.0,
+  spellcasterDamageMultiplier: 0.8,
+  spellcasterCooldownMultiplier: 0.8,
+  spellcasterRangeMultiplier: 0.9,
 
   // Map Density and Sustain
   packCountMultiplier: 1.0,
@@ -71,49 +71,24 @@ export const gameTweaks = {
   // Tier Overrides
   // Use these for quick targeted balance passes. Values override the global tweak above
   // only on that map tier. Missing values fall back to the global tweak.
+  //
+  // Keep these blocks sparse: only add values that should differ from the global
+  // tweak. If a neutral 1.0 is left here, it still overrides the global value.
   tierOverrides: {
-    9: {
-      enemyHpMultiplier: 1.0,
-      enemyResistanceMultiplier: 1.0,
-      enemyDamageMultiplier: 1.0,
-      enemySpeedMultiplier: 1.0,
-      rareMonsterHpMultiplier: 1.0,
-      rareMonsterDamageMultiplier: 1.0,
-      bossHpMultiplier: 1.0,
-      bossResistanceMultiplier: 1.0,
-      bossDamageMultiplier: 1.0,
-      bossRewardDropMultiplier: 1.0,
-      chaseUniqueChance: 0.05,
-      rareSpawnMultiplier: 1.0,
-      spellcasterSpawnChance: 0.20,
-      spellcasterDamageMultiplier: 1.0,
-      spellcasterCooldownMultiplier: 1.0,
-      spellcasterRangeMultiplier: 1.0,
-      packCountMultiplier: 1.0,
-      monsterCountMultiplier: 1.0,
-      mapShardDropMultiplier: 1.0
-    },
+    9: {} as TierBalanceTweaks,
     10: {
       enemyHpMultiplier: 1.0,
       enemyResistanceMultiplier: 1.0,
-      enemyDamageMultiplier: 1.0,
-      enemySpeedMultiplier: 1.0,
-      rareMonsterHpMultiplier: 1.0,
-      rareMonsterDamageMultiplier: 1.0,
-      bossHpMultiplier: 1.0,
+      enemyDamageMultiplier: 1.5,
+      enemySpeedMultiplier: 1.5,
+      rareMonsterHpMultiplier: 1.5,
+      rareMonsterDamageMultiplier: 1.5,
       bossResistanceMultiplier: 1.0,
-      bossDamageMultiplier: 1.0,
-      bossRewardDropMultiplier: 1.0,
-      chaseUniqueChance: 0.05,
-      rareSpawnMultiplier: 1.0,
-      spellcasterSpawnChance: 0.20,
-      spellcasterDamageMultiplier: 1.0,
-      spellcasterCooldownMultiplier: 1.0,
-      spellcasterRangeMultiplier: 1.0,
-      packCountMultiplier: 1.0,
-      monsterCountMultiplier: 1.0,
-      mapShardDropMultiplier: 1.0
-    }
+      spellcasterSpawnChance: 0.50,
+      spellcasterDamageMultiplier: 1.7,
+      spellcasterCooldownMultiplier: 1.7,
+      spellcasterRangeMultiplier: 1.7
+    } as TierBalanceTweaks
   } satisfies Record<number, TierBalanceTweaks>,
 
   // Item Drop Rarity Weights

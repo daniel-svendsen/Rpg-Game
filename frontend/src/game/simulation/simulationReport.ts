@@ -1,4 +1,5 @@
 import { mapConfig } from "../config/mapConfig";
+import { getTierBalanceTweaks } from "../config/balance";
 import { spellConfig, supportSpellConfig } from "../config/spellConfig";
 import { spellDropBalance, supportSpellDropBalance } from "../config/balance";
 import type {
@@ -243,6 +244,7 @@ export const buildSimulationSummary = (
     maxRunDurationMs,
     autoUseLifeFlaskThreshold,
     overrides,
+    activeBalanceTweaks: getTierBalanceTweaks(mapConfig[mapId]?.tier ?? 0),
     characterSnapshot,
     dropTables: buildDropTableSnapshot(),
     shop,
@@ -323,6 +325,7 @@ export const formatSimulationSummary = (summary: SimulationSummary): string => {
   const cs = summary.characterSnapshot;
   const ir = summary.itemRolls;
   const avg = summary.averages;
+  const tweaks = summary.activeBalanceTweaks;
 
   const avgNormal = avg.normalItemsDropped;
   const avgMagic = avg.magicItemsDropped;
@@ -359,6 +362,9 @@ export const formatSimulationSummary = (summary: SimulationSummary): string => {
     `Max run time: ${formatNumber(summary.maxRunDurationMs / 1000)}s`,
     `Auto life flask: ${flaskText}`,
     `Overrides: ${overridesText}`,
+    `Balance tweaks: enemy hp ${formatNumber(tweaks.enemyHpMultiplier)}x / res ${formatNumber(tweaks.enemyResistanceMultiplier)}x / dmg ${formatNumber(tweaks.enemyDamageMultiplier)}x / speed ${formatNumber(tweaks.enemySpeedMultiplier)}x`,
+    `- Rare: hp ${formatNumber(tweaks.rareMonsterHpMultiplier)}x / dmg ${formatNumber(tweaks.rareMonsterDamageMultiplier)}x  Spellcasters: spawn ${formatPercent(tweaks.spellcasterSpawnChance)} / dmg ${formatNumber(tweaks.spellcasterDamageMultiplier)}x / cooldown ${formatNumber(tweaks.spellcasterCooldownMultiplier)}x / range ${formatNumber(tweaks.spellcasterRangeMultiplier)}x`,
+    `- Density/sustain: packs ${formatNumber(tweaks.packCountMultiplier)}x / monsters ${formatNumber(tweaks.monsterCountMultiplier)}x / map shards ${formatNumber(tweaks.mapShardDropMultiplier)}x`,
     "",
     "Character stats:",
     `- HP: ${cs.maxHealth}  Armor: ${cs.armor}  Evasion: ${cs.evasion}`,

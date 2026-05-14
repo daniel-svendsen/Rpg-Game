@@ -213,6 +213,8 @@ describe("simulationReport", () => {
     );
     const output = formatSimulationSummary(summary);
 
+    expect(output).toContain("Balance tweaks:");
+    expect(output).toContain("Spellcasters:");
     expect(output).toContain("Spell categories: common 0 (0 total)  chase 0 (0 total)");
     expect(output).toContain("Support categories: common 0 (0 total)  chase 0 (0 total)");
     expect(output).not.toContain("Drop pools:");

@@ -1,4 +1,5 @@
 import type { CharacterRecord, LootEntry, ItemSlot, InventoryItem } from "../../shared/types/saveTypes";
+import type { TierBalanceTweaks } from "../config/balance";
 
 export interface SimulationBalanceOverrides {
   enemyBaseHealthMultiplier?: number;
@@ -143,6 +144,7 @@ export interface SimulationSummary {
   maxRunDurationMs: number;
   autoUseLifeFlaskThreshold: number | null;
   overrides: SimulationBalanceOverrides | null;
+  activeBalanceTweaks: Required<TierBalanceTweaks>;
   characterSnapshot: CharacterSnapshot;
   dropTables: DropTableSnapshot;
   shop: ShopSampleSummary | null;
