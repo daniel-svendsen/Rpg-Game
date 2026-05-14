@@ -228,6 +228,7 @@ export const HubScreen = ({
           healthHud={healthHud}
           accountEmail={accountEmail}
           character={character}
+          selectedMapId={selectedMapId}
           onLogout={onLogout}
           onSpendStatPoint={onSpendStatPoint}
         />

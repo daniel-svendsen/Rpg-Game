@@ -316,7 +316,7 @@ Candidate tasks:
 - [x] Add passive support slots so build-wide support effects can be equipped separately from per-spell links.
 - [x] Add support upgrade progression with saved support levels and upgrade costs, keeping support scaling visible through spell/support UI output.
 - [x] Lock spell visuals to a single per-spell impact animation plus elemental travel orb, and document sheet-specific frame mapping guardrails (`startFrame`/`frameCount` must be derived from each sheet's own column count) to prevent cross-row color bleed in FX.
-- [ ] Show effective mitigation in the character sheet for current or recent map tier context, so raw armor, evasion, and similar defense stats are paired with an estimated real combat outcome instead of standing alone as opaque numbers.
+- [x] Show effective mitigation in the character sheet for current or recent map tier context, so raw armor, evasion, and similar defense stats are paired with an estimated real combat outcome instead of standing alone as opaque numbers.
 - [ ] Add a minimalist death recap in the run summary that shows the killing enemy and damage type, giving players a compact explanation for deaths without turning the screen into a full combat log.
 - [ ] Map pacing: maps currently feel short; brainstorm and tune levers (monster count, arena size, spawn cadence, movement speed, pack density).
 - [ ] Add a lightweight `Guardian Pulse` cue when auto-move or targeting is leading toward a key guardian, so runs gain a clearer anticipation beat before the boss-key drop instead of treating the guardian like just another rare pack.
@@ -412,7 +412,7 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 - [x] Add rarity-specific inventory selling and pickup auto-sell controls (`Sell Normal/Magic/Rare`, `Auto-sell Normal/Magic/Rare`) while keeping uniques protected.
 - [x] Replace low-value run-state panels with a compact arena HUD focused on map name, enemy count / completion state, HP, flask charges, and loot.
 - [x] Show resolved spell/support output directly in the spell screen using shared domain-derived spell stats, so players can see the final linked result without manually combining base values, support bonuses, and character-derived modifiers from elsewhere in the UI.
-- [ ] Show current-tier effective mitigation in the character sheet so players can see what their defense stats actually mean against present content, especially for armor, evasion, and elemental survivability.
+- [x] Show current-tier effective mitigation in the character sheet so players can see what their defense stats actually mean against present content, especially for armor, evasion, and elemental survivability.
 - [ ] Add a small guardian-target anticipation cue in the arena UI or runtime presentation when the current pursuit target is a key guardian, so boss-key progression gets a clearer mid-run tension spike.
 - [ ] Add a compact death recap to the run summary so players can immediately see what killed them and which damage type mattered most in the final hit, helping them connect deaths back to resistances and defense choices.
 

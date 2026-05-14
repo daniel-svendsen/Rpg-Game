@@ -1,12 +1,14 @@
 ﻿import type { ReactNode } from "react";
 import type { CharacterRecord } from "../shared/types/saveTypes";
 import { getCharacterCombatSummary } from "./combatSummary";
+import { getCharacterDefenseEstimate } from "./defenseEstimate";
 
 interface CharacterTabProps {
   topBar: ReactNode;
   healthHud: ReactNode;
   accountEmail: string;
   character: CharacterRecord | null;
+  selectedMapId: string;
   onLogout: () => void;
   onSpendStatPoint: (statKey: "strength" | "agility" | "vitality" | "dexterity" | "intelligence") => void;
 }
@@ -16,10 +18,17 @@ export const CharacterTab = ({
   healthHud,
   accountEmail,
   character,
+  selectedMapId,
   onLogout,
   onSpendStatPoint
 }: CharacterTabProps) => {
   const combatSummary = character ? getCharacterCombatSummary(character) : null;
+  const defenseEstimate = character ? getCharacterDefenseEstimate(character, selectedMapId) : null;
+  const defenseContextLabel = defenseEstimate
+    ? defenseEstimate.context.source === "recent"
+      ? `Recent Tier ${defenseEstimate.context.map.tier}`
+      : `Tier ${defenseEstimate.context.map.tier}`
+    : "-";
 
   return (
     <div className="content stack mobile-content">
@@ -38,31 +47,61 @@ export const CharacterTab = ({
       </section>
       <section className="panel stack">
         <h4>Character Stats</h4>
-        <div className="status-text">Total Damage: {combatSummary ? Math.round(combatSummary.totalDamage) : 0}</div>
-        <div className="status-text">Total Survival: {combatSummary ? Math.round(combatSummary.totalSurvival) : 0}</div>
-        <div className="status-text">Max Health: {character?.derivedStats.maxHealth ?? 0}</div>
-        <div className="status-text">Armor: {character?.derivedStats.armor ?? 0}</div>
-        <div className="status-text">Evasion: {character?.derivedStats.evasion ?? 0}</div>
-        <div className="status-text">
-          Cast Speed: +{Math.round((character?.derivedStats.castSpeedMultiplier ?? 1) * 100 - 100)}%
+        <div className="stat-section stack">
+          <h5>Offensive</h5>
+          <div className="status-text">Total Damage: {combatSummary ? Math.round(combatSummary.totalDamage) : 0}</div>
+          <div className="status-text">
+            Cast Speed: +{Math.round((character?.derivedStats.castSpeedMultiplier ?? 1) * 100 - 100)}%
+          </div>
+          <div className="status-text">
+            Attack Speed: +{Math.round((character?.derivedStats.attackSpeedMultiplier ?? 1) * 100 - 100)}%
+          </div>
+          <div className="status-text">
+            Crit Chance: {Math.round((character?.derivedStats.critChance ?? 0) * 100)}%
+          </div>
+          <div className="status-text">
+            Spell Damage: +{Math.round(((character?.derivedStats.spellPowerMultiplier ?? 1) - 1) * 100)}%
+          </div>
         </div>
-        <div className="status-text">
-          Attack Speed: +{Math.round((character?.derivedStats.attackSpeedMultiplier ?? 1) * 100 - 100)}%
+        <div className="stat-section stack">
+          <h5>Defensive</h5>
+          <div className="status-text">Total Survival: {combatSummary ? Math.round(combatSummary.totalSurvival) : 0}</div>
+          <div className="status-text">Max Health: {character?.derivedStats.maxHealth ?? 0}</div>
+          <div className="status-text">Armor: {character?.derivedStats.armor ?? 0}</div>
+          <div className="status-text">Evasion: {character?.derivedStats.evasion ?? 0}</div>
+          <div className="status-text">
+            Resistances:{" "}
+            {character
+              ? `Fire ${Math.round(character.derivedStats.resistances.Fire * 100)}% | Cold ${Math.round(character.derivedStats.resistances.Cold * 100)}% | Lightning ${Math.round(character.derivedStats.resistances.Lightning * 100)}%`
+              : "-"}
+          </div>
+          {defenseEstimate ? (
+            <div className="defense-estimate stack">
+              <div className="status-text">Defense Estimate: {defenseContextLabel}</div>
+              <div className="status-text">Incoming Hit: ~{defenseEstimate.incomingHit}</div>
+              <div className="status-text">
+                Armor Outcome: {Math.round(defenseEstimate.armorReduction * 100)}% physical reduction, ~
+                {defenseEstimate.physicalDamageAfterArmor} damage taken
+              </div>
+              <div className="status-text">
+                Evasion Outcome: {Math.round(defenseEstimate.evasionChance * 100)}% evade chance
+              </div>
+              <div className="status-text">
+                Physical Prevention: {Math.round(defenseEstimate.expectedPhysicalPrevention * 100)}% expected per hit
+              </div>
+              <div className="status-text">
+                Elemental Hit Taken: Fire ~{defenseEstimate.elementalDamageTaken.Fire} | Cold ~
+                {defenseEstimate.elementalDamageTaken.Cold} | Lightning ~
+                {defenseEstimate.elementalDamageTaken.Lightning}
+              </div>
+            </div>
+          ) : null}
         </div>
-        <div className="status-text">
-          Movement Speed: +{Math.round(((character?.derivedStats.movementSpeedMultiplier ?? 1) - 1) * 100)}%
-        </div>
-        <div className="status-text">
-          Crit Chance: {Math.round((character?.derivedStats.critChance ?? 0) * 100)}%
-        </div>
-        <div className="status-text">
-          Spell Damage: +{Math.round(((character?.derivedStats.spellPowerMultiplier ?? 1) - 1) * 100)}%
-        </div>
-        <div className="status-text">
-          Resistances:{" "}
-          {character
-            ? `Fire ${Math.round(character.derivedStats.resistances.Fire * 100)}% | Cold ${Math.round(character.derivedStats.resistances.Cold * 100)}% | Lightning ${Math.round(character.derivedStats.resistances.Lightning * 100)}%`
-            : "-"}
+        <div className="stat-section stack">
+          <h5>Utility</h5>
+          <div className="status-text">
+            Movement Speed: +{Math.round(((character?.derivedStats.movementSpeedMultiplier ?? 1) - 1) * 100)}%
+          </div>
         </div>
       </section>
       <section className="panel stack">
