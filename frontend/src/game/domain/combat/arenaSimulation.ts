@@ -1,6 +1,6 @@
 import { balanceConfig } from "../../config/balanceConfig";
 import {
-  gameTweaks,
+  getTierBalanceTweaks,
   getMapBalanceByTier,
   itemBalance,
   mapBalance,
@@ -60,7 +60,7 @@ const createBossUniqueDrop = (tier: number): InventoryItem | null => {
     return null;
   }
 
-  const chaseRoll = Math.random() < gameTweaks.chaseUniqueChance;
+  const chaseRoll = Math.random() < getTierBalanceTweaks(tier).chaseUniqueChance;
   const selectedId = chaseRoll
     ? bossUniqueIds.chase
     : Math.random() < 0.5
@@ -271,6 +271,7 @@ const createEnemy = (
   forcedDefinition?: typeof monsterDefinitions[number]
 ): InternalEnemyState => {
   const tierBalance = getMapBalanceByTier(map.tier);
+  const tierTweaks = getTierBalanceTweaks(map.tier);
   const isBossMap = map.id.startsWith("bossTier");
   const eligibleMonsters = monsterDefinitions.filter(
     (monster) =>
@@ -284,27 +285,27 @@ const createEnemy = (
     monsterDefinitions[0];
   const rarityHealthMultiplier =
     rarity === "Rare"
-      ? monsterBalance.rareHealthMultiplier
+      ? monsterBalance.rareHealthMultiplier * tierTweaks.rareMonsterHpMultiplier
       : monsterBalance.normalHealthMultiplier;
   const rarityDamageMultiplier =
     rarity === "Rare"
-      ? monsterBalance.rareDamageMultiplier
+      ? monsterBalance.rareDamageMultiplier * tierTweaks.rareMonsterDamageMultiplier
       : monsterBalance.normalDamageMultiplier;
-  const bossMultiplier = isBossMap ? gameTweaks.bossHpMultiplier : 1;
+  const bossMultiplier = isBossMap ? tierTweaks.bossHpMultiplier : 1;
   const maxHealth = Math.round(
-    monsterBalance.baseHealth * map.enemyHealthMultiplier * rarityHealthMultiplier * gameTweaks.enemyHpMultiplier * bossMultiplier
+    monsterBalance.baseHealth * map.enemyHealthMultiplier * rarityHealthMultiplier * tierTweaks.enemyHpMultiplier * bossMultiplier
   );
   const tierResistance = map.tier * monsterBalance.resistancePerTier;
   const rareResistanceBonus = rarity === "Rare" ? monsterBalance.rareResistanceBonus : 0;
   const baseResistances = monsterDefinition.resistances ?? {};
-  const bossResistanceMult = isBossMap ? gameTweaks.bossResistanceMultiplier : 1;
+  const bossResistanceMult = isBossMap ? tierTweaks.bossResistanceMultiplier : 1;
   const resolveResistance = (type: "Fire" | "Cold" | "Lightning") =>
     Math.min(
       monsterBalance.maxResistance,
       ((baseResistances[type] ?? 0) +
         tierResistance +
         rareResistanceBonus +
-        map.enhancementEffects.enemyResistanceBonus) * gameTweaks.enemyResistanceMultiplier * bossResistanceMult
+        map.enhancementEffects.enemyResistanceBonus) * tierTweaks.enemyResistanceMultiplier * bossResistanceMult
     );
 
   return {
@@ -317,12 +318,13 @@ const createEnemy = (
     maxHealth,
     rarity,
     damage: Math.round(
-      monsterBalance.baseDamage * map.enemyDamageMultiplier * rarityDamageMultiplier * gameTweaks.enemyDamageMultiplier * (isBossMap ? gameTweaks.bossDamageMultiplier : 1)
+      monsterBalance.baseDamage * map.enemyDamageMultiplier * rarityDamageMultiplier * tierTweaks.enemyDamageMultiplier * (isBossMap ? tierTweaks.bossDamageMultiplier : 1)
     ),
     damageType: resolveEnemyDamageType(monsterDefinition.tags),
     movementSpeed:
       (rarity === "Rare" ? tierBalance.rareMonsterSpeed : tierBalance.normalMonsterSpeed) *
-      map.enhancementEffects.enemySpeedMultiplier,
+      map.enhancementEffects.enemySpeedMultiplier *
+      tierTweaks.enemySpeedMultiplier,
     experienceReward: Math.round(
       (rarity === "Rare"
         ? progressionBalance.rewards.rareExperienceBase
@@ -392,12 +394,15 @@ const createMonsterPacks = (
   const averagePackSize = (packSizeMin + packSizeMax) / 2;
   const packCountBonusExtra = Math.min(PACK_COUNT_BONUS_MAX_EXTRA, Math.max(0, Math.floor(map.tier / 2)));
   const packCountBonus = PACK_COUNT_BONUS_BASE + packCountBonusExtra;
-  const packCount = Math.max(1, Math.ceil(map.monsterCount / averagePackSize) + packCountBonus);
 
   const tierBalance = getMapBalanceByTier(map.tier);
-  const rareChancePerPack = isBossMap ? 1 : Math.min(1, tierBalance.rareMonsterChance * gameTweaks.rareSpawnMultiplier);
+  const tierTweaks = getTierBalanceTweaks(map.tier);
+  const monsterCount = Math.max(1, Math.round(map.monsterCount * tierTweaks.monsterCountMultiplier));
+  const basePackCount = Math.ceil(monsterCount / averagePackSize) + packCountBonus;
+  const packCount = Math.max(1, Math.round(basePackCount * tierTweaks.packCountMultiplier));
+  const rareChancePerPack = isBossMap ? 1 : Math.min(1, tierBalance.rareMonsterChance * tierTweaks.rareSpawnMultiplier);
 
-  let remaining = map.monsterCount;
+  let remaining = monsterCount;
   let rareMonstersSpawned = 0;
 
   for (let packIndex = 0; packIndex < packCount && remaining > 0; packIndex += 1) {
@@ -433,7 +438,7 @@ const createMonsterPacks = (
       enemies.push(createEnemy(map, rarity, packId, x, y));
     }
 
-    if (!isBossMap && Math.random() < gameTweaks.spellcasterSpawnChance) {
+    if (!isBossMap && Math.random() < tierTweaks.spellcasterSpawnChance) {
       const eligibleSpellcasters = monsterDefinitions.filter(
         (m) => m.spellId && !m.isBossOnly && (m.minTier === undefined || m.minTier <= map.tier)
       );
@@ -686,6 +691,7 @@ const rollGroundDrops = (
   createdAtMs: number
 ): GroundLootState[] => {
   const tierBalance = getMapBalanceByTier(mapTier);
+  const tierTweaks = getTierBalanceTweaks(mapTier);
   const isRareMonster = rarity === "Rare";
   const uniqueModifiers = getEquippedUniqueModifiers(character);
   const isBossMap = resolvedMap.id.startsWith("bossTier");
@@ -727,6 +733,7 @@ const rollGroundDrops = (
     Math.random() <
     tierBalance.mapShardDropRate *
       resolvedMap.enhancementEffects.mapShardDropRateMultiplier *
+      tierTweaks.mapShardDropMultiplier *
       (isRareMonster ? itemBalance.rareMonsterMapShardDropMultiplier : 1) *
       uniqueModifiers.mapShardDropMultiplier
   ) {
@@ -804,7 +811,7 @@ const rollGroundDrops = (
   if (isBossMap && isRareMonster) {
     groundLoot.push(...createGuaranteedBossRewardDrops(mapTier, dropX, dropY, createdAtMs));
 
-    if (Math.random() < 0.6) {
+    if (Math.random() < Math.min(1, 0.6 * tierTweaks.bossRewardDropMultiplier)) {
       groundLoot.push({
         id: `ground-currency-imbuingOrb-${createClientId()}`,
         x: clamp(dropX + (Math.random() - 0.5) * 18, 40, ARENA_WIDTH - 40),
@@ -824,7 +831,7 @@ const rollGroundDrops = (
     const sameTierMapTier = mapTier <= 0 ? 1 : mapTier;
     const sameTierMapDropChance = getPerMonsterDropChance(
       tierBalance.sameTierMapDropsPerRunTarget,
-      resolvedMap.monsterCount
+      Math.max(1, Math.round(resolvedMap.monsterCount * tierTweaks.monsterCountMultiplier))
     );
 
     if (Math.random() < sameTierMapDropChance) {
@@ -845,7 +852,7 @@ const rollGroundDrops = (
       const nextTier = Math.max(1, mapTier + 1);
       const nextTierMapDropChance = getPerMonsterDropChance(
         tierBalance.nextTierMapDropsPerRunTarget,
-        resolvedMap.monsterCount
+        Math.max(1, Math.round(resolvedMap.monsterCount * tierTweaks.monsterCountMultiplier))
       );
 
       if (Math.random() < nextTierMapDropChance) {
@@ -1158,16 +1165,17 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   nextEnemies = nextEnemies.map((enemy) => {
     const monsterDef = monsterDefinitions.find((m) => m.id === enemy.monsterTypeId);
     if (!monsterDef?.spellId || !monsterDef.spellRange) return enemy;
+    const tierTweaks = getTierBalanceTweaks(mapTier);
     const dist = distance(enemy.x, enemy.y, playerX, playerY);
-    if (dist > monsterDef.spellRange) return enemy;
-    const cooldown = monsterDef.spellCooldownMs ?? 2000;
+    if (dist > monsterDef.spellRange * tierTweaks.spellcasterRangeMultiplier) return enemy;
+    const cooldown = Math.max(1, (monsterDef.spellCooldownMs ?? 2000) * tierTweaks.spellcasterCooldownMultiplier);
     if (nextTime - enemy.lastSpellCastAt < cooldown) return enemy;
 
     const spell = spellConfig[monsterDef.spellId as keyof typeof spellConfig];
     if (!spell) return enemy;
 
     const rawDamage = Math.round(
-      spell.baseDamage * (monsterBalance.baseDamage / 10)
+      spell.baseDamage * (monsterBalance.baseDamage / 10) * tierTweaks.spellcasterDamageMultiplier
     );
     const preventedByResistance =
       spell.tags.includes("Fire")
