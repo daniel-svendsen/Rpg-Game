@@ -12,7 +12,7 @@ It is used to:
 
 - compare map difficulty without Phaser rendering
 - evaluate map sustain
-- tune loot and spell rarity
+- tune loot, spell rarity, and support unlock pacing
 - compare drop and shop reward pressure
 - validate balance changes with profiles and overrides
 - tune boss key farming rates and boss material pressure
@@ -126,6 +126,7 @@ Printed at the top of every report — shows the benchmark character's actual de
 - `Avg health on completion` — how much HP remained on successful clears (proxy for safety margin)
 - `Average run time`
 - `Economy` section — gold, shards, orbs, map sustain, boss keys, map drop rate
+- `Balance tweaks` section — active global and tier-specific combat, density, and sustain multipliers for the simulated map tier
 
 ### Kills and packs
 
@@ -153,6 +154,8 @@ Printed at the top of every report — shows the benchmark character's actual de
 
 - `Total items/run` with rarity % breakdown: Normal / Magic / Rare / Exceptional / Unique
 - `Spells` — spell drops per run (target ≈ 0.05–0.12 for normal maps)
+- `Supports` — support spell drops per run
+- `Support categories` — common vs chase support drops, useful when tuning support unlock pacing separately from main spell drops
 - `Maps` / `Currency pickups` — ground loot volume per run
 
 ### Item rolls
@@ -191,6 +194,7 @@ The simulator is especially useful for:
 - early and mid-tier map difficulty
 - map sustain pressure
 - spell drop rarity
+- support unlock and chase-support pacing
 - unique tier pacing
 - shop pricing pressure
 

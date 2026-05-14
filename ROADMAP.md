@@ -313,6 +313,8 @@ Candidate tasks:
 - [x] Add lightweight build-synergy tags or highlights in item tooltips so affixes that directly match the currently active spell or support profile stand out from generically strong but lower-synergy stats.
 - [x] Add affix tier pips or similar compact roll-quality indicators in item tooltips so players can quickly tell whether an affix is a strong or weak roll within its tier range without memorizing hidden stat spans.
 - [x] Add a spell `Active Result` panel in the spell/support UI so linked supports immediately show the resolved result from the same domain-driven spell calculation used by combat, exposing concrete player-facing values such as projectile count, chain count, area, cooldown/cast-speed impact, crit chance, and similar derived spell stats.
+- [x] Add passive support slots so build-wide support effects can be equipped separately from per-spell links.
+- [x] Add support upgrade progression with saved support levels and upgrade costs, keeping support scaling visible through spell/support UI output.
 - [x] Lock spell visuals to a single per-spell impact animation plus elemental travel orb, and document sheet-specific frame mapping guardrails (`startFrame`/`frameCount` must be derived from each sheet's own column count) to prevent cross-row color bleed in FX.
 - [ ] Show effective mitigation in the character sheet for current or recent map tier context, so raw armor, evasion, and similar defense stats are paired with an estimated real combat outcome instead of standing alone as opaque numbers.
 - [ ] Add a minimalist death recap in the run summary that shows the killing enemy and damage type, giving players a compact explanation for deaths without turning the screen into a full combat log.
@@ -384,7 +386,7 @@ Success criteria:
 
 ## Next Recommended Step
 
-- Continue `Phase 3` by tightening item comparison clarity and verifying remaining mobile overflow issues in the live UI. Keep map pacing follow-up simulator-driven and avoid reopening broad Phaser or asset experiments unless they directly support readability.
+- Continue `Phase 3` by playtesting the expanded spell/support UI on desktop and mobile, then fix any remaining overflow or unclear upgrade/result states. Keep map pacing follow-up simulator-driven and avoid reopening broad Phaser or asset experiments unless they directly support readability.
 
 ## Planned Workstreams
 
@@ -416,8 +418,9 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 
 ### Spells and supports
 
+- [x] Add passive support slots so support choices can affect the whole build without occupying a specific spell link.
+- [x] Add support upgrade progression, persistence, and UI actions so supports scale alongside main spells.
 - [ ] Add more support spells (in small curated batches) to expand build expression without flooding the current spell/support UI, and keep each new support simulator-checkable plus clearly communicated in spell detail output.
-- [ ] Add first-impact secondary-effect spell logic (split/chain/projectile/area follow-up) plus matching visual-event behavior so support-driven chaining originates from the actual first hit target and remains readable in runtime presentation.
 - [x] Add first-impact secondary-effect spell logic (split/chain/projectile/area follow-up) plus matching visual-event behavior so support-driven chaining originates from the actual first hit target and remains readable in runtime presentation.
 
 ### Map pacing and sustain
@@ -485,6 +488,8 @@ Implemented (continued):
   - time moving vs fighting per run
   - damage dealt, prevented by resistance, prevented by armor, evades per run
   - item distribution: Normal / Magic / Rare / Exceptional / Unique per run
+  - spell and support drops by category, including common vs chase support visibility
+  - active balance tweak summary for tier-specific pressure and sustain tuning
   - guardian spawn rate and kill rate per run
   - full sweep documented in `docs/BALANCE_PASS_2026-05-09.md`
 - All-in-one simulator report: a single run now outputs all balance-relevant data — character snapshot (HP/armor/evasion/resistances/crit/speeds), offense (spells cast, damage dealt, crits), defense (hits taken, evade rate, damage prevented by type), kills (total, rares, packs cleared), economy, and full item distribution with rarity % breakdown and stat-tier histogram
@@ -500,6 +505,6 @@ Implemented (continued):
   - `docs/VISUALS.md` and `docs/ASSET_MAPPING.md` document the current runtime sprite / FX setup.
 
 Still planned (next major domain work):
-- Item stat roll UI: expose roll distributions to players (min/max per stat, tier label on item card).
+- Effective mitigation UI: show what armor, evasion, and resistances mean against current or recent map-tier pressure.
+- Death recap: expose the killing enemy and damage type in the run summary.
 - Add stronger boss crafting/material rewards and a fuller long-term chase structure beyond the current tier-specific unique pools.
-- Secondary spell effects from first impact: support item bonuses that trigger an additional effect (projectile, chain, or area) originating from the primary impact point rather than from the player. Currently all targets are resolved in a single pass at cast time; this requires a second targeting pass after primary hit resolution.

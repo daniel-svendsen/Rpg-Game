@@ -76,6 +76,8 @@ The current build already includes:
 - equipment, inventory, selling, and a simple shop
 - FF7-inspired spell/support slot UI
 - spell progression with saved spell levels and upgrade costs
+- support progression with saved support levels and upgrade costs
+- passive support slots for build-wide support effects
 - compact mobile-first menus and pickers
 - session and autosave guardrails around arena runtime updates and character persistence
 
@@ -87,6 +89,7 @@ Some important gameplay rules already implemented:
 - `Storm Chain` uses actual chain targeting logic with a chain range, not just flavor text
 - spells can be upgraded with scaling gold costs and later shard requirements
 - new spell levels are saved as part of character progression
+- supports can be upgraded separately, including passive-only supports that affect the build outside a single linked spell
 - gear drops are intentionally toned down compared to earlier iterations
 - gold, shop prices, and shop item power are tuned together instead of independently
 - healing is now built around a simple life flask system:
@@ -250,6 +253,7 @@ Character saves currently include:
 - unlocked spells
 - unlocked supports
 - spell progression levels
+- support progression levels
 - spell loadout links
 - life flask charges
 - currencies

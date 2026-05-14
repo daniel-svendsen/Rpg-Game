@@ -8,7 +8,7 @@
 - Combat and spells.
 - Items, rarity, and drops.
 - Map progression and sustain.
-- Character persistence (inventory, gear, spells, supports, map progress, currencies, life flask).
+- Character persistence (inventory, gear, spells, supports, spell/support progression, map progress, currencies, life flask).
 - Auth and character ownership.
 
 ## Critical Flows
