@@ -27,7 +27,6 @@ export const LootPanel = ({ recentLoot }: LootPanelProps) => (
               {detail}
             </div>
           ))}
-          {loot.isUpgrade ? <div className="upgrade-text">Possible upgrade</div> : null}
         </div>
       );
     })}

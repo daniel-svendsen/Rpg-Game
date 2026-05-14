@@ -123,9 +123,6 @@ export const ShopTab = ({
             {item.uniqueEffectDescription ? (
               <div className="unique-effect-line">{item.uniqueEffectDescription}</div>
             ) : null}
-            {summary && (summary.damagePercentDelta > 0 || summary.survivalPercentDelta > 0) ? (
-              <div className="upgrade-text">Possible upgrade</div>
-            ) : null}
             <button className="secondary-button" disabled={!canAfford} onClick={() => onBuyShopItem(item.id)}>
               {canAfford ? "Buy" : "Not enough gold"}
             </button>

@@ -411,6 +411,23 @@ button {
     0 10px 24px rgba(0, 0, 0, 0.18);
 }
 
+.loot-entry--clickable {
+  cursor: pointer;
+}
+
+.loot-entry--clickable:hover {
+  border-color: rgba(255, 232, 204, 0.2);
+  background:
+    linear-gradient(180deg, rgba(255, 224, 181, 0.08), transparent 26%),
+    rgba(255, 255, 255, 0.04);
+}
+
+.loot-entry-stats {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 232, 204, 0.08);
+}
+
 .map-card {
   padding: 12px;
   border-radius: 14px;
@@ -587,18 +604,23 @@ button {
 
 .stat-tier-1 .stat-tier-dot { background: #444; }
 .stat-tier-1 .stat-value { color: #777; }
+.craft-tier-badge--1 { background: rgba(255,255,255,0.05); color: #666; border-color: rgba(255,255,255,0.08); }
 
 .stat-tier-2 .stat-tier-dot { background: #666; }
 .stat-tier-2 .stat-value { color: #999; }
+.craft-tier-badge--2 { background: rgba(255,255,255,0.06); color: #888; border-color: rgba(255,255,255,0.1); }
 
 .stat-tier-3 .stat-tier-dot { background: #6ca0ff; }
 .stat-tier-3 .stat-value { color: #b8ccff; }
+.craft-tier-badge--3 { background: rgba(108,160,255,0.12); color: #8ab4ff; border-color: rgba(108,160,255,0.25); }
 
 .stat-tier-4 .stat-tier-dot { background: #ffd879; }
 .stat-tier-4 .stat-value { color: #ffd879; }
+.craft-tier-badge--4 { background: rgba(255,216,121,0.12); color: #ffd879; border-color: rgba(255,216,121,0.28); }
 
 .stat-tier-5 .stat-tier-dot { background: #ff9966; }
 .stat-tier-5 .stat-value { color: #ffaa77; }
+.craft-tier-badge--5 { background: rgba(255,153,102,0.14); color: #ff9966; border-color: rgba(255,153,102,0.3); }
 
 .materia-strip {
   display: flex;
@@ -1219,6 +1241,51 @@ button {
   box-shadow: 0 0 0 1px rgba(246, 197, 111, 0.16) inset;
 }
 
+.bottom-tab-menu-wrapper {
+  position: relative;
+  display: flex;
+}
+
+.bottom-tab-menu-wrapper > .bottom-tab {
+  flex: 1;
+  width: 100%;
+}
+
+.bottom-tab-menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 0;
+  min-width: 130px;
+  background: rgba(20, 12, 10, 0.97);
+  border: 1px solid rgba(201, 154, 92, 0.3);
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 40;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.bottom-tab-menu-item {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  text-align: left;
+  color: #eadcc1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid rgba(201, 154, 92, 0.12);
+  background: transparent;
+}
+
+.bottom-tab-menu-item:last-child {
+  border-bottom: none;
+}
+
+.bottom-tab-menu-item.active {
+  color: #fff1d1;
+  background: rgba(196, 115, 32, 0.18);
+}
+
 .mobile-overlay {
   position: fixed;
   inset: 0;
@@ -1738,4 +1805,301 @@ button {
   font-size: 0.72rem;
   color: var(--text-dim);
   letter-spacing: 0.02em;
+}
+
+/* ── Craft Tab ──────────────────────────────────────────────────────────────── */
+
+.craft-tab {
+  display: grid;
+  gap: 12px;
+}
+
+.craft-section {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(201, 154, 92, 0.16);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.craft-section-scroll {
+  display: flex;
+  flex-direction: column;
+}
+
+.craft-section-title {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.craft-hint {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  text-align: center;
+  padding: 8px 0;
+}
+
+.craft-selected-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.craft-stat-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.craft-stat-block--before {
+  opacity: 0.45;
+}
+
+.craft-item-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 10px;
+}
+
+.craft-preview-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+
+.craft-preview-label--after {
+  color: rgba(140, 210, 140, 0.85);
+}
+
+.craft-preview-divider {
+  height: 1px;
+  background: rgba(201, 154, 92, 0.15);
+  margin: 5px 0 6px;
+}
+
+.craft-tier-badge {
+  display: inline-block;
+  font-size: 0.55rem;
+  font-weight: 700;
+  padding: 0 3px;
+  border-radius: 3px;
+  border: 1px solid;
+  margin-left: 4px;
+  vertical-align: middle;
+  line-height: 1.5;
+}
+
+.affix-group-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-dim);
+  margin: 6px 0 2px;
+}
+
+.craft-stat-new .stat-label,
+.craft-stat-new .stat-value,
+.craft-stat-new .stat-tier-dot {
+  color: rgba(140, 210, 140, 0.95);
+}
+
+.craft-stat-removed .stat-label,
+.craft-stat-removed .stat-value {
+  text-decoration: line-through;
+  color: rgba(234, 220, 193, 0.3);
+}
+
+.craft-rarity-change {
+  font-size: 0.72rem;
+  color: rgba(140, 210, 140, 0.85);
+  margin: 0 0 6px;
+  font-style: italic;
+}
+
+.craft-selected-item-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.craft-selected-item-meta {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.craft-orb-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.craft-orb-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid rgba(201, 154, 92, 0.22);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #eadcc1;
+  text-align: left;
+  width: 100%;
+}
+
+.craft-orb-btn:not(.disabled):hover {
+  border-color: rgba(201, 154, 92, 0.5);
+  background: rgba(201, 154, 92, 0.1);
+}
+
+.craft-orb-btn.disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.craft-orb-btn-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.craft-orb-name {
+  flex: 1;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.craft-orb-desc {
+  font-size: 0.68rem;
+  color: rgba(234, 220, 193, 0.55);
+  line-height: 1.3;
+}
+
+.craft-orb-count {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  min-width: 24px;
+  text-align: right;
+}
+
+.craft-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.craft-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 10px;
+  border: 1px solid rgba(201, 154, 92, 0.12);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.02);
+  color: #eadcc1;
+  text-align: left;
+  width: 100%;
+  gap: 8px;
+}
+
+.craft-item-row.selected {
+  border-color: rgba(246, 197, 111, 0.5);
+  background: rgba(196, 115, 32, 0.15);
+}
+
+.craft-item-row:hover:not(.selected) {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.craft-item-row-equipped {
+  border-left: 3px solid rgba(246, 197, 111, 0.7);
+}
+
+.craft-item-equipped-badge {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #f6c56f;
+  background: rgba(246, 197, 111, 0.15);
+  border: 1px solid rgba(246, 197, 111, 0.35);
+  border-radius: 4px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.craft-item-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  flex: 1;
+  text-align: left;
+}
+
+.craft-item-meta {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.craft-currency-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.craft-currency-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+}
+
+.craft-currency-row-orb {
+  align-items: flex-start;
+  padding: 5px 0;
+}
+
+.craft-currency-orb-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.craft-currency-orb-desc {
+  font-size: 0.65rem;
+  color: rgba(234, 220, 193, 0.45);
+  line-height: 1.3;
+}
+
+.craft-currency-name {
+  font-size: 0.78rem;
+}
+
+.craft-currency-amount {
+  font-size: 0.78rem;
+  color: #f6c56f;
+  min-width: 20px;
+  text-align: right;
+}
+
+.craft-combine-btn {
+  font-size: 0.68rem;
+  padding: 3px 8px;
+  border: 1px solid rgba(201, 154, 92, 0.3);
+  border-radius: 5px;
+  background: rgba(201, 154, 92, 0.08);
+  color: #eadcc1;
+}
+
+.craft-combine-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }

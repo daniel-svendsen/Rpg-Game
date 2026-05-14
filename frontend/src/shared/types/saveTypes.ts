@@ -57,6 +57,13 @@ export interface DerivedStats {
   spellPowerMultiplier: number;
 }
 
+export interface ItemAffixInstance {
+  id: string;
+  kind: "Prefix" | "Suffix";
+  statKey: string;
+  value: number;
+}
+
 export interface InventoryItem {
   id: string;
   name: string;
@@ -66,6 +73,7 @@ export interface InventoryItem {
   tags: Tag[];
   uniqueEffectId?: string;
   uniqueEffectDescription?: string;
+  affixes?: ItemAffixInstance[];
   statBonuses: Partial<CharacterStats> & {
     maxHealth?: number;
     movementSpeedBonus?: number;
@@ -89,6 +97,7 @@ export interface LootEntry {
   isUpgrade: boolean;
   rarity?: ItemRarity;
   slot?: ItemSlot;
+  item?: InventoryItem;
 }
 
 export type GroundLootKind = LootEntry["kind"];

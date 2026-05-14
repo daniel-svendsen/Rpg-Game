@@ -17,6 +17,7 @@ public record InventoryItemRequest(
         @NotEmpty List<@NotBlank String> tags,
         String uniqueEffectId,
         String uniqueEffectDescription,
+        List<Map<String, Object>> affixes,
         @NotNull Map<String, Object> statBonuses
 ) {
 }

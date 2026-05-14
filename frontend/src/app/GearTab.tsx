@@ -251,9 +251,6 @@ export const GearTab = ({
               Sell for {getItemSellPrice(item)} gold
             </button>
           </div>
-          {summary && (summary.damagePercentDelta > 0 || summary.survivalPercentDelta > 0) ? (
-            <div className="upgrade-text">Possible upgrade</div>
-          ) : null}
         </div>
           );
         })}

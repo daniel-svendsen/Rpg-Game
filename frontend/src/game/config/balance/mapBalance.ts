@@ -14,6 +14,8 @@ export type ItemStatRangeSet = {
   lightningResistance: readonly [number, number];
   critChance: readonly [number, number];
   spellPowerMultiplier: readonly [number, number];
+  attackSpeedMultiplier: readonly [number, number];
+  castSpeedMultiplier: readonly [number, number];
 };
 
 export interface MapTierBalance {
@@ -50,7 +52,9 @@ const createItemStatRanges = (tier: number): ItemStatRangeSet => ({
   coldResistance: statRange(0.02 + tier * 0.004, 0.05 + tier * 0.008),
   lightningResistance: statRange(0.02 + tier * 0.004, 0.05 + tier * 0.008),
   critChance: statRange(0.01 + tier * 0.002, 0.03 + tier * 0.005),
-  spellPowerMultiplier: statRange(0.02 + tier * 0.004, 0.05 + tier * 0.008)
+  spellPowerMultiplier: statRange(0.02 + tier * 0.004, 0.05 + tier * 0.008),
+  attackSpeedMultiplier: statRange(0.02 + tier * 0.003, 0.05 + tier * 0.006),
+  castSpeedMultiplier: statRange(0.02 + tier * 0.003, 0.05 + tier * 0.006)
 });
 
 export const mapBalance = {

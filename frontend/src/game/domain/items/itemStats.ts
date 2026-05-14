@@ -36,6 +36,9 @@ const statKeyLabels: Record<ItemStatKey, string> = {
 
 export type StatEntry = { label: string; formattedValue: string; tier: number | null; isBase: boolean };
 
+export const getStatLabel = (statKey: string): string =>
+  statKeyLabels[statKey as ItemStatKey] ?? statKey;
+
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
 export const getStatTier = (statKey: ItemStatKey, value: number, itemTier: number): number => {

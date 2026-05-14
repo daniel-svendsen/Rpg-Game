@@ -171,6 +171,7 @@ public class CharacterProfileService {
                 List.copyOf(item.tags()),
                 item.uniqueEffectId(),
                 item.uniqueEffectDescription(),
+                item.affixes(),
                 item.statBonuses()
         );
     }

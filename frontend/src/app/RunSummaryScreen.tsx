@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { ItemSlotIcon } from "./ItemSlotIcon";
+import { ItemStatBlock } from "./ItemStatBlock";
 import type { RunSummaryData } from "./appTypes";
 import { countRunSummaryLoot } from "./runSummaryHelpers";
 import { rarityCardClassName } from "./appUiHelpers";
@@ -13,6 +15,7 @@ export const RunSummaryScreen = ({ summaryData, onKeepFarming, onReturnToHub }: 
   const { mapName, wasDefeated, loot, completedMaps, completionNotes } = summaryData;
   const summaryTitle = completedMaps > 1 ? `${completedMaps} Maps Complete` : mapName;
   const { unique: uniqueCount, rare: rareCount, magic: magicCount, bossKeys: bossKeyCount } = countRunSummaryLoot(loot);
+  const [expandedLootId, setExpandedLootId] = useState<string | null>(null);
 
   return (
     <div className="content run-summary-screen">
@@ -85,8 +88,14 @@ export const RunSummaryScreen = ({ summaryData, onKeepFarming, onReturnToHub }: 
             <div className="stack loot-recent">
               {loot.map((entry) => {
                 const rarityClass = entry.rarity ? ` ${rarityCardClassName(entry.rarity)}` : "";
+                const isExpanded = expandedLootId === entry.id;
+                const clickable = entry.kind === "Item" && entry.item != null;
                 return (
-                  <div key={entry.id} className={`loot-entry${rarityClass}`}>
+                  <div
+                    key={entry.id}
+                    className={`loot-entry${rarityClass}${clickable ? " loot-entry--clickable" : ""}`}
+                    onClick={clickable ? () => setExpandedLootId(isExpanded ? null : entry.id) : undefined}
+                  >
                     <div className="inventory-row">
                       <div className="item-name-row">
                         {entry.slot ? <ItemSlotIcon slot={entry.slot} size={16} /> : null}
@@ -94,7 +103,11 @@ export const RunSummaryScreen = ({ summaryData, onKeepFarming, onReturnToHub }: 
                       </div>
                       <span className="status-text">{entry.kind}</span>
                     </div>
-                    {entry.isUpgrade ? <div className="upgrade-text">Possible upgrade</div> : null}
+                    {isExpanded && entry.item ? (
+                      <div className="loot-entry-stats">
+                        <ItemStatBlock item={entry.item} showDeltas={false} />
+                      </div>
+                    ) : null}
                   </div>
                 );
               })}

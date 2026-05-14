@@ -629,7 +629,8 @@ const applyGroundLootPickup = (
         ],
         isUpgrade: isUpgradeForCharacter(character, item),
         rarity: item.rarity,
-        slot: item.slot ?? undefined
+        slot: item.slot ?? undefined,
+        item
       }
     };
   }
@@ -787,6 +788,24 @@ const rollGroundDrops = (
       payload: {
         kind: "Currency",
         code: "mapShard",
+        amount: 1
+      }
+    });
+  }
+
+  if (
+    Math.random() <
+    tierBalance.mapShardDropRate *
+      (isRareMonster ? itemBalance.rareMonsterMapShardDropMultiplier : 1)
+  ) {
+    groundLoot.push({
+      id: `ground-currency-craftingShard-${createClientId()}`,
+      x: clamp(dropX + (Math.random() - 0.5) * 18, 40, ARENA_WIDTH - 40),
+      y: clamp(dropY + (Math.random() - 0.5) * 18, 40, ARENA_HEIGHT - 40),
+      createdAtMs,
+      payload: {
+        kind: "Currency",
+        code: "craftingShard",
         amount: 1
       }
     });

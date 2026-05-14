@@ -4,6 +4,7 @@ import { HubBottomTabs } from "./HubBottomTabs";
 import { HubOverlayPanel } from "./HubOverlayPanel";
 import { HubTopBar } from "./HubTopBar";
 import { BossTab } from "./BossTab";
+import { CraftTab } from "./CraftTab";
 import { GearTab } from "./GearTab";
 import { MapsTab } from "./MapsTab";
 import { ShopTab } from "./ShopTab";
@@ -73,6 +74,8 @@ interface HubScreenProps {
   onSellItemsByRarity: (rarity: AutoSellRarity) => void;
   onSellUniqueItems: () => void;
   onSellItem: (itemId: string) => void;
+  onApplyCraftingOrb: (itemId: string, orbCode: string) => void;
+  onCombineOrbs: (outputCode: string) => void;
   onSpendStatPoint: (statKey: keyof CharacterRecord["baseStats"]) => void;
   onStartMap: () => void;
   onUpgradeSpell: (spellId: string) => void;
@@ -122,6 +125,8 @@ export const HubScreen = ({
   onSellItemsByRarity,
   onSellUniqueItems,
   onSellItem,
+  onApplyCraftingOrb,
+  onCombineOrbs,
   onSpendStatPoint,
   onStartMap,
   onUpgradeSpell,
@@ -208,6 +213,14 @@ export const HubScreen = ({
           onOpenPassivePicker={onOpenPassivePicker}
           onUpgradeSpell={onUpgradeSpell}
           onUpgradeSupport={onUpgradeSupport}
+        />
+      ) : null}
+      {hubTab === "craft" ? (
+        <CraftTab
+          topBar={topBar}
+          character={character}
+          onApplyCraftingOrb={onApplyCraftingOrb}
+          onCombineOrbs={onCombineOrbs}
         />
       ) : null}
       {hubTab === "shop" ? (

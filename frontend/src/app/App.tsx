@@ -15,6 +15,7 @@ import { useShopActions } from "./useShopActions";
 import { useCharacterActions } from "./useCharacterActions";
 import { useMapRunning } from "./useMapRunning";
 import { useMapCrafting } from "./useMapCrafting";
+import { useCrafting } from "./useCrafting";
 import { useCharacterPersistence } from "./useCharacterPersistence";
 import { useAutoSellSettings } from "./useAutoSellSettings";
 import { useShopBootstrap } from "./useShopBootstrap";
@@ -126,6 +127,13 @@ export const App = () => {
     commitCharacter,
     persistCharacterNow,
     setSelectedMapTarget,
+    setStatusMessage,
+    setErrorMessage
+  });
+  const { handleApplyCraftingOrb, handleCombineOrbs } = useCrafting({
+    character,
+    commitCharacter,
+    persistCharacterNow,
     setStatusMessage,
     setErrorMessage
   });
@@ -396,6 +404,8 @@ export const App = () => {
         onSellItemsByRarity={handleSellItemsByRarity}
         onSellUniqueItems={handleSellUniqueItems}
         onSellItem={handleSellItem}
+        onApplyCraftingOrb={handleApplyCraftingOrb}
+        onCombineOrbs={handleCombineOrbs}
         onSpendStatPoint={handleSpendStatPoint}
         onStartMap={handleStartMap}
         onUpgradeSpell={handleUpgradeSpell}

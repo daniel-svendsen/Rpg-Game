@@ -19,12 +19,19 @@ export type ItemAffixPool = {
 };
 
 export const itemAffixTierWeights: Record<AffixTier, number> = {
-  1: 52,
-  2: 26,
-  3: 14,
-  4: 6,
-  5: 2
+  1: 30,
+  2: 25,
+  3: 20,
+  4: 15,
+  5: 10
 } as const;
+
+export const rareAffixCountWeights: { count: number; weight: number }[] = [
+  { count: 3, weight: 50 },
+  { count: 4, weight: 28 },
+  { count: 5, weight: 15 },
+  { count: 6, weight: 7 }
+];
 
 export const getAffixCountByRarity = (
   rarity: Exclude<ItemRarity, "Unique">
@@ -76,6 +83,11 @@ const spellAffixes = {
   critChance: suffix("precision", "critChance", 8)
 } as const;
 
+const speedAffixes = {
+  attackSpeedMultiplier: suffix("swiftstriker", "attackSpeedMultiplier", 8),
+  castSpeedMultiplier: prefix("quickcast", "castSpeedMultiplier", 8)
+} as const;
+
 const movementAffixes = {
   movementSpeedBonus: suffix("fleetfoot", "movementSpeedBonus", 6)
 } as const;
@@ -83,26 +95,18 @@ const movementAffixes = {
 export const itemAffixPoolsBySlot: Record<ItemSlot, ItemAffixPool> = {
   Weapon: {
     prefixes: [spellAffixes.spellPowerMultiplier, statAffixes.dexterity, statAffixes.agility, statAffixes.intelligence],
-    suffixes: [spellAffixes.critChance, statAffixes.strength]
+    suffixes: [spellAffixes.critChance, statAffixes.strength, speedAffixes.attackSpeedMultiplier]
   },
   Helmet: {
-    prefixes: [
-      defenseAffixes.maxHealth,
-      statAffixes.vitality,
-      statAffixes.strength
-    ],
+    prefixes: [defenseAffixes.maxHealth, statAffixes.vitality, statAffixes.strength, statAffixes.intelligence],
     suffixes: [spellAffixes.critChance, resistanceAffixes.fireResistance, resistanceAffixes.coldResistance, resistanceAffixes.lightningResistance, statAffixes.dexterity]
   },
   BodyArmor: {
-    prefixes: [
-      defenseAffixes.maxHealth,
-      statAffixes.vitality,
-      statAffixes.strength
-    ],
-    suffixes: [resistanceAffixes.fireResistance, resistanceAffixes.coldResistance, resistanceAffixes.lightningResistance, statAffixes.agility, statAffixes.dexterity]
+    prefixes: [defenseAffixes.maxHealth, statAffixes.vitality, statAffixes.strength, statAffixes.agility],
+    suffixes: [resistanceAffixes.fireResistance, resistanceAffixes.coldResistance, resistanceAffixes.lightningResistance, statAffixes.dexterity, spellAffixes.critChance]
   },
   Gloves: {
-    prefixes: [statAffixes.agility, statAffixes.dexterity],
+    prefixes: [statAffixes.agility, statAffixes.dexterity, speedAffixes.castSpeedMultiplier, speedAffixes.attackSpeedMultiplier],
     suffixes: [spellAffixes.critChance, resistanceAffixes.fireResistance, resistanceAffixes.coldResistance, resistanceAffixes.lightningResistance, spellAffixes.spellPowerMultiplier]
   },
   Boots: {
@@ -110,11 +114,11 @@ export const itemAffixPoolsBySlot: Record<ItemSlot, ItemAffixPool> = {
     suffixes: [movementAffixes.movementSpeedBonus, resistanceAffixes.fireResistance, resistanceAffixes.coldResistance, resistanceAffixes.lightningResistance, spellAffixes.critChance, statAffixes.dexterity]
   },
   Belt: {
-    prefixes: [defenseAffixes.maxHealth, statAffixes.vitality],
-    suffixes: [resistanceAffixes.fireResistance, resistanceAffixes.coldResistance, resistanceAffixes.lightningResistance, statAffixes.strength, statAffixes.agility]
+    prefixes: [defenseAffixes.maxHealth, statAffixes.vitality, statAffixes.strength, statAffixes.agility],
+    suffixes: [resistanceAffixes.fireResistance, resistanceAffixes.coldResistance, resistanceAffixes.lightningResistance]
   },
   Amulet: {
-    prefixes: [spellAffixes.spellPowerMultiplier, defenseAffixes.maxHealth, statAffixes.vitality, statAffixes.intelligence],
+    prefixes: [spellAffixes.spellPowerMultiplier, defenseAffixes.maxHealth, statAffixes.vitality, statAffixes.intelligence, speedAffixes.castSpeedMultiplier],
     suffixes: [spellAffixes.critChance, resistanceAffixes.fireResistance, resistanceAffixes.coldResistance, resistanceAffixes.lightningResistance, statAffixes.dexterity, statAffixes.agility]
   },
   Ring: {

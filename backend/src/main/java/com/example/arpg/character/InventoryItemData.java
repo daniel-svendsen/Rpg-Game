@@ -12,6 +12,7 @@ public record InventoryItemData(
         List<String> tags,
         String uniqueEffectId,
         String uniqueEffectDescription,
+        List<Map<String, Object>> affixes,
         Map<String, Object> statBonuses
 ) {
 }
