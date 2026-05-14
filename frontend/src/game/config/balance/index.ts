@@ -7,3 +7,4 @@ export { monsterBalance } from "./monsterBalance";
 export { progressionBalance } from "./progressionBalance";
 export { spellDropBalance, getSpellDropChanceForTier, type DroppableSpellEntry } from "./spellDropBalance";
 export { supportSpellDropBalance, getSupportSpellDropChanceForTier, type DroppableSupportSpellEntry } from "./supportSpellDropBalance";
+export { gameTweaks } from "./tweaks";

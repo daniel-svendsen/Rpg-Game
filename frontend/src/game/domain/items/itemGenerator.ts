@@ -1,4 +1,4 @@
-import { getMapBalanceByTier, itemBalance } from "../../config/balance";
+import { gameTweaks, getMapBalanceByTier, itemBalance } from "../../config/balance";
 import { itemBases, uniqueItemDefinitions, type ItemBaseDefinition } from "../../config/itemConfig";
 import type { CharacterRecord, InventoryItem, ItemRarity } from "../../../shared/types/saveTypes";
 import { createClientId } from "../../../shared/utils/id";
@@ -39,7 +39,8 @@ const getExceptionalRareChanceForTier = (tier: number, isRareMonster: boolean): 
   ) as keyof typeof itemBalance.exceptionalRare.chanceByTier;
   const baseChance = itemBalance.exceptionalRare.chanceByTier[normalizedTier] ?? 0;
 
-  return isRareMonster ? baseChance * itemBalance.exceptionalRare.rareMonsterChanceMultiplier : baseChance;
+  const tierBase = gameTweaks.exceptionalItemDropRate ?? baseChance;
+  return isRareMonster ? tierBase * itemBalance.exceptionalRare.rareMonsterChanceMultiplier : tierBase;
 };
 
 const maybeCreateExceptionalRare = (
@@ -153,23 +154,19 @@ const generateRarity = (tier: number, isRareMonster: boolean): ItemRarity => {
     pickWeighted<ItemRarity>([
     {
       key: "Normal",
-      weight:
-        tierBalance.normalItemDropRate * (isRareMonster ? rarityMultiplier.normal : 1)
+      weight: (gameTweaks.normalItemDropRate ?? tierBalance.normalItemDropRate) * (isRareMonster ? rarityMultiplier.normal : 1)
     },
     {
       key: "Magic",
-      weight:
-        tierBalance.magicItemDropRate * (isRareMonster ? rarityMultiplier.magic : 1)
+      weight: (gameTweaks.magicItemDropRate ?? tierBalance.magicItemDropRate) * (isRareMonster ? rarityMultiplier.magic : 1)
     },
     {
       key: "Rare",
-      weight:
-        tierBalance.rareItemDropRate * (isRareMonster ? rarityMultiplier.rare : 1)
+      weight: (gameTweaks.rareItemDropRate ?? tierBalance.rareItemDropRate) * (isRareMonster ? rarityMultiplier.rare : 1)
     },
     {
       key: "Unique",
-      weight:
-        tierBalance.uniqueItemDropRate * (isRareMonster ? rarityMultiplier.unique : 1)
+      weight: (gameTweaks.uniqueItemDropRate ?? tierBalance.uniqueItemDropRate) * (isRareMonster ? rarityMultiplier.unique : 1)
     }
     ]) ?? "Normal"
   );

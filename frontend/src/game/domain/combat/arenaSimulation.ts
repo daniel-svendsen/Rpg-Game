@@ -1,5 +1,6 @@
 import { balanceConfig } from "../../config/balanceConfig";
 import {
+  gameTweaks,
   getMapBalanceByTier,
   itemBalance,
   mapBalance,
@@ -59,7 +60,7 @@ const createBossUniqueDrop = (tier: number): InventoryItem | null => {
     return null;
   }
 
-  const chaseRoll = Math.random() < 0.05;
+  const chaseRoll = Math.random() < gameTweaks.chaseUniqueChance;
   const selectedId = chaseRoll
     ? bossUniqueIds.chase
     : Math.random() < 0.5
@@ -289,19 +290,21 @@ const createEnemy = (
     rarity === "Rare"
       ? monsterBalance.rareDamageMultiplier
       : monsterBalance.normalDamageMultiplier;
+  const bossMultiplier = isBossMap ? gameTweaks.bossHpMultiplier : 1;
   const maxHealth = Math.round(
-    monsterBalance.baseHealth * map.enemyHealthMultiplier * rarityHealthMultiplier
+    monsterBalance.baseHealth * map.enemyHealthMultiplier * rarityHealthMultiplier * gameTweaks.enemyHpMultiplier * bossMultiplier
   );
   const tierResistance = map.tier * monsterBalance.resistancePerTier;
   const rareResistanceBonus = rarity === "Rare" ? monsterBalance.rareResistanceBonus : 0;
   const baseResistances = monsterDefinition.resistances ?? {};
+  const bossResistanceMult = isBossMap ? gameTweaks.bossResistanceMultiplier : 1;
   const resolveResistance = (type: "Fire" | "Cold" | "Lightning") =>
     Math.min(
       monsterBalance.maxResistance,
-      (baseResistances[type] ?? 0) +
+      ((baseResistances[type] ?? 0) +
         tierResistance +
         rareResistanceBonus +
-        map.enhancementEffects.enemyResistanceBonus
+        map.enhancementEffects.enemyResistanceBonus) * gameTweaks.enemyResistanceMultiplier * bossResistanceMult
     );
 
   return {
@@ -314,7 +317,7 @@ const createEnemy = (
     maxHealth,
     rarity,
     damage: Math.round(
-      monsterBalance.baseDamage * map.enemyDamageMultiplier * rarityDamageMultiplier
+      monsterBalance.baseDamage * map.enemyDamageMultiplier * rarityDamageMultiplier * gameTweaks.enemyDamageMultiplier * (isBossMap ? gameTweaks.bossDamageMultiplier : 1)
     ),
     damageType: resolveEnemyDamageType(monsterDefinition.tags),
     movementSpeed:
@@ -392,7 +395,7 @@ const createMonsterPacks = (
   const packCount = Math.max(1, Math.ceil(map.monsterCount / averagePackSize) + packCountBonus);
 
   const tierBalance = getMapBalanceByTier(map.tier);
-  const rareChancePerPack = isBossMap ? 1 : tierBalance.rareMonsterChance;
+  const rareChancePerPack = isBossMap ? 1 : Math.min(1, tierBalance.rareMonsterChance * gameTweaks.rareSpawnMultiplier);
 
   let remaining = map.monsterCount;
   let rareMonstersSpawned = 0;
@@ -430,7 +433,7 @@ const createMonsterPacks = (
       enemies.push(createEnemy(map, rarity, packId, x, y));
     }
 
-    if (!isBossMap && Math.random() < 0.20) {
+    if (!isBossMap && Math.random() < gameTweaks.spellcasterSpawnChance) {
       const eligibleSpellcasters = monsterDefinitions.filter(
         (m) => m.spellId && !m.isBossOnly && (m.minTier === undefined || m.minTier <= map.tier)
       );
