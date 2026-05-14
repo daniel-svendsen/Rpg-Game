@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { economyBalance } from "./economyBalance";
 import { mapBalance } from "./mapBalance";
 import { spellDropBalance } from "./spellDropBalance";
+import { supportSpellDropBalance } from "./supportSpellDropBalance";
 
 describe("drop balance guardrails", () => {
   it("keeps early item and shard drop rates in a restrained range", () => {
@@ -21,6 +22,12 @@ describe("drop balance guardrails", () => {
   it("keeps baseline spell drop chance from becoming too common", () => {
     expect(spellDropBalance.baseDropChanceByTier[0]).toBeLessThanOrEqual(0.03);
     expect(spellDropBalance.baseDropChanceByTier[10]).toBeLessThanOrEqual(0.05);
+  });
+
+  it("keeps support unlock drops rare enough for late-tier progression", () => {
+    expect(supportSpellDropBalance.baseDropChanceByTier[1]).toBe(0);
+    expect(supportSpellDropBalance.baseDropChanceByTier[10]).toBeLessThanOrEqual(0.005);
+    expect(supportSpellDropBalance.rareMonsterDropChanceMultiplier).toBeLessThanOrEqual(4);
   });
 
   it("keeps Gemcutter's Prism drops restrained for per-monster currency rolls", () => {

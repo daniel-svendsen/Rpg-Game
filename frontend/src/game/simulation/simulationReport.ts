@@ -1,8 +1,72 @@
 import { mapConfig } from "../config/mapConfig";
-import type { CharacterSnapshot, SimulationSummary, SingleRunSimulationMetrics, ShopSampleSummary } from "./simulationTypes";
+import { spellConfig, supportSpellConfig } from "../config/spellConfig";
+import { spellDropBalance, supportSpellDropBalance } from "../config/balance";
+import type {
+  CharacterSnapshot,
+  DropTableSnapshot,
+  SimulationSummary,
+  SingleRunSimulationMetrics,
+  ShopSampleSummary
+} from "./simulationTypes";
 
 const formatPercent = (value: number): string => `${(value * 100).toFixed(1)}%`;
 const formatNumber = (value: number): string => value.toFixed(2).replace(/\.00$/, "");
+
+const sortDropEntries = <T extends { minTier: number; weight: number; name: string }>(entries: T[]): T[] =>
+  [...entries].sort((a, b) => a.minTier - b.minTier || b.weight - a.weight || a.name.localeCompare(b.name));
+
+export const buildDropTableSnapshot = (): DropTableSnapshot => ({
+  spells: {
+    common: sortDropEntries(
+      spellDropBalance.pool
+        .filter((entry) => entry.dropCategory === "common")
+        .map((entry) => ({
+          id: entry.spellId,
+          name: spellConfig[entry.spellId]?.name ?? entry.spellId,
+          minTier: entry.minTier,
+          weight: entry.weight,
+          category: entry.dropCategory
+        }))
+    ),
+    chase: sortDropEntries(
+      spellDropBalance.pool
+        .filter((entry) => entry.dropCategory === "chase")
+        .map((entry) => ({
+          id: entry.spellId,
+          name: spellConfig[entry.spellId]?.name ?? entry.spellId,
+          minTier: entry.minTier,
+          weight: entry.weight,
+          category: entry.dropCategory
+        }))
+    )
+  },
+  supports: {
+    common: sortDropEntries(
+      supportSpellDropBalance.pool
+        .filter((entry) => entry.dropCategory === "common")
+        .map((entry) => ({
+          id: entry.supportSpellId,
+          name: supportSpellConfig[entry.supportSpellId]?.name ?? entry.supportSpellId,
+          minTier: entry.minTier,
+          weight: entry.weight,
+          category: entry.dropCategory,
+          passiveOnly: supportSpellConfig[entry.supportSpellId]?.passiveOnly === true
+        }))
+    ),
+    chase: sortDropEntries(
+      supportSpellDropBalance.pool
+        .filter((entry) => entry.dropCategory === "chase")
+        .map((entry) => ({
+          id: entry.supportSpellId,
+          name: supportSpellConfig[entry.supportSpellId]?.name ?? entry.supportSpellId,
+          minTier: entry.minTier,
+          weight: entry.weight,
+          category: entry.dropCategory,
+          passiveOnly: supportSpellConfig[entry.supportSpellId]?.passiveOnly === true
+        }))
+    )
+  }
+});
 
 export const buildSimulationSummary = (
   profileName: string,
@@ -72,6 +136,14 @@ export const buildSimulationSummary = (
       uniqueTier2ItemsDropped: summary.uniqueTier2ItemsDropped + run.uniqueTier2ItemsDropped,
       uniqueTier3ItemsDropped: summary.uniqueTier3ItemsDropped + run.uniqueTier3ItemsDropped,
       spellDrops: summary.spellDrops + run.spellDrops,
+      spellDropsByCategory: {
+        common: summary.spellDropsByCategory.common + run.spellDropsByCategory.common,
+        chase: summary.spellDropsByCategory.chase + run.spellDropsByCategory.chase
+      },
+      supportDropsByCategory: {
+        common: summary.supportDropsByCategory.common + run.supportDropsByCategory.common,
+        chase: summary.supportDropsByCategory.chase + run.supportDropsByCategory.chase
+      },
       rareMonstersSpawned: summary.rareMonstersSpawned + run.rareMonstersSpawned,
       rareMonstersKilled: summary.rareMonstersKilled + run.rareMonstersKilled,
       totalMonstersKilled: summary.totalMonstersKilled + run.totalMonstersKilled,
@@ -116,6 +188,14 @@ export const buildSimulationSummary = (
       uniqueTier2ItemsDropped: 0,
       uniqueTier3ItemsDropped: 0,
       spellDrops: 0,
+      spellDropsByCategory: {
+        common: 0,
+        chase: 0
+      },
+      supportDropsByCategory: {
+        common: 0,
+        chase: 0
+      },
       rareMonstersSpawned: 0,
       rareMonstersKilled: 0,
       totalMonstersKilled: 0,
@@ -164,6 +244,7 @@ export const buildSimulationSummary = (
     autoUseLifeFlaskThreshold,
     overrides,
     characterSnapshot,
+    dropTables: buildDropTableSnapshot(),
     shop,
     sustain: {
       zeroMapRuns,
@@ -193,6 +274,14 @@ export const buildSimulationSummary = (
       uniqueTier2ItemsDropped: totals.uniqueTier2ItemsDropped / runCount,
       uniqueTier3ItemsDropped: totals.uniqueTier3ItemsDropped / runCount,
       spellDrops: totals.spellDrops / runCount,
+      spellDropsByCategory: {
+        common: totals.spellDropsByCategory.common / runCount,
+        chase: totals.spellDropsByCategory.chase / runCount
+      },
+      supportDropsByCategory: {
+        common: totals.supportDropsByCategory.common / runCount,
+        chase: totals.supportDropsByCategory.chase / runCount
+      },
       rareMonstersSpawned: totals.rareMonstersSpawned / runCount,
       rareMonstersKilled: totals.rareMonstersKilled / runCount,
       totalMonstersKilled: totals.totalMonstersKilled / runCount,
@@ -321,6 +410,8 @@ export const formatSimulationSummary = (summary: SimulationSummary): string => {
     `- Exceptional: ${formatNumber(avgExc)}${itemPct(avgExc)}`,
     `- Unique:      ${formatNumber(avgUnique)}${itemPct(avgUnique)} (T1: ${formatNumber(avg.uniqueTier1ItemsDropped)}, T2: ${formatNumber(avg.uniqueTier2ItemsDropped)}, T3: ${formatNumber(avg.uniqueTier3ItemsDropped)})`,
     `- Spells: ${formatNumber(avg.spellDrops)}  Supports: ${formatNumber(summary.totals.lootByKind.Support / Math.max(1, summary.runs))}  Maps: ${formatNumber(summary.totals.lootByKind.Map / Math.max(1, summary.runs))}  Currency pickups: ${formatNumber(summary.totals.lootByKind.Currency / Math.max(1, summary.runs))}`,
+    `- Spell categories: common ${formatNumber(avg.spellDropsByCategory.common)} (${formatNumber(summary.totals.spellDropsByCategory.common)} total)  chase ${formatNumber(avg.spellDropsByCategory.chase)} (${formatNumber(summary.totals.spellDropsByCategory.chase)} total)`,
+    `- Support categories: common ${formatNumber(avg.supportDropsByCategory.common)} (${formatNumber(summary.totals.supportDropsByCategory.common)} total)  chase ${formatNumber(avg.supportDropsByCategory.chase)} (${formatNumber(summary.totals.supportDropsByCategory.chase)} total)`,
     "",
     `Item rolls (${ir.itemsDropped} items total across all runs):`,
     `- By rarity: ${Object.entries(ir.byRarity).map(([k, v]) => `${k}=${v}`).join(", ") || "none"}`,

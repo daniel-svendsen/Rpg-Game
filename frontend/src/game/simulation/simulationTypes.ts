@@ -44,6 +44,8 @@ export interface SingleRunSimulationMetrics {
   uniqueTier2ItemsDropped: number;
   uniqueTier3ItemsDropped: number;
   spellDrops: number;
+  spellDropsByCategory: Record<DropCategory, number>;
+  supportDropsByCategory: Record<DropCategory, number>;
   lootByKind: Record<LootEntry["kind"], number>;
   rareMonstersSpawned: number;
   rareMonstersKilled: number;
@@ -113,6 +115,25 @@ export interface CharacterSnapshot {
   spellPowerMultiplier: number;
 }
 
+export type DropCategory = "common" | "chase";
+
+export interface SpellDropPoolEntry {
+  id: string;
+  name: string;
+  minTier: number;
+  weight: number;
+  category: DropCategory;
+}
+
+export interface SupportDropPoolEntry extends SpellDropPoolEntry {
+  passiveOnly: boolean;
+}
+
+export interface DropTableSnapshot {
+  spells: Record<DropCategory, SpellDropPoolEntry[]>;
+  supports: Record<DropCategory, SupportDropPoolEntry[]>;
+}
+
 export interface SimulationSummary {
   profileName: string;
   mapId: string;
@@ -123,6 +144,7 @@ export interface SimulationSummary {
   autoUseLifeFlaskThreshold: number | null;
   overrides: SimulationBalanceOverrides | null;
   characterSnapshot: CharacterSnapshot;
+  dropTables: DropTableSnapshot;
   shop: ShopSampleSummary | null;
   sustain: {
     zeroMapRuns: number;
@@ -149,6 +171,8 @@ export interface SimulationSummary {
     uniqueTier2ItemsDropped: number;
     uniqueTier3ItemsDropped: number;
     spellDrops: number;
+    spellDropsByCategory: Record<DropCategory, number>;
+    supportDropsByCategory: Record<DropCategory, number>;
     rareMonstersSpawned: number;
     rareMonstersKilled: number;
     totalMonstersKilled: number;
@@ -189,6 +213,8 @@ export interface SimulationSummary {
     uniqueTier2ItemsDropped: number;
     uniqueTier3ItemsDropped: number;
     spellDrops: number;
+    spellDropsByCategory: Record<DropCategory, number>;
+    supportDropsByCategory: Record<DropCategory, number>;
     rareMonstersSpawned: number;
     rareMonstersKilled: number;
     totalMonstersKilled: number;

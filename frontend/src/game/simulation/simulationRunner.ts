@@ -9,12 +9,15 @@ import { createSimulationBaselineCharacter } from "./simulationCharacter";
 import { applySimulationBalanceOverrides } from "./simulationOverrides";
 import { buildSimulationSummary } from "./simulationReport";
 import type {
+  DropCategory,
   SimulationRunOptions,
   SimulationSummary,
   SingleRunSimulationMetrics,
   ShopSampleSummary,
   CharacterSnapshot
 } from "./simulationTypes";
+import { spellConfig, supportSpellConfig } from "../config/spellConfig";
+import { spellDropBalance, supportSpellDropBalance } from "../config/balance";
 import { getAffixTierRangesForStat, type AffixTier } from "../config/itemAffixConfig";
 
 const DEFAULT_STEP_MS = 50;
@@ -47,6 +50,57 @@ const countLootKinds = (lootEvents: LootEntry[]): Record<LootEntry["kind"], numb
       Map: 0
     }
   );
+
+const emptyDropCategoryCounts = (): Record<DropCategory, number> => ({
+  common: 0,
+  chase: 0
+});
+
+const spellDropCategoryByName = new Map(
+  spellDropBalance.pool.map((entry) => [
+    spellConfig[entry.spellId]?.name ?? entry.spellId,
+    entry.dropCategory
+  ])
+);
+
+const supportDropCategoryByName = new Map(
+  supportSpellDropBalance.pool.map((entry) => [
+    supportSpellConfig[entry.supportSpellId]?.name ?? entry.supportSpellId,
+    entry.dropCategory
+  ])
+);
+
+const countDropCategories = (
+  lootEvents: LootEntry[],
+  kind: "Spell" | "Support"
+): Record<DropCategory, number> => {
+  const categoryByName = kind === "Spell" ? spellDropCategoryByName : supportDropCategoryByName;
+
+  return lootEvents.reduce((totals, entry) => {
+    if (entry.kind !== kind) {
+      return totals;
+    }
+
+    const category = categoryByName.get(entry.name);
+
+    if (!category) {
+      return totals;
+    }
+
+    return {
+      ...totals,
+      [category]: totals[category] + 1
+    };
+  }, emptyDropCategoryCounts());
+};
+
+const addDropCategoryCounts = (
+  left: Record<DropCategory, number>,
+  right: Record<DropCategory, number>
+): Record<DropCategory, number> => ({
+  common: left.common + right.common,
+  chase: left.chase + right.chase
+});
 
 const syncRuntimePlayer = (runtime: ArenaRuntimeState, player: CharacterRecord): ArenaRuntimeState => ({
   ...runtime,
@@ -124,6 +178,8 @@ const runSingleSimulation = (
     Currency: 0,
     Map: 0
   };
+  let accumulatedSpellDropsByCategory = emptyDropCategoryCounts();
+  let accumulatedSupportDropsByCategory = emptyDropCategoryCounts();
   let flaskUses = 0;
 
   while (
@@ -134,6 +190,8 @@ const runSingleSimulation = (
     runtime = stepArenaRuntime(runtime, stepMs);
 
     const nextLootCounts = countLootKinds(runtime.snapshot.lootEvents);
+    const nextSpellDropCategories = countDropCategories(runtime.snapshot.lootEvents, "Spell");
+    const nextSupportDropCategories = countDropCategories(runtime.snapshot.lootEvents, "Support");
     accumulatedLootByKind = {
       Item: accumulatedLootByKind.Item + nextLootCounts.Item,
       Spell: accumulatedLootByKind.Spell + nextLootCounts.Spell,
@@ -141,6 +199,11 @@ const runSingleSimulation = (
       Currency: accumulatedLootByKind.Currency + nextLootCounts.Currency,
       Map: accumulatedLootByKind.Map + nextLootCounts.Map
     };
+    accumulatedSpellDropsByCategory = addDropCategoryCounts(accumulatedSpellDropsByCategory, nextSpellDropCategories);
+    accumulatedSupportDropsByCategory = addDropCategoryCounts(
+      accumulatedSupportDropsByCategory,
+      nextSupportDropCategories
+    );
 
     if (autoUseLifeFlaskThreshold !== null) {
       const healthRatio = runtime.snapshot.player.currentHealth / runtime.snapshot.player.derivedStats.maxHealth;
@@ -215,6 +278,8 @@ const runSingleSimulation = (
     uniqueTier2ItemsDropped,
     uniqueTier3ItemsDropped,
     spellDrops: accumulatedLootByKind.Spell,
+    spellDropsByCategory: accumulatedSpellDropsByCategory,
+    supportDropsByCategory: accumulatedSupportDropsByCategory,
     lootByKind: accumulatedLootByKind,
     rareMonstersSpawned: runtime.telemetry.rareMonstersSpawned,
     rareMonstersKilled: runtime.telemetry.rareMonstersKilled,

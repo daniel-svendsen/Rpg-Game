@@ -13,17 +13,17 @@ export const supportSpellDropBalance = {
   baseDropChanceByTier: {
     0: percent(0.0),
     1: percent(0.0),
-    2: percent(0.5),
-    3: percent(0.7),
-    4: percent(0.9),
-    5: percent(1.1),
-    6: percent(1.3),
-    7: percent(1.5),
-    8: percent(1.7),
-    9: percent(1.9),
-    10: percent(2.1)
+    2: percent(0.08),
+    3: percent(0.12),
+    4: percent(0.16),
+    5: percent(0.20),
+    6: percent(0.25),
+    7: percent(0.30),
+    8: percent(0.35),
+    9: percent(0.40),
+    10: percent(0.45)
   } as const,
-  rareMonsterDropChanceMultiplier: 6,
+  rareMonsterDropChanceMultiplier: 4,
   pool: [
     { supportSpellId: "chainSupport", minTier: 2, weight: 8, dropCategory: "common" },
     { supportSpellId: "scattershotProjectiles", minTier: 3, weight: 3, dropCategory: "chase" },
