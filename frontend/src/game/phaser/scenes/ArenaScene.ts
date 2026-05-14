@@ -12,12 +12,14 @@ import {
 
 const ARENA_WIDTH = 2000;
 const ARENA_HEIGHT = 1400;
+type ArenaGroundLoot = ArenaSnapshot["groundLoot"][number];
 
 export class ArenaScene extends Phaser.Scene {
   private latestSnapshot: ArenaSnapshot | null = null;
   private playerSprite?: Phaser.GameObjects.Sprite;
   private enemySprites = new Map<string, Phaser.GameObjects.Sprite>();
   private enemyHealthBars = new Map<string, Phaser.GameObjects.Rectangle>();
+  private groundLootObjects = new Map<string, Phaser.GameObjects.Container>();
   private floatingTexts = new Map<string, Phaser.GameObjects.Text>();
   private processedSpellEventIds = new Set<string>();
   private processedMonsterSpellEventIds = new Set<string>();
@@ -268,6 +270,8 @@ export class ArenaScene extends Phaser.Scene {
       });
     }
 
+    this.renderGroundLoot();
+
     // Floating damage text
     for (const entry of this.latestSnapshot.floatingTexts) {
       if (this.floatingTexts.has(entry.id)) continue;
@@ -323,6 +327,96 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   // ─── Spell animations ───────────────────────────────────────────────────────
+
+  private renderGroundLoot(): void {
+    if (!this.latestSnapshot) return;
+
+    const activeLootIds = new Set<string>();
+
+    for (const loot of this.latestSnapshot.groundLoot) {
+      activeLootIds.add(loot.id);
+      let object = this.groundLootObjects.get(loot.id);
+
+      if (!object) {
+        object = this.createGroundLootObject(loot);
+        this.groundLootObjects.set(loot.id, object);
+      }
+
+      object.setPosition(loot.x, loot.y);
+    }
+
+    for (const [id, object] of this.groundLootObjects) {
+      if (activeLootIds.has(id)) continue;
+      this.groundLootObjects.delete(id);
+      this.tweens.add({
+        targets: object,
+        scale: 1.35,
+        alpha: 0,
+        duration: 160,
+        ease: "Quad.easeOut",
+        onComplete: () => { object.destroy(); }
+      });
+    }
+  }
+
+  private createGroundLootObject(loot: ArenaGroundLoot): Phaser.GameObjects.Container {
+    const color = this.getGroundLootColor(loot);
+    const container = this.add.container(loot.x, loot.y).setDepth(4);
+
+    if (loot.beam) {
+      const beamColor = loot.beam === "Chase" ? 0xb47cff : color;
+      const beam = this.add.rectangle(0, -48, 10, 88, beamColor, 0.34)
+        .setBlendMode(Phaser.BlendModes.ADD);
+      const beamCore = this.add.rectangle(0, -48, 3, 92, 0xffffff, 0.28)
+        .setBlendMode(Phaser.BlendModes.ADD);
+      const beamGlow = this.add.ellipse(0, -90, 28, 12, beamColor, 0.22)
+        .setBlendMode(Phaser.BlendModes.ADD);
+      container.add([beam, beamCore, beamGlow]);
+
+      this.tweens.add({
+        targets: [beam, beamCore, beamGlow],
+        alpha: { from: 0.22, to: 0.52 },
+        duration: loot.beam === "Chase" ? 520 : 700,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut"
+      });
+    }
+
+    const shadow = this.add.ellipse(0, 8, 24, 10, 0x000000, 0.38);
+    const glow = this.add.ellipse(0, 0, loot.beam ? 28 : 20, loot.beam ? 18 : 12, color, loot.beam ? 0.28 : 0.16)
+      .setBlendMode(Phaser.BlendModes.ADD);
+    const item = this.add.polygon(0, -1, [0, -10, 10, 0, 0, 10, -10, 0], color, 1)
+      .setStrokeStyle(2, 0xfef3c7, loot.beam ? 0.82 : 0.48);
+
+    container.add([shadow, glow, item]);
+
+    this.tweens.add({
+      targets: item,
+      y: -4,
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut"
+    });
+
+    return container;
+  }
+
+  private getGroundLootColor(loot: ArenaGroundLoot): number {
+    if (loot.beam === "Chase") return 0xb47cff;
+    if (loot.kind === "Spell" || loot.kind === "Support") return 0x86efac;
+
+    if (loot.rarity === "Unique") return 0xffb172;
+    if (loot.rarity === "Rare") return 0xffd879;
+    if (loot.rarity === "Magic") return 0x9fd5ff;
+    if (loot.rarity === "Normal") return 0xbba990;
+
+    if (loot.kind === "Currency") return 0x67e8f9;
+    if (loot.kind === "Map") return 0x86efac;
+
+    return 0xfef3c7;
+  }
 
   private animateSpellEvent(event: SpellVisualEvent): void {
     if (event.chainPositions.length === 0) return;

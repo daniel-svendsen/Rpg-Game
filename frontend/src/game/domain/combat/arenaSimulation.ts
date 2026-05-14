@@ -5,12 +5,14 @@ import {
   itemBalance,
   mapBalance,
   monsterBalance,
-  progressionBalance
+  progressionBalance,
+  spellDropBalance,
+  supportSpellDropBalance
 } from "../../config/balance";
 import { mapConfig } from "../../config/mapConfig";
 import { monsterDefinitions } from "../../config/monsterConfig";
 import { generateItemDropForCharacter } from "../items/itemGenerator";
-import { getItemPowerScore, isUpgradeForCharacter } from "../items/itemPower";
+import { getItemPowerScore, isExceptionalRare, isUpgradeForCharacter } from "../items/itemPower";
 import { getItemStatEntries } from "../items/itemStats";
 import { getEquippedUniqueModifiers } from "../items/uniqueEffects";
 import {
@@ -53,6 +55,46 @@ const defaultAutoSellSettings: AutoSellSettings = {
   Rare: false
 };
 
+const chaseUniqueBaseIds = new Set<string>(
+  Object.values(itemBalance.bossUniquePools).map((pool) => pool.chase)
+);
+
+const getItemBaseId = (item: InventoryItem): string => item.id.split("-")[0] ?? item.id;
+
+const getGroundLootDropCategory = (entry: GroundLootState): "common" | "chase" | undefined => {
+  const payload = entry.payload;
+
+  if (payload.kind === "Spell") {
+    return spellDropBalance.pool.find((drop) => drop.spellId === payload.spellId)?.dropCategory;
+  }
+
+  if (payload.kind === "Support") {
+    return supportSpellDropBalance.pool.find((drop) => drop.supportSpellId === payload.supportSpellId)?.dropCategory;
+  }
+
+  return undefined;
+};
+
+export const getGroundLootBeam = (entry: GroundLootState): "Rare" | "Unique" | "Chase" | "SpellChase" | undefined => {
+  const dropCategory = getGroundLootDropCategory(entry);
+
+  if (dropCategory === "chase") {
+    return "SpellChase";
+  }
+
+  if (entry.payload.kind !== "Item") {
+    return undefined;
+  }
+
+  const item = entry.payload.item;
+
+  if (item.rarity === "Unique") {
+    return chaseUniqueBaseIds.has(getItemBaseId(item)) ? "Chase" : "Unique";
+  }
+
+  return isExceptionalRare(item) ? "Rare" : undefined;
+};
+
 const createBossUniqueDrop = (tier: number): InventoryItem | null => {
   const bossUniqueIds = itemBalance.bossUniquePools[tier as keyof typeof itemBalance.bossUniquePools];
 
@@ -88,13 +130,13 @@ const createBossUniqueDrop = (tier: number): InventoryItem | null => {
 const ARENA_WIDTH = 2000;
 const ARENA_HEIGHT = 1400;
 const PLAYER_BASE_MOVEMENT_SPEED = 120;
-const AUTO_LOOT_SEEK_RADIUS = 240;
+const GROUND_LOOT_PICKUP_DELAY_MS = 650;
 const PLAYER_SPAWN_PADDING = 220;
 const PACK_MIN_CENTER_DISTANCE = 240;
 const PACK_CENTER_PADDING = 140;
 const PACK_COUNT_BONUS_BASE = 2;
 const PACK_COUNT_BONUS_MAX_EXTRA = 4;
-const MAP_COMPLETE_DELAY_MS = 1000;
+const MAP_COMPLETE_DELAY_MS = 2500;
 
 type PackId = string;
 
@@ -981,36 +1023,11 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
       const movement = (movementSpeed * deltaMs) / 1000;
       const playerTargetingRange = resolvePlayerTargetingRange(nextPlayer);
 
-      // Prefer nearby ground loot before selecting the next pack.
-      const targetLootStillExists = autoMove.targetLootId
-        ? nextGroundLoot.some((entry) => entry.id === autoMove.targetLootId)
-        : false;
-      const targetLootId =
-        targetLootStillExists
-          ? autoMove.targetLootId
-          : selectNearestLoot(nextGroundLoot, playerX, playerY, AUTO_LOOT_SEEK_RADIUS);
+      const nearbyEnemyExists = nextEnemies.some(
+        (enemy) => distance(playerX, playerY, enemy.x, enemy.y) <= balanceConfig.combat.enemyAggroRadius
+      );
 
-      if (targetLootId) {
-        const loot = nextGroundLoot.find((entry) => entry.id === targetLootId);
-
-        autoMove = {
-          ...autoMove,
-          targetLootId,
-          targetPackId: null
-        };
-
-        if (loot) {
-          const distanceToLoot = distance(playerX, playerY, loot.x, loot.y);
-
-          if (distanceToLoot > balanceConfig.combat.autoPickupRadius) {
-            const directionX = loot.x - playerX;
-            const directionY = loot.y - playerY;
-            const length = Math.max(1, Math.hypot(directionX, directionY));
-            playerX = clamp(playerX + (directionX / length) * movement, 40, ARENA_WIDTH - 40);
-            playerY = clamp(playerY + (directionY / length) * movement, 40, ARENA_HEIGHT - 40);
-          }
-        }
-      } else {
+      if (nearbyEnemyExists) {
         const targetPackAlive = autoMove.targetPackId ? alivePackIdsBefore.has(autoMove.targetPackId) : false;
         const targetPackId =
           targetPackAlive
@@ -1040,6 +1057,62 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
             }
           }
         }
+      } else {
+        const targetLootStillExists = autoMove.targetLootId
+          ? nextGroundLoot.some((entry) => entry.id === autoMove.targetLootId)
+          : false;
+        const targetLootId =
+          targetLootStillExists
+            ? autoMove.targetLootId
+            : selectNearestLoot(nextGroundLoot, playerX, playerY, Number.POSITIVE_INFINITY);
+
+        if (targetLootId) {
+          const loot = nextGroundLoot.find((entry) => entry.id === targetLootId);
+
+          autoMove = {
+            ...autoMove,
+            targetLootId,
+            targetPackId: null
+          };
+
+          if (loot) {
+            const distanceToLoot = distance(playerX, playerY, loot.x, loot.y);
+
+            if (distanceToLoot > balanceConfig.combat.autoPickupRadius) {
+              const directionX = loot.x - playerX;
+              const directionY = loot.y - playerY;
+              const length = Math.max(1, Math.hypot(directionX, directionY));
+              playerX = clamp(playerX + (directionX / length) * movement, 40, ARENA_WIDTH - 40);
+              playerY = clamp(playerY + (directionY / length) * movement, 40, ARENA_HEIGHT - 40);
+            }
+          }
+        } else {
+          const targetPackId = selectNearestPack(state.packs, nextEnemies, playerX, playerY);
+
+          autoMove = {
+            ...autoMove,
+            targetPackId,
+            targetLootId: null
+          };
+
+          if (targetPackId) {
+            const pack = state.packs.find((entry) => entry.id === targetPackId);
+
+            if (pack) {
+              const center = getPackCenter(pack, nextEnemies);
+              const distanceToPack = distance(playerX, playerY, center.x, center.y);
+
+              if (distanceToPack > playerTargetingRange) {
+                const directionX = center.x - playerX;
+                const directionY = center.y - playerY;
+                const length = Math.max(1, Math.hypot(directionX, directionY));
+                playerX = clamp(playerX + (directionX / length) * movement, 40, ARENA_WIDTH - 40);
+                playerY = clamp(playerY + (directionY / length) * movement, 40, ARENA_HEIGHT - 40);
+                telemetry = { ...telemetry, timeMovingMs: telemetry.timeMovingMs + deltaMs };
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -1057,6 +1130,10 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   const pickedLootIds = new Set<string>();
 
   nextGroundLoot.forEach((entry) => {
+    if (nextTime - entry.createdAtMs < GROUND_LOOT_PICKUP_DELAY_MS) {
+      return;
+    }
+
     if (distance(playerX, playerY, entry.x, entry.y) > pickupRadius) {
       return;
     }
@@ -1405,7 +1482,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
       ...autoMove,
       lootPauseUntilMs: 0,
       targetPackId: null,
-      targetLootId: selectNearestLoot(nextGroundLoot, playerX, playerY, AUTO_LOOT_SEEK_RADIUS * 2)
+      targetLootId: selectNearestLoot(nextGroundLoot, playerX, playerY, Number.POSITIVE_INFINITY)
     };
   }
 
@@ -1420,7 +1497,11 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   const completionDelayUntilMs = allEnemiesDefeated
     ? state.completionDelayUntilMs ?? nextTime + MAP_COMPLETE_DELAY_MS
     : null;
-  const isComplete = allEnemiesDefeated && completionDelayUntilMs !== null && nextTime >= completionDelayUntilMs;
+  const isComplete =
+    allEnemiesDefeated &&
+    nextGroundLoot.length === 0 &&
+    completionDelayUntilMs !== null &&
+    nextTime >= completionDelayUntilMs;
   const justCompleted = !state.snapshot.isComplete && isComplete;
 
   if (justCompleted) {
@@ -1494,7 +1575,10 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
         kind,
         x: entry.x,
         y: entry.y,
-        name
+        name,
+        rarity: kind === "Item" ? entry.payload.item.rarity : undefined,
+        dropCategory: getGroundLootDropCategory(entry),
+        beam: getGroundLootBeam(entry)
       };
     }),
     isComplete

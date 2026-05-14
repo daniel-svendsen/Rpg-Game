@@ -75,18 +75,32 @@ export const gameTweaks = {
   // Keep these blocks sparse: only add values that should differ from the global
   // tweak. If a neutral 1.0 is left here, it still overrides the global value.
   tierOverrides: {
-    9: {} as TierBalanceTweaks,
+    9: {
+      enemyHpMultiplier: 1.1,
+      enemyResistanceMultiplier: 1.15,
+      enemyDamageMultiplier: 1.2,
+      enemySpeedMultiplier: 1.05,
+      rareMonsterHpMultiplier: 1.25,
+      rareMonsterDamageMultiplier: 1.15,
+      spellcasterSpawnChance: 0.50,
+      spellcasterDamageMultiplier: 1.25,
+      spellcasterCooldownMultiplier: 0.9,
+      spellcasterRangeMultiplier: 1.1,
+      monsterCountMultiplier: 1.05,
+      packCountMultiplier: 1.0,
+      mapShardDropMultiplier: 1.1
+    } as TierBalanceTweaks,
     10: {
-      enemyHpMultiplier: 1.3,
-      enemyResistanceMultiplier: 1.3,
+      enemyHpMultiplier: 1.7,
+      enemyResistanceMultiplier: 1.7,
       enemyDamageMultiplier: 1.7,
       enemySpeedMultiplier: 1.7,
-      rareMonsterHpMultiplier: 1.6,
+      rareMonsterHpMultiplier: 1.7,
       rareMonsterDamageMultiplier: 1.6,
       bossResistanceMultiplier: 1.5,
       spellcasterSpawnChance: 0.60,
       spellcasterDamageMultiplier: 1.7,
-      spellcasterCooldownMultiplier: 1.7,
+      spellcasterCooldownMultiplier: 0.8,
       spellcasterRangeMultiplier: 1.7
     } as TierBalanceTweaks
   } satisfies Record<number, TierBalanceTweaks>,

@@ -246,6 +246,9 @@ export interface ArenaSnapshot {
     x: number;
     y: number;
     name: string;
+    rarity?: ItemRarity;
+    dropCategory?: "common" | "chase";
+    beam?: "Rare" | "Unique" | "Chase" | "SpellChase";
   }>;
   spellEvents: SpellVisualEvent[];
   monsterSpellEvents: MonsterSpellVisualEvent[];
