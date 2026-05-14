@@ -134,7 +134,8 @@ export const App = () => {
     handleSelectMainSpell,
     handleSelectSupportSpell,
     handleSelectPassiveSupport,
-    handleUpgradeSpell
+    handleUpgradeSpell,
+    handleUpgradeSupport
   } = useLoadoutActions({
     character,
     selectedSupportSlot,
@@ -396,6 +397,7 @@ export const App = () => {
         onSpendStatPoint={handleSpendStatPoint}
         onStartMap={handleStartMap}
         onUpgradeSpell={handleUpgradeSpell}
+        onUpgradeSupport={handleUpgradeSupport}
         onUseLifeFlask={handleUseLifeFlask}
       />
     </>

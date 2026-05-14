@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addOwnedMap, consumeOwnedMap, getNextUnclearedBossTier } from "./mapProgress";
+import { addOwnedMap, consumeOwnedMap, getNextUnclearedBossTier, getPlayerResistancePenalty } from "./mapProgress";
 import { createTestCharacter } from "../../../test/createTestCharacter";
 
 describe("mapProgress", () => {
@@ -41,5 +41,18 @@ describe("mapProgress", () => {
     });
 
     expect(getNextUnclearedBossTier(character.mapProgress, 10)).toBeNull();
+  });
+
+  it("applies resistance penalties from cleared boss milestones and legacy unlocked tiers", () => {
+    const character = createTestCharacter({
+      mapProgress: {
+        highestUnlockedTier: 10,
+        lastCompletedTier: 10,
+        consumableMaps: [],
+        clearedBossTiers: []
+      }
+    });
+
+    expect(getPlayerResistancePenalty(character.mapProgress)).toBeCloseTo(0.45);
   });
 });

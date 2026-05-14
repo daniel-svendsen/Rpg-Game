@@ -75,6 +75,7 @@ interface HubScreenProps {
   onSpendStatPoint: (statKey: keyof CharacterRecord["baseStats"]) => void;
   onStartMap: () => void;
   onUpgradeSpell: (spellId: string) => void;
+  onUpgradeSupport: (supportSpellId: string) => void;
   onUseLifeFlask: () => void;
 }
 
@@ -122,6 +123,7 @@ export const HubScreen = ({
   onSpendStatPoint,
   onStartMap,
   onUpgradeSpell,
+  onUpgradeSupport,
   onUseLifeFlask
 }: HubScreenProps) => {
   const totalBossKeys = character
@@ -135,6 +137,7 @@ export const HubScreen = ({
       level={character?.level}
       gold={character?.gold}
       mapShards={character ? getCurrencyAmount(character, "mapShard") : undefined}
+      gemcuttersPrisms={character ? getCurrencyAmount(character, "gemcuttersPrism") : undefined}
       bossKeys={totalBossKeys}
       onSave={onSave}
     />
@@ -201,6 +204,7 @@ export const HubScreen = ({
           onOpenSupportPicker={onOpenSupportPicker}
           onOpenPassivePicker={onOpenPassivePicker}
           onUpgradeSpell={onUpgradeSpell}
+          onUpgradeSupport={onUpgradeSupport}
         />
       ) : null}
       {hubTab === "shop" ? (
@@ -242,6 +246,7 @@ export const HubScreen = ({
         onSelectSupportSpell={onSelectSupportSpell}
         onSelectPassiveSupport={onSelectPassiveSupport}
         onUpgradeSpell={onUpgradeSpell}
+        onUpgradeSupport={onUpgradeSupport}
       />
     </div>
   );

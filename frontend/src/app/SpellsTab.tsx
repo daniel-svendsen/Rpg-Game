@@ -5,6 +5,7 @@ import { resolveSpell } from "../game/domain/spells/spellEngine";
 import { getSupportEffectDetails, getSupportPassiveDetails, getSupportRoleTags } from "./supportSpellPresentation";
 import { getSpellAccentClassName, getSupportAccentClassName } from "./appUiHelpers";
 import { SpellUpgradeActions } from "./SpellUpgradeActions";
+import { SupportUpgradeActions } from "./SupportUpgradeActions";
 
 const getSpellElementSymbol = (spellId: string): string => {
   const tags = spellConfig[spellId]?.tags ?? [];
@@ -32,6 +33,7 @@ interface SpellsTabProps {
   onOpenSupportPicker: (slotIndex: 0 | 1) => void;
   onOpenPassivePicker: (slotIndex: 0 | 1 | 2) => void;
   onUpgradeSpell: (spellId: string) => void;
+  onUpgradeSupport: (supportSpellId: string) => void;
 }
 
 export const SpellsTab = ({
@@ -41,7 +43,8 @@ export const SpellsTab = ({
   onOpenMainSpellPicker,
   onOpenSupportPicker,
   onOpenPassivePicker,
-  onUpgradeSpell
+  onUpgradeSpell,
+  onUpgradeSupport
 }: SpellsTabProps) => {
   const activeMainSpellId = character?.spellLoadout[0]?.mainSpellId ?? "";
   const supportSlots = character?.spellLoadout[0]?.supportSpellIds ?? [];
@@ -151,11 +154,19 @@ export const SpellsTab = ({
         </div>
         {passiveSlots.filter(Boolean).length > 0 ? (
           <div className="stack compact-stack">
-            {passiveSlots.filter(Boolean).map((passiveId) => {
+            {passiveSlots.filter(Boolean).map((passiveId, index) => {
               const passiveDetails = getSupportPassiveDetails(passiveId).join(", ");
               const passiveName = supportSpellConfig[passiveId]?.name ?? passiveId;
               return passiveDetails ? (
-                <span key={passiveId} className="status-text">{passiveName}: {passiveDetails}</span>
+                <div key={`${passiveId}-${index}`} className="active-result-support-card">
+                  <strong>{passiveName}</strong>
+                  <span className="status-text">{passiveDetails}</span>
+                  <SupportUpgradeActions
+                    character={character}
+                    supportSpellId={passiveId}
+                    onUpgradeSupport={onUpgradeSupport}
+                  />
+                </div>
               ) : null;
             })}
           </div>
@@ -220,6 +231,11 @@ export const SpellsTab = ({
                       </div>
                     ) : null}
                     <span className="status-text">{support.details}</span>
+                    <SupportUpgradeActions
+                      character={character}
+                      supportSpellId={support.id}
+                      onUpgradeSupport={onUpgradeSupport}
+                    />
                   </div>
                 ))
               ) : (

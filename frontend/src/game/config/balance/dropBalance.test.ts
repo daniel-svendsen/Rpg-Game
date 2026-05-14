@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { economyBalance } from "./economyBalance";
 import { mapBalance } from "./mapBalance";
 import { spellDropBalance } from "./spellDropBalance";
 
@@ -20,5 +21,9 @@ describe("drop balance guardrails", () => {
   it("keeps baseline spell drop chance from becoming too common", () => {
     expect(spellDropBalance.baseDropChanceByTier[0]).toBeLessThanOrEqual(0.03);
     expect(spellDropBalance.baseDropChanceByTier[10]).toBeLessThanOrEqual(0.05);
+  });
+
+  it("keeps Gemcutter's Prism drops restrained for per-monster currency rolls", () => {
+    expect(economyBalance.economy.gemcuttersPrismDropChance).toBeCloseTo(0.004);
   });
 });

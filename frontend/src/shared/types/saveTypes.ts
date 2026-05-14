@@ -127,6 +127,11 @@ export interface SpellProgressState {
   level: number;
 }
 
+export interface SupportProgressState {
+  supportSpellId: string;
+  level: number;
+}
+
 export type MapEnhancementId =
   | "overflowingSpoils"
   | "gildedHunt"
@@ -178,6 +183,7 @@ export interface CharacterRecord {
   unlockedSupportSpellIds: string[];
   passiveSupportIds?: string[];
   spellProgress: SpellProgressState[];
+  supportProgress?: SupportProgressState[];
   spellLoadout: SpellLinkState[];
   currencies: CurrencyStack[];
   mapProgress: MapProgressState;

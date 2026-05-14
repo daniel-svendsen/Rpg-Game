@@ -6,6 +6,7 @@ import com.example.arpg.character.LifeFlaskState;
 import com.example.arpg.character.MapProgressData;
 import com.example.arpg.character.SpellLoadoutEntry;
 import com.example.arpg.character.SpellProgressState;
+import com.example.arpg.character.SupportProgressState;
 import com.example.arpg.user.UserAccountEntity;
 import com.example.arpg.user.UserAccountRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -106,7 +107,9 @@ class AuthFlowIntegrationTest {
                 Map.of(),
                 List.of("stormChain", "emberBurst"),
                 List.of("fasterCasting"),
+                List.of(),
                 List.of(new SpellProgressState("stormChain", 1)),
+                List.of(new SupportProgressState("fasterCasting", 1)),
                 List.of(new SpellLoadoutEntry("stormChain", List.of())),
                 List.of(),
                 new MapProgressData(1, 0, List.of(), List.of())

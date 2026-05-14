@@ -16,6 +16,7 @@ describe("simulationReport", () => {
         goldGained: 120,
         mapShardsGained: 1,
         imbuingOrbsGained: 0,
+        gemcuttersPrismsGained: 2,
         mapsGained: 0,
         bossKeysGained: 0,
         normalItemsDropped: 1,
@@ -65,6 +66,7 @@ describe("simulationReport", () => {
         goldGained: 60,
         mapShardsGained: 0,
         imbuingOrbsGained: 1,
+        gemcuttersPrismsGained: 0,
         mapsGained: 1,
         bossKeysGained: 2,
         normalItemsDropped: 0,
@@ -135,6 +137,7 @@ describe("simulationReport", () => {
     expect(summary.totals.deaths).toBe(1);
     expect(summary.totals.goldGained).toBe(180);
     expect(summary.totals.imbuingOrbsGained).toBe(1);
+    expect(summary.totals.gemcuttersPrismsGained).toBe(2);
     expect(summary.totals.bossKeysGained).toBe(2);
     expect(summary.totals.rareItemsDropped).toBe(1);
     expect(summary.totals.exceptionalRareItemsDropped).toBe(1);
@@ -147,6 +150,7 @@ describe("simulationReport", () => {
     expect(summary.averages.bossKeysGained).toBe(1);
     expect(summary.averages.exceptionalRareItemsDropped).toBe(0.5);
     expect(summary.averages.imbuingOrbsGained).toBe(0.5);
+    expect(summary.averages.gemcuttersPrismsGained).toBe(1);
     expect(summary.averages.uniqueTier3ItemsDropped).toBe(0.5);
     expect(summary.averages.rareMonstersKilled).toBe(2.5);
   });

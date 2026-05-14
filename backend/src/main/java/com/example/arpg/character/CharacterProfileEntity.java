@@ -79,8 +79,16 @@ public class CharacterProfileEntity {
     private List<String> unlockedSupportSpellIds;
 
     @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "passive_support_ids", nullable = false, columnDefinition = "jsonb")
+    private List<String> passiveSupportIds;
+
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "spell_progress", nullable = false, columnDefinition = "jsonb")
     private List<SpellProgressState> spellProgress;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "support_progress", nullable = false, columnDefinition = "jsonb")
+    private List<SupportProgressState> supportProgress;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "spell_loadout", nullable = false, columnDefinition = "jsonb")
@@ -224,12 +232,28 @@ public class CharacterProfileEntity {
         this.unlockedSupportSpellIds = unlockedSupportSpellIds;
     }
 
+    public List<String> getPassiveSupportIds() {
+        return passiveSupportIds;
+    }
+
+    public void setPassiveSupportIds(List<String> passiveSupportIds) {
+        this.passiveSupportIds = passiveSupportIds;
+    }
+
     public List<SpellProgressState> getSpellProgress() {
         return spellProgress;
     }
 
     public void setSpellProgress(List<SpellProgressState> spellProgress) {
         this.spellProgress = spellProgress;
+    }
+
+    public List<SupportProgressState> getSupportProgress() {
+        return supportProgress;
+    }
+
+    public void setSupportProgress(List<SupportProgressState> supportProgress) {
+        this.supportProgress = supportProgress;
     }
 
     public List<SpellLoadoutEntry> getSpellLoadout() {

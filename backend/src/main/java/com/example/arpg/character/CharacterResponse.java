@@ -19,7 +19,9 @@ public record CharacterResponse(
         Map<String, InventoryItemData> equippedItems,
         List<String> unlockedSpellIds,
         List<String> unlockedSupportSpellIds,
+        List<String> passiveSupportIds,
         List<SpellProgressState> spellProgress,
+        List<SupportProgressState> supportProgress,
         List<SpellLoadoutEntry> spellLoadout,
         List<CurrencyStackData> currencies,
         MapProgressData mapProgress

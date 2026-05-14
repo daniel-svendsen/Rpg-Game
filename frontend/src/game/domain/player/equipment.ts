@@ -3,6 +3,8 @@ import { balanceConfig } from "../../config/balanceConfig";
 import { supportSpellConfig } from "../../config/spellConfig";
 import { getItemPowerScore } from "../items/itemPower";
 import { getEquippedUniqueModifiers } from "../items/uniqueEffects";
+import { getPlayerResistancePenalty } from "../maps/mapProgress";
+import { getSupportEffectMultiplier, getSupportLevel } from "../spells/supportProgression";
 import { deriveStats } from "./statCalculation";
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
@@ -68,16 +70,39 @@ export const applyEquipmentState = (character: CharacterRecord): CharacterRecord
   const weaponCastSpeedMultiplier = character.equippedItems.Weapon?.statBonuses.castSpeedMultiplier ?? 1;
   const weaponAttackSpeedMultiplier = character.equippedItems.Weapon?.statBonuses.attackSpeedMultiplier ?? 1;
   const resistanceCap = balanceConfig.combat.resistances.playerCap;
+  const resistancePenalty = getPlayerResistancePenalty(character.mapProgress);
 
-  const passiveIds = character.passiveSupportIds ?? [];
-  const passiveMovementSpeed = passiveIds.reduce((sum, id) => sum + (supportSpellConfig[id]?.applyPassive?.movementSpeedBonus ?? 0), 0);
-  const passiveArmor = passiveIds.reduce((sum, id) => sum + (supportSpellConfig[id]?.applyPassive?.armorBonus ?? 0), 0);
-  const passiveEvasion = passiveIds.reduce((sum, id) => sum + (supportSpellConfig[id]?.applyPassive?.evasionBonus ?? 0), 0);
-  const passiveFireRes = passiveIds.reduce((sum, id) => sum + (supportSpellConfig[id]?.applyPassive?.fireResistanceBonus ?? 0), 0);
-  const passiveColdRes = passiveIds.reduce((sum, id) => sum + (supportSpellConfig[id]?.applyPassive?.coldResistanceBonus ?? 0), 0);
-  const passiveLightningRes = passiveIds.reduce((sum, id) => sum + (supportSpellConfig[id]?.applyPassive?.lightningResistanceBonus ?? 0), 0);
-  const passiveCritChance = passiveIds.reduce((sum, id) => sum + (supportSpellConfig[id]?.applyPassive?.critChanceBonus ?? 0), 0);
-  const passiveSpellPower = passiveIds.reduce((sum, id) => sum + (supportSpellConfig[id]?.applyPassive?.spellPowerBonus ?? 0), 0);
+  const passiveBonuses = (character.passiveSupportIds ?? []).reduce(
+    (totals, id) => {
+      const passive = supportSpellConfig[id]?.applyPassive;
+      if (!passive) {
+        return totals;
+      }
+
+      const effectMultiplier = getSupportEffectMultiplier(getSupportLevel(character, id));
+
+      return {
+        movementSpeed: totals.movementSpeed + (passive.movementSpeedBonus ?? 0) * effectMultiplier,
+        armor: totals.armor + (passive.armorBonus ?? 0) * effectMultiplier,
+        evasion: totals.evasion + (passive.evasionBonus ?? 0) * effectMultiplier,
+        fireResistance: totals.fireResistance + (passive.fireResistanceBonus ?? 0) * effectMultiplier,
+        coldResistance: totals.coldResistance + (passive.coldResistanceBonus ?? 0) * effectMultiplier,
+        lightningResistance: totals.lightningResistance + (passive.lightningResistanceBonus ?? 0) * effectMultiplier,
+        critChance: totals.critChance + (passive.critChanceBonus ?? 0) * effectMultiplier,
+        spellPower: totals.spellPower + (passive.spellPowerBonus ?? 0) * effectMultiplier
+      };
+    },
+    {
+      movementSpeed: 0,
+      armor: 0,
+      evasion: 0,
+      fireResistance: 0,
+      coldResistance: 0,
+      lightningResistance: 0,
+      critChance: 0,
+      spellPower: 0
+    }
+  );
 
   return {
     ...character,
@@ -86,19 +111,19 @@ export const applyEquipmentState = (character: CharacterRecord): CharacterRecord
       maxHealth: nextMaxHealth,
       castSpeedMultiplier: derivedStats.castSpeedMultiplier * weaponCastSpeedMultiplier,
       attackSpeedMultiplier: derivedStats.attackSpeedMultiplier * weaponAttackSpeedMultiplier,
-      movementSpeedMultiplier: derivedStats.movementSpeedMultiplier + movementSpeedBonus + passiveMovementSpeed,
-      armor: derivedStats.armor + armorBonus + passiveArmor,
-      evasion: derivedStats.evasion + evasionBonus + passiveEvasion,
+      movementSpeedMultiplier: derivedStats.movementSpeedMultiplier + movementSpeedBonus + passiveBonuses.movementSpeed,
+      armor: derivedStats.armor + armorBonus + passiveBonuses.armor,
+      evasion: derivedStats.evasion + evasionBonus + passiveBonuses.evasion,
       resistances: {
-        Fire: clamp(derivedStats.resistances.Fire + fireResistanceBonus + passiveFireRes, -1, resistanceCap),
-        Cold: clamp(derivedStats.resistances.Cold + coldResistanceBonus + passiveColdRes, -1, resistanceCap),
-        Lightning: clamp(derivedStats.resistances.Lightning + lightningResistanceBonus + passiveLightningRes, -1, resistanceCap)
+        Fire: clamp(derivedStats.resistances.Fire + fireResistanceBonus + passiveBonuses.fireResistance - resistancePenalty, -1, resistanceCap),
+        Cold: clamp(derivedStats.resistances.Cold + coldResistanceBonus + passiveBonuses.coldResistance - resistancePenalty, -1, resistanceCap),
+        Lightning: clamp(derivedStats.resistances.Lightning + lightningResistanceBonus + passiveBonuses.lightningResistance - resistancePenalty, -1, resistanceCap)
       },
       critChance: Math.min(
         balanceConfig.statScaling.critChanceCap,
         derivedStats.critChance +
           Object.values(character.equippedItems).reduce((total, item) => total + (item?.statBonuses.critChance ?? 0), 0) +
-          passiveCritChance
+          passiveBonuses.critChance
       ),
       critMultiplier: derivedStats.critMultiplier,
       spellPowerMultiplier:
@@ -107,7 +132,7 @@ export const applyEquipmentState = (character: CharacterRecord): CharacterRecord
           (total, item) => total + (item?.statBonuses.spellPowerMultiplier ?? 0),
           0
         ) +
-        passiveSpellPower
+        passiveBonuses.spellPower
     },
     currentHealth: Math.max(1, Math.round(nextMaxHealth * healthRatio))
   };

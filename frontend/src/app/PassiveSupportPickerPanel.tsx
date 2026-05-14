@@ -2,6 +2,7 @@ import { supportSpellConfig } from "../game/config/spellConfig";
 import { OverlayShell } from "./OverlayShell";
 import { getSupportAccentClassName } from "./appUiHelpers";
 import { getSupportPassiveDetails } from "./supportSpellPresentation";
+import { SupportUpgradeActions } from "./SupportUpgradeActions";
 import type { CharacterRecord } from "../shared/types/saveTypes";
 
 interface PassiveSupportPickerPanelProps {
@@ -9,13 +10,15 @@ interface PassiveSupportPickerPanelProps {
   selectedPassiveSlot: 0 | 1 | 2;
   onClose: () => void;
   onSelectPassiveSupport: (supportSpellId: string) => void;
+  onUpgradeSupport: (supportSpellId: string) => void;
 }
 
 export const PassiveSupportPickerPanel = ({
   character,
   selectedPassiveSlot,
   onClose,
-  onSelectPassiveSupport
+  onSelectPassiveSupport,
+  onUpgradeSupport
 }: PassiveSupportPickerPanelProps) => {
   const passiveSupports = Object.values(supportSpellConfig).filter((s) => s.passiveOnly);
 
@@ -50,6 +53,13 @@ export const PassiveSupportPickerPanel = ({
                   Select
                 </button>
               </div>
+              {isUnlocked ? (
+                <SupportUpgradeActions
+                  character={character}
+                  supportSpellId={support.id}
+                  onUpgradeSupport={onUpgradeSupport}
+                />
+              ) : null}
             </div>
           );
         })}

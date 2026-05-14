@@ -1,4 +1,5 @@
 import type { CharacterRecord, MapProgressState, OwnedMapStack } from "../../../shared/types/saveTypes";
+import { balanceConfig } from "../../config/balanceConfig";
 import {
   createOwnedMapStackId,
   getMapStackSignature,
@@ -62,6 +63,11 @@ export const normalizeMapProgress = (mapProgress: Partial<MapProgressState> | un
 
 export const isBossTierCleared = (mapProgress: MapProgressState, tier: number): boolean =>
   (mapProgress.clearedBossTiers ?? []).includes(tier) || mapProgress.highestUnlockedTier > tier;
+
+export const getPlayerResistancePenalty = (mapProgress: MapProgressState): number =>
+  balanceConfig.combat.resistances.bossPenaltyMilestones
+    .filter((tier) => isBossTierCleared(mapProgress, tier))
+    .length * balanceConfig.combat.resistances.bossPenaltyPerMilestone;
 
 export const getNextUnclearedBossTier = (
   mapProgress: MapProgressState,

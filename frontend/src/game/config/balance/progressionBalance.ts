@@ -29,5 +29,13 @@ export const progressionBalance = {
     upgradeGoldGrowthFactor: 1.45,
     shardUpgradeStartLevel: 4,
     shardUpgradeInterval: 3
+  },
+  supportProgression: {
+    maxLevel: 20,
+    baseUpgradeGoldCost: 20,
+    upgradeGoldGrowthFactor: 1.35,
+    shardUpgradeStartLevel: 6,
+    shardUpgradeInterval: 4,
+    effectScalingPerLevel: 0.06
   }
 } as const;

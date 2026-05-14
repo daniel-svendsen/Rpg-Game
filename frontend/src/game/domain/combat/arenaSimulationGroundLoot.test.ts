@@ -2,6 +2,16 @@ import { describe, expect, it } from "vitest";
 import type { ArenaRuntimeState } from "./arenaSimulation";
 import { createArenaRuntime, stepArenaRuntime } from "./arenaSimulation";
 import type { GroundLootState } from "../../../shared/types/saveTypes";
+import { createTestCharacter } from "../../../test/createTestCharacter";
+
+const createTestArenaCharacter = () => createTestCharacter({
+  unlockedSpellIds: [],
+  unlockedSupportSpellIds: [],
+  spellProgress: [],
+  spellLoadout: [],
+  currencies: [],
+  lifeFlask: { currentCharges: 0 }
+});
 
 describe("arenaSimulation ground loot", () => {
   it("picks up ground loot within pickup radius and applies it to the character", () => {
@@ -94,6 +104,52 @@ describe("arenaSimulation ground loot", () => {
     expect(stepped.snapshot.groundLoot).toHaveLength(0);
     expect(stepped.snapshot.lootEvents.some((entry) => entry.kind === "Currency")).toBe(true);
     expect(stepped.player.currencies.find((entry) => entry.code === "mapShard")?.amount).toBe(2);
+  });
+
+  it("picks up Gemcutter's Prisms as currency", () => {
+    const runtime = createArenaRuntime(createTestArenaCharacter(), "trainingGrounds");
+    const loot: GroundLootState = {
+      id: "test-gcp",
+      x: runtime.playerX,
+      y: runtime.playerY,
+      createdAtMs: 0,
+      payload: {
+        kind: "Currency",
+        code: "gemcuttersPrism",
+        amount: 1
+      }
+    };
+
+    const stepped = stepArenaRuntime(
+      {
+        ...runtime,
+        enemies: [],
+        packs: [],
+        groundLoot: [loot],
+        autoMove: {
+          ...runtime.autoMove,
+          enabled: false
+        },
+        snapshot: {
+          ...runtime.snapshot,
+          enemies: [],
+          lootEvents: [],
+          groundLoot: [
+            {
+              id: loot.id,
+              kind: "Currency",
+              x: loot.x,
+              y: loot.y,
+              name: "Gemcutter's Prism"
+            }
+          ]
+        }
+      },
+      50
+    );
+
+    expect(stepped.player.currencies.find((entry) => entry.code === "gemcuttersPrism")?.amount).toBe(1);
+    expect(stepped.snapshot.lootEvents[0]?.name).toBe("Gemcutter's Prism");
   });
 
   it("adds a boss key to map inventory instead of a hidden retry unlock", () => {

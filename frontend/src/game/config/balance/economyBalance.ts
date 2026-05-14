@@ -13,7 +13,8 @@ export const economyBalance = {
     },
     itemSellPriceMultiplier: 0.22,
     itemSellPriceFloor: 3,
-    guaranteedRareStartTier: 6
+    guaranteedRareStartTier: 6,
+    gemcuttersPrismDropChance: 0.004
   },
   mapCrafting: {
     combineShardsCost: 5,

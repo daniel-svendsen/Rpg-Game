@@ -18,6 +18,7 @@ interface HubOverlayPanelProps {
   onSelectSupportSpell: (supportSpellId: string) => void;
   onSelectPassiveSupport: (id: string) => void;
   onUpgradeSpell: (spellId: string) => void;
+  onUpgradeSupport: (supportSpellId: string) => void;
 }
 
 export const HubOverlayPanel = ({
@@ -32,7 +33,8 @@ export const HubOverlayPanel = ({
   onSelectMainSpell,
   onSelectSupportSpell,
   onSelectPassiveSupport,
-  onUpgradeSpell
+  onUpgradeSpell,
+  onUpgradeSupport
 }: HubOverlayPanelProps) => {
   if (!character || !overlayPanel) {
     return null;
@@ -68,6 +70,7 @@ export const HubOverlayPanel = ({
         selectedPassiveSlot={selectedPassiveSlot}
         onClose={onClose}
         onSelectPassiveSupport={onSelectPassiveSupport}
+        onUpgradeSupport={onUpgradeSupport}
       />
     );
   }
@@ -76,8 +79,9 @@ export const HubOverlayPanel = ({
     <SupportSpellPickerPanel
       character={character}
       selectedSupportSlot={selectedSupportSlot}
-      onClose={onClose}
-      onSelectSupportSpell={onSelectSupportSpell}
-    />
+    onClose={onClose}
+    onSelectSupportSpell={onSelectSupportSpell}
+    onUpgradeSupport={onUpgradeSupport}
+  />
   );
 };

@@ -74,7 +74,11 @@ export const itemRarities: ItemRarity[] = ["Normal", "Magic", "Rare", "Unique"];
 
 export const currencyDefinitions: CurrencyDefinition[] = [
   { code: "mapShard", name: "Map Shard", tags: ["Currency", "MapModifier"] },
-  { code: "imbuingOrb", name: "Imbuing Orb", tags: ["Currency"] }
+  { code: "imbuingOrb", name: "Imbuing Orb", tags: ["Currency"] },
+  { code: "gemcuttersPrism", name: "Gemcutter's Prism", tags: ["Currency"] }
 ];
+
+export const getCurrencyName = (code: string): string =>
+  currencyDefinitions.find((currency) => currency.code === code)?.name ?? code;
 
 export const uniqueItemDefinitions: UniqueItemDefinition[] = [...itemBalance.uniqueItems];

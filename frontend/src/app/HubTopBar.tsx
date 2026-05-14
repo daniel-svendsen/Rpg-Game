@@ -4,11 +4,12 @@ interface HubTopBarProps {
   level: number | undefined;
   gold: number | undefined;
   mapShards: number | undefined;
+  gemcuttersPrisms: number | undefined;
   bossKeys: number | undefined;
   onSave: () => void;
 }
 
-export const HubTopBar = ({ level, gold, mapShards, bossKeys, onSave }: HubTopBarProps) => {
+export const HubTopBar = ({ level, gold, mapShards, gemcuttersPrisms, bossKeys, onSave }: HubTopBarProps) => {
   const [justSaved, setJustSaved] = useState(false);
 
   const handleSave = () => {
@@ -24,6 +25,9 @@ export const HubTopBar = ({ level, gold, mapShards, bossKeys, onSave }: HubTopBa
         <span className="summary-chip summary-chip--gold">{gold}g</span>
         {typeof mapShards === "number" ? (
           <span className="summary-chip summary-chip--shards">{mapShards} Shards</span>
+        ) : null}
+        {typeof gemcuttersPrisms === "number" ? (
+          <span className="summary-chip summary-chip--shards">{gemcuttersPrisms} GCP</span>
         ) : null}
         {typeof bossKeys === "number" && bossKeys > 0 ? (
           <span className="summary-chip summary-chip--keys">{bossKeys} Keys</span>

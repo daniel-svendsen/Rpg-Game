@@ -2,6 +2,7 @@ import { spellConfig, supportSpellConfig } from "../../config/spellConfig";
 import type { CharacterRecord } from "../../../shared/types/saveTypes";
 import { getEquippedUniqueModifiers } from "../items/uniqueEffects";
 import { getSpellLevel } from "./spellProgression";
+import { getSupportEffectMultiplier, getSupportLevel } from "./supportProgression";
 
 export interface ResolvedSpell {
   id: string;
@@ -49,16 +50,26 @@ export const resolveSpell = (
   supportSpellIds.forEach((supportSpellId) => {
     const support = supportSpellConfig[supportSpellId];
 
-    if (!support) {
+    if (!support || support.passiveOnly) {
       return;
     }
 
-    damageMultiplier *= 1 + (support.apply.moreDamageMultiplier ?? 0);
-    cooldownMs = Math.round(cooldownMs / (1 + (support.apply.castSpeedMultiplierBonus ?? 0)));
-    projectileCount += support.apply.bonusProjectiles ?? 0;
-    chainCount += support.apply.bonusChains ?? 0;
-    areaRadius += support.apply.bonusAreaRadius ?? 0;
-    critChance += support.apply.criticalChanceBonus ?? 0;
+    const effectMultiplier = getSupportEffectMultiplier(getSupportLevel(character, supportSpellId));
+    const moreDamageMultiplier = support.apply.moreDamageMultiplier ?? 0;
+    const bonusAreaRadius = support.apply.bonusAreaRadius ?? 0;
+    const scaledMoreDamageMultiplier =
+      moreDamageMultiplier < 0 ? moreDamageMultiplier : moreDamageMultiplier * effectMultiplier;
+
+    damageMultiplier *= 1 + scaledMoreDamageMultiplier;
+    cooldownMs = Math.round(cooldownMs / (1 + (support.apply.castSpeedMultiplierBonus ?? 0) * effectMultiplier));
+    projectileCount += (support.apply.bonusProjectiles ?? 0) * effectMultiplier;
+    chainCount += (support.apply.bonusChains ?? 0) * effectMultiplier;
+    if (bonusAreaRadius < 0 && bonusAreaRadius > -1) {
+      areaRadius *= 1 + bonusAreaRadius;
+    } else {
+      areaRadius += bonusAreaRadius < 0 ? bonusAreaRadius : bonusAreaRadius * effectMultiplier;
+    }
+    critChance += (support.apply.criticalChanceBonus ?? 0) * effectMultiplier;
   });
 
   cooldownMs = Math.round(cooldownMs / equippedUniqueModifiers.castSpeedMultiplierForSpells);
@@ -122,10 +133,10 @@ export const resolveSpell = (
     level: spellLevel,
     damage: Math.round(scaledBaseDamage * damageMultiplier),
     cooldownMs,
-    projectileCount,
-    chainCount,
+    projectileCount: Math.max(0, Math.round(projectileCount)),
+    chainCount: Math.max(0, Math.round(chainCount)),
     chainRange,
-    areaRadius,
+    areaRadius: Math.round(areaRadius),
     critChance,
     resistancePenetration: {
       Fire: (baseSpell.tags.includes("Fire") ? equippedUniqueModifiers.resistancePenetrationForFireSpells : 0) + equippedUniqueModifiers.resistancePenetrationForAllSpells,

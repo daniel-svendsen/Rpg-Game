@@ -32,6 +32,7 @@ export interface SingleRunSimulationMetrics {
   goldGained: number;
   mapShardsGained: number;
   imbuingOrbsGained: number;
+  gemcuttersPrismsGained: number;
   mapsGained: number;
   bossKeysGained: number;
   normalItemsDropped: number;
@@ -136,6 +137,7 @@ export interface SimulationSummary {
     goldGained: number;
     mapShardsGained: number;
     imbuingOrbsGained: number;
+    gemcuttersPrismsGained: number;
     mapsGained: number;
     bossKeysGained: number;
     normalItemsDropped: number;
@@ -175,6 +177,7 @@ export interface SimulationSummary {
     goldGained: number;
     mapShardsGained: number;
     imbuingOrbsGained: number;
+    gemcuttersPrismsGained: number;
     mapsGained: number;
     bossKeysGained: number;
     normalItemsDropped: number;

@@ -3,6 +3,7 @@ import { resolveSpell } from "../game/domain/spells/spellEngine";
 import { OverlayShell } from "./OverlayShell";
 import { getSupportAccentClassName } from "./appUiHelpers";
 import { getSupportEffectDetails, getSupportRoleTags } from "./supportSpellPresentation";
+import { SupportUpgradeActions } from "./SupportUpgradeActions";
 import type { CharacterRecord } from "../shared/types/saveTypes";
 
 interface SupportSpellPickerPanelProps {
@@ -10,13 +11,15 @@ interface SupportSpellPickerPanelProps {
   selectedSupportSlot: 0 | 1;
   onClose: () => void;
   onSelectSupportSpell: (supportSpellId: string) => void;
+  onUpgradeSupport: (supportSpellId: string) => void;
 }
 
 export const SupportSpellPickerPanel = ({
   character,
   selectedSupportSlot,
   onClose,
-  onSelectSupportSpell
+  onSelectSupportSpell,
+  onUpgradeSupport
 }: SupportSpellPickerPanelProps) => {
   const activeLoadout = character.spellLoadout[0];
   const activeMainSpellId = activeLoadout?.mainSpellId ?? "";
@@ -28,6 +31,7 @@ export const SupportSpellPickerPanel = ({
   return (
     <OverlayShell title={`Support Slot ${selectedSupportSlot + 1}`} onClose={onClose}>
       {Object.values(supportSpellConfig)
+        .filter((supportSpell) => supportSpell.passiveOnly !== true)
         .sort((left, right) => left.name.localeCompare(right.name))
         .map((supportSpell) => {
           const isUnlocked = (character.unlockedSupportSpellIds ?? []).includes(supportSpell.id);
@@ -116,6 +120,13 @@ export const SupportSpellPickerPanel = ({
                   Select
                 </button>
               </div>
+              {isUnlocked ? (
+                <SupportUpgradeActions
+                  character={character}
+                  supportSpellId={supportSpell.id}
+                  onUpgradeSupport={onUpgradeSupport}
+                />
+              ) : null}
             </div>
           );
         })}

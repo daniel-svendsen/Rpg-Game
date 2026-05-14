@@ -5,6 +5,7 @@ import { getExperienceRequiredForLevel } from "../progression/progression";
 import { createInitialLifeFlask, normalizeLifeFlask } from "./lifeFlask";
 import { normalizeSpellId } from "../spells/spellDrops";
 import { createInitialSpellProgress, normalizeSpellProgress } from "../spells/spellProgression";
+import { createInitialSupportProgress, normalizeSupportProgress } from "../spells/supportProgression";
 import { applyEquipmentState } from "./equipment";
 import { deriveStats } from "./statCalculation";
 
@@ -36,6 +37,7 @@ export const createNewCharacter = (name: string, baseStats: CharacterStats): Cha
     unlockedSpellIds: [...starterSpellIds],
     unlockedSupportSpellIds: [...starterSupportSpellIds],
     spellProgress: createInitialSpellProgress(starterSpellIds),
+    supportProgress: createInitialSupportProgress(starterSupportSpellIds),
     spellLoadout: [
       {
         mainSpellId: starterSpellIds[0],
@@ -58,7 +60,14 @@ export const normalizeCharacterRecord = (character: CharacterRecord): CharacterR
     ...starterSupportSpellIds
   ])];
   const normalizedSpellLoadout = character.spellLoadout.map((link) => {
-    const uniqueSupportSpellIds = [...new Set(link.supportSpellIds.filter(Boolean))].slice(0, 2);
+    const uniqueSupportSpellIds = [
+      ...new Set(
+        link.supportSpellIds.filter((id) => {
+          const def = supportSpellConfig[id];
+          return def !== undefined && def.passiveOnly !== true;
+        })
+      )
+    ].slice(0, 2);
 
     return {
       ...link,
@@ -83,6 +92,7 @@ export const normalizeCharacterRecord = (character: CharacterRecord): CharacterR
     passiveSupportIds: normalizedPassiveSupportIds,
     lifeFlask: normalizeLifeFlask(character.lifeFlask?.currentCharges),
     spellProgress: normalizeSpellProgress(character.spellProgress, normalizedUnlockedSpellIds),
+    supportProgress: normalizeSupportProgress(character.supportProgress, normalizedUnlockedSupportSpellIds),
     mapProgress: normalizeMapProgress(character.mapProgress)
   });
 };

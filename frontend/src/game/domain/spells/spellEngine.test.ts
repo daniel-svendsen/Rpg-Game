@@ -154,4 +154,20 @@ describe("spellEngine unique item effects", () => {
     expect(withCascade.areaRadius).toBeGreaterThanOrEqual(baseline.areaRadius + 14);
     expect(withCascade.damage).toBeLessThan(baseline.damage);
   });
+
+  it("scales upgraded support bonuses while keeping concentrated effect penalties fixed", () => {
+    const levelOneCharacter = createTestCharacter({
+      supportProgress: [{ supportSpellId: "concentratedEffect", level: 1 }]
+    });
+    const levelTwentyCharacter = createTestCharacter({
+      supportProgress: [{ supportSpellId: "concentratedEffect", level: 20 }]
+    });
+    const baseline = resolveSpell(levelOneCharacter, "emberBurst", []);
+    const levelOne = resolveSpell(levelOneCharacter, "emberBurst", ["concentratedEffect"]);
+    const levelTwenty = resolveSpell(levelTwentyCharacter, "emberBurst", ["concentratedEffect"]);
+
+    expect(levelTwenty.damage).toBeGreaterThan(levelOne.damage);
+    expect(levelOne.areaRadius).toBe(Math.round(baseline.areaRadius * 0.75));
+    expect(levelTwenty.areaRadius).toBe(Math.round(baseline.areaRadius * 0.75));
+  });
 });

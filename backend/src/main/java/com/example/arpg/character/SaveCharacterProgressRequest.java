@@ -25,7 +25,9 @@ public record SaveCharacterProgressRequest(
         @NotNull Map<String, @Valid InventoryItemRequest> equippedItems,
         @NotNull List<@NotBlank String> unlockedSpellIds,
         @NotNull List<@NotBlank String> unlockedSupportSpellIds,
+        List<@NotBlank String> passiveSupportIds,
         @NotNull List<@Valid SpellProgressRequest> spellProgress,
+        List<@Valid SupportProgressRequest> supportProgress,
         @NotNull List<@Valid SpellLinkRequest> spellLoadout,
         @NotNull List<@Valid CurrencyStackRequest> currencies,
         @NotNull @Valid MapProgressRequest mapProgress

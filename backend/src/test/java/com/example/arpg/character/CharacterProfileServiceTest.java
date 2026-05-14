@@ -65,7 +65,9 @@ class CharacterProfileServiceTest {
                 Map.of(),
                 List.of("stormChain"),
                 List.of("fasterCasting"),
+                List.of(),
                 List.of(new SpellProgressRequest("stormChain", 3)),
+                List.of(new SupportProgressRequest("fasterCasting", 2)),
                 List.of(new SpellLinkRequest("stormChain", List.of("fasterCasting"))),
                 List.of(new CurrencyStackRequest("mapShard", 4)),
                 new MapProgressRequest(2, 1, List.of(), List.of())
@@ -138,7 +140,9 @@ class CharacterProfileServiceTest {
                 Map.of("Ring1", uniqueItem),
                 List.of("stormChain"),
                 List.of("fasterCasting"),
+                List.of(),
                 List.of(new SpellProgressRequest("stormChain", 2)),
+                List.of(new SupportProgressRequest("fasterCasting", 2)),
                 List.of(new SpellLinkRequest("stormChain", List.of("fasterCasting"))),
                 List.of(),
                 new MapProgressRequest(1, 1, List.of(), List.of())
@@ -283,9 +287,14 @@ class CharacterProfileServiceTest {
                 Map.of("BodyArmor", bodyArmor),
                 List.of("stormChain", "emberBurst", "glacialNova"),
                 List.of("fasterCasting", "moreDamage"),
+                List.of("swiftnessAura"),
                 List.of(
                         new SpellProgressRequest("stormChain", 5),
                         new SpellProgressRequest("emberBurst", 3)
+                ),
+                List.of(
+                        new SupportProgressRequest("fasterCasting", 4),
+                        new SupportProgressRequest("swiftnessAura", 6)
                 ),
                 List.of(new SpellLinkRequest("stormChain", List.of("fasterCasting", "moreDamage"))),
                 List.of(
@@ -343,6 +352,11 @@ class CharacterProfileServiceTest {
         assertThat(loaded.spellProgress()).containsExactly(
                 new SpellProgressState("stormChain", 5),
                 new SpellProgressState("emberBurst", 3)
+        );
+        assertThat(loaded.passiveSupportIds()).containsExactly("swiftnessAura");
+        assertThat(loaded.supportProgress()).containsExactly(
+                new SupportProgressState("fasterCasting", 4),
+                new SupportProgressState("swiftnessAura", 6)
         );
         assertThat(loaded.spellLoadout()).containsExactly(
                 new SpellLoadoutEntry("stormChain", List.of("fasterCasting", "moreDamage"))

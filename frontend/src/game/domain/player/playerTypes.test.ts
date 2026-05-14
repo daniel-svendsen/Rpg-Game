@@ -100,12 +100,12 @@ describe("playerTypes", () => {
     expect(normalized.derivedStats.maxHealth).toBeGreaterThan(character.derivedStats.maxHealth);
   });
 
-  it("deduplicates linked supports in spell loadout during normalization", () => {
+  it("deduplicates linked supports and filters passive auras in spell loadout during normalization", () => {
     const character = createTestCharacter({
       spellLoadout: [
         {
           mainSpellId: "stormChain",
-          supportSpellIds: ["moreDamage", "moreDamage"]
+          supportSpellIds: ["moreDamage", "swiftnessAura", "moreDamage"]
         }
       ]
     });
@@ -113,6 +113,28 @@ describe("playerTypes", () => {
     const normalized = normalizeCharacterRecord(character);
 
     expect(normalized.spellLoadout[0]?.supportSpellIds).toEqual(["moreDamage"]);
+  });
+
+  it("normalizes passive support progress and applies upgraded passive bonuses", () => {
+    const character = createTestCharacter({
+      unlockedSupportSpellIds: ["swiftnessAura", "moreDamage"],
+      passiveSupportIds: ["moreDamage", "swiftnessAura", "unknownSupport"],
+      supportProgress: [
+        { supportSpellId: "swiftnessAura", level: 20 },
+        { supportSpellId: "moreDamage", level: 99 }
+      ]
+    });
+
+    const normalized = normalizeCharacterRecord(character);
+
+    expect(normalized.passiveSupportIds).toEqual(["swiftnessAura"]);
+    expect(normalized.supportProgress).toEqual(
+      expect.arrayContaining([
+        { supportSpellId: "swiftnessAura", level: balanceConfig.supportProgression.maxLevel },
+        { supportSpellId: "moreDamage", level: balanceConfig.supportProgression.maxLevel }
+      ])
+    );
+    expect(normalized.derivedStats.movementSpeedMultiplier).toBeCloseTo(1.2);
   });
 
   it("defaults missing intelligence on legacy characters to prevent NaN derived stats", () => {

@@ -3,6 +3,7 @@ import { supportSpellConfig } from "../game/config/spellConfig";
 import { equipItem } from "../game/domain/player/equipment";
 import { getSpellName } from "../game/domain/spells/spellDrops";
 import { getSpellLevel, upgradeSpell } from "../game/domain/spells/spellProgression";
+import { getSupportLevel, upgradeSupport } from "../game/domain/spells/supportProgression";
 import type { CharacterRecord, EquipmentSlot } from "../shared/types/saveTypes";
 import type { OverlayPanel } from "./appTypes";
 
@@ -61,6 +62,10 @@ export const useLoadoutActions = ({
       setErrorMessage("Support not unlocked yet.");
       return;
     }
+    if (supportSpellConfig[supportSpellId]?.passiveOnly) {
+      setErrorMessage("Passive auras cannot be linked to active spells.");
+      return;
+    }
 
     const currentLoadout = character.spellLoadout[0];
     const nextSupportSpellIds = [...currentLoadout.supportSpellIds];
@@ -116,6 +121,10 @@ export const useLoadoutActions = ({
       setErrorMessage("Support not unlocked yet.");
       return;
     }
+    if (!supportSpellConfig[supportSpellId]?.passiveOnly) {
+      setErrorMessage("Only passive auras can be equipped in passive slots.");
+      return;
+    }
     const currentPassive = [...(character.passiveSupportIds ?? [])];
     if (currentPassive[selectedPassiveSlot] === supportSpellId) {
       currentPassive.splice(selectedPassiveSlot, 1);
@@ -130,11 +139,31 @@ export const useLoadoutActions = ({
     setStatusMessage(`${supportSpellConfig[supportSpellId]?.name ?? supportSpellId} equipped in passive slot ${selectedPassiveSlot + 1}.`);
   };
 
+  const handleUpgradeSupport = (supportSpellId: string): void => {
+    if (!character) {
+      return;
+    }
+
+    const nextCharacter = upgradeSupport(character, supportSpellId);
+
+    if (nextCharacter === character) {
+      setErrorMessage("You need a Gemcutter's Prism to upgrade that support.");
+      return;
+    }
+
+    commitCharacter(nextCharacter);
+    setStatusMessage(
+      `${supportSpellConfig[supportSpellId]?.name ?? supportSpellId} upgraded to level ${getSupportLevel(nextCharacter, supportSpellId)}.`
+    );
+    setErrorMessage(null);
+  };
+
   return {
     handleEquipItem,
     handleSelectMainSpell,
     handleSelectSupportSpell,
     handleSelectPassiveSupport,
-    handleUpgradeSpell
+    handleUpgradeSpell,
+    handleUpgradeSupport
   };
 };

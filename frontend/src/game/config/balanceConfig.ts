@@ -30,12 +30,14 @@ export const balanceConfig = {
     playerTargetingRange: combatBalance.playerTargetingRange,
     enemyContactRange: combatBalance.enemyContactRange,
     enemyContactDamageIntervalMs: monsterBalance.contactDamageIntervalMs,
-    resistances: combatBalance.resistances
+    resistances: combatBalance.resistances,
+    mitigation: combatBalance.mitigation
   },
   healing: combatBalance.healing,
   economy: economyBalance.economy,
   mapCrafting: economyBalance.mapCrafting,
   spellProgression: progressionBalance.spellProgression,
+  supportProgression: progressionBalance.supportProgression,
   supportSpellModifiers: combatBalance.supportSpellModifiers,
   mapTierScaling: {
     maxTier: mapBalance.maxTier

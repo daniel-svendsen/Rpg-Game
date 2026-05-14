@@ -26,7 +26,7 @@ import { applyExperience } from "../progression/progression";
 import { getSpellName, rollSpellDrop } from "../spells/spellDrops";
 import { rollSupportSpellDrop } from "../spells/supportSpellDrops";
 import { resolveSpell } from "../spells/spellEngine";
-import { getItemSlotLabel } from "../../config/itemConfig";
+import { getCurrencyName, getItemSlotLabel } from "../../config/itemConfig";
 import { uniqueItemDefinitions } from "../../config/itemConfig";
 import { createClientId } from "../../../shared/utils/id";
 import { applyArmorMitigation, applyResistanceToDamage, clampEnemyResistance, clampPlayerResistance, resolveEnemyDamageType, rollEvasion } from "./combatMath";
@@ -598,7 +598,7 @@ const applyGroundLootPickup = (
       lootEvent: {
         id: `${entry.id}-picked`,
         kind: "Currency",
-        name: payload.code === "mapShard" ? "Map Shard" : payload.code,
+        name: getCurrencyName(payload.code),
         details: ["Picked up from the ground"],
         isUpgrade: false
       }
@@ -738,6 +738,24 @@ const rollGroundDrops = (
       payload: {
         kind: "Currency",
         code: "mapShard",
+        amount: 1
+      }
+    });
+  }
+
+  if (
+    Math.random() <
+    balanceConfig.economy.gemcuttersPrismDropChance *
+      resolvedMap.enhancementEffects.itemDropRateMultiplier
+  ) {
+    groundLoot.push({
+      id: `ground-currency-gemcuttersPrism-${createClientId()}`,
+      x: clamp(dropX + (Math.random() - 0.5) * 18, 40, ARENA_WIDTH - 40),
+      y: clamp(dropY + (Math.random() - 0.5) * 18, 40, ARENA_HEIGHT - 40),
+      createdAtMs,
+      payload: {
+        kind: "Currency",
+        code: "gemcuttersPrism",
         amount: 1
       }
     });
@@ -1454,9 +1472,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
         kind === "Item"
           ? entry.payload.item.name
           : kind === "Currency"
-            ? entry.payload.code === "mapShard"
-              ? "Map Shard"
-              : entry.payload.code
+            ? getCurrencyName(entry.payload.code)
             : kind === "Spell"
               ? getSpellName(entry.payload.spellId)
               : kind === "Support"

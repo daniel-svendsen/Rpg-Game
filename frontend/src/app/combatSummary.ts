@@ -1,4 +1,5 @@
-﻿import type { CharacterRecord } from "../shared/types/saveTypes";
+import { balanceConfig } from "../game/config/balanceConfig";
+import type { CharacterRecord } from "../shared/types/saveTypes";
 
 export interface CombatSummary {
   totalDamage: number;
@@ -15,8 +16,14 @@ export const getCharacterCombatSummary = (character: CharacterRecord): CombatSum
 
   const averageResistance = (stats.resistances.Fire + stats.resistances.Cold + stats.resistances.Lightning) / 3;
   const resistanceFactor = 1 + averageResistance;
-  const armorFactor = 1 + stats.armor / (stats.armor + 500);
-  const evasionFactor = 1 + stats.evasion / (stats.evasion + 400);
+  const armorFactor = 1 + Math.min(
+    balanceConfig.combat.mitigation.armorMaxReduction,
+    stats.armor / (stats.armor + 500)
+  );
+  const evasionFactor = 1 + Math.min(
+    balanceConfig.combat.mitigation.evasionMaxChance,
+    stats.evasion / (stats.evasion + 400)
+  );
   const totalSurvival = clampPositive(stats.maxHealth * resistanceFactor * armorFactor * evasionFactor);
 
   return {

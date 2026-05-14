@@ -63,10 +63,26 @@ public class CharacterProfileService {
         character.setInventory(List.of());
         character.setEquippedItems(Map.of());
         character.setUnlockedSpellIds(List.of("stormChain", "emberBurst"));
-        character.setUnlockedSupportSpellIds(List.of("increasedCriticalChance", "fasterCasting", "moreDamage"));
+        character.setUnlockedSupportSpellIds(List.of(
+                "increasedCriticalChance",
+                "fasterCasting",
+                "moreDamage",
+                "precisionCriticalChance",
+                "focusedCooldownRecovery",
+                "overloadDamage"
+        ));
+        character.setPassiveSupportIds(List.of());
         character.setSpellProgress(List.of(
                 new SpellProgressState("stormChain", 1),
                 new SpellProgressState("emberBurst", 1)
+        ));
+        character.setSupportProgress(List.of(
+                new SupportProgressState("increasedCriticalChance", 1),
+                new SupportProgressState("fasterCasting", 1),
+                new SupportProgressState("moreDamage", 1),
+                new SupportProgressState("precisionCriticalChance", 1),
+                new SupportProgressState("focusedCooldownRecovery", 1),
+                new SupportProgressState("overloadDamage", 1)
         ));
         character.setSpellLoadout(List.of(new SpellLoadoutEntry("stormChain", List.of())));
         character.setCurrencies(List.of());
@@ -104,10 +120,15 @@ public class CharacterProfileService {
         character.setEquippedItems(equippedItems);
         character.setUnlockedSpellIds(new ArrayList<>(request.unlockedSpellIds()));
         character.setUnlockedSupportSpellIds(new ArrayList<>(request.unlockedSupportSpellIds()));
+        character.setPassiveSupportIds(new ArrayList<>(request.passiveSupportIds() == null ? List.of() : request.passiveSupportIds()));
         List<SpellProgressState> spellProgress = request.spellProgress().stream()
                 .map(progress -> new SpellProgressState(progress.spellId(), progress.level()))
                 .toList();
         character.setSpellProgress(spellProgress);
+        List<SupportProgressState> supportProgress = (request.supportProgress() == null ? List.<SupportProgressRequest>of() : request.supportProgress()).stream()
+                .map(progress -> new SupportProgressState(progress.supportSpellId(), progress.level()))
+                .toList();
+        character.setSupportProgress(supportProgress);
         List<SpellLoadoutEntry> spellLoadout = request.spellLoadout().stream()
                 .map(link -> new SpellLoadoutEntry(link.mainSpellId(), List.copyOf(link.supportSpellIds())))
                 .toList();
@@ -171,7 +192,9 @@ public class CharacterProfileService {
                 entity.getEquippedItems(),
                 entity.getUnlockedSpellIds(),
                 entity.getUnlockedSupportSpellIds(),
+                entity.getPassiveSupportIds() == null ? List.of() : entity.getPassiveSupportIds(),
                 entity.getSpellProgress(),
+                entity.getSupportProgress() == null ? List.of() : entity.getSupportProgress(),
                 entity.getSpellLoadout(),
                 entity.getCurrencies(),
                 entity.getMapProgress()

@@ -60,6 +60,7 @@ export const buildSimulationSummary = (
       goldGained: summary.goldGained + run.goldGained,
       mapShardsGained: summary.mapShardsGained + run.mapShardsGained,
       imbuingOrbsGained: summary.imbuingOrbsGained + run.imbuingOrbsGained,
+      gemcuttersPrismsGained: summary.gemcuttersPrismsGained + run.gemcuttersPrismsGained,
       mapsGained: summary.mapsGained + run.mapsGained,
       bossKeysGained: summary.bossKeysGained + run.bossKeysGained,
       normalItemsDropped: summary.normalItemsDropped + run.normalItemsDropped,
@@ -103,6 +104,7 @@ export const buildSimulationSummary = (
       goldGained: 0,
       mapShardsGained: 0,
       imbuingOrbsGained: 0,
+      gemcuttersPrismsGained: 0,
       mapsGained: 0,
       bossKeysGained: 0,
       normalItemsDropped: 0,
@@ -179,6 +181,7 @@ export const buildSimulationSummary = (
       goldGained: totals.goldGained / runCount,
       mapShardsGained: totals.mapShardsGained / runCount,
       imbuingOrbsGained: totals.imbuingOrbsGained / runCount,
+      gemcuttersPrismsGained: totals.gemcuttersPrismsGained / runCount,
       mapsGained: totals.mapsGained / runCount,
       bossKeysGained: totals.bossKeysGained / runCount,
       normalItemsDropped: totals.normalItemsDropped / runCount,
@@ -284,6 +287,7 @@ export const formatSimulationSummary = (summary: SimulationSummary): string => {
     `- Gold: ${formatNumber(avg.goldGained)}`,
     `- Map shards: ${formatNumber(avg.mapShardsGained)}`,
     `- Imbuing orbs: ${formatNumber(avg.imbuingOrbsGained)}`,
+    `- Gemcutter's Prisms: ${formatNumber(avg.gemcuttersPrismsGained)} (${formatNumber(summary.totals.gemcuttersPrismsGained)} total)`,
     `- Maps: ${formatNumber(avg.mapsGained)} (sustain)  Boss keys: ${formatNumber(avg.bossKeysGained)}`,
     `- Map drop rate: ${formatPercent(1 - summary.sustain.zeroMapRunRate)} (0-map runs: ${formatPercent(summary.sustain.zeroMapRunRate)}, expected streak: ${
       Number.isFinite(summary.sustain.expectedZeroMapRunsBeforeDrop)

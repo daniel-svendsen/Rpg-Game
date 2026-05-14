@@ -181,6 +181,9 @@ const runSingleSimulation = (
   const imbuingOrbsGained =
     getCurrencyAmount(finalPlayer.currencies, "imbuingOrb") -
     getCurrencyAmount(baselineCharacter.currencies, "imbuingOrb");
+  const gemcuttersPrismsGained =
+    getCurrencyAmount(finalPlayer.currencies, "gemcuttersPrism") -
+    getCurrencyAmount(baselineCharacter.currencies, "gemcuttersPrism");
   const mapsGained =
     getTotalConsumableMaps(finalPlayer.mapProgress.consumableMaps) -
     getTotalConsumableMaps(baselineCharacter.mapProgress.consumableMaps);
@@ -200,6 +203,7 @@ const runSingleSimulation = (
     goldGained,
     mapShardsGained,
     imbuingOrbsGained,
+    gemcuttersPrismsGained,
     mapsGained,
     bossKeysGained,
     normalItemsDropped,

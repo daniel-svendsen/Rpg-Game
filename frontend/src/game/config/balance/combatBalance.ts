@@ -5,7 +5,13 @@ export const combatBalance = {
   enemyContactRange: 26,
   resistances: {
     playerCap: 0.75,
-    minEffectiveResistance: -0.25
+    minEffectiveResistance: -0.25,
+    bossPenaltyMilestones: [3, 6, 9],
+    bossPenaltyPerMilestone: 0.15
+  },
+  mitigation: {
+    armorMaxReduction: 0.9,
+    evasionMaxChance: 0.4
   },
   healing: {
     refillToFullOnMapStart: true,
@@ -33,11 +39,11 @@ export const combatBalance = {
     overloadDamage: 0.14,
     concentratedEffect: 0.35,
     concentratedEffectAreaPenalty: -0.25,
-    swiftnessAura: 0.20,
-    wardingAura: 0.08,
-    ironSkinAuraArmor: 50,
-    ironSkinAuraEvasion: 50,
-    arcaneResonanceSpellPower: 0.10,
-    arcaneResonanceCrit: 0.04,
+    swiftnessAura: 0.0935,
+    wardingAura: 0.1402,
+    ironSkinAuraArmor: 140.2,
+    ironSkinAuraEvasion: 140.2,
+    arcaneResonanceSpellPower: 0.1402,
+    arcaneResonanceCrit: 0.0467,
   }
 } as const;

@@ -21,6 +21,7 @@ export const createTestCharacter = (overrides: Partial<CharacterRecord> = {}): C
     unlockedSpellIds: overrides.unlockedSpellIds ?? baseCharacter.unlockedSpellIds,
     unlockedSupportSpellIds: overrides.unlockedSupportSpellIds ?? baseCharacter.unlockedSupportSpellIds,
     spellProgress: overrides.spellProgress ?? baseCharacter.spellProgress,
+    supportProgress: overrides.supportProgress ?? baseCharacter.supportProgress,
     spellLoadout: overrides.spellLoadout ?? baseCharacter.spellLoadout,
     currencies: overrides.currencies ?? baseCharacter.currencies,
     mapProgress: overrides.mapProgress ?? baseCharacter.mapProgress
