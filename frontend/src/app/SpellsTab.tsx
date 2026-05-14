@@ -3,6 +3,8 @@ import { getSpellDescription, getSpellName } from "../game/domain/spells/spellDr
 import { spellConfig, supportSpellConfig } from "../game/config/spellConfig";
 import { resolveSpell } from "../game/domain/spells/spellEngine";
 import { getSupportEffectDetails, getSupportRoleTags } from "./supportSpellPresentation";
+import { getSpellAccentClassName, getSupportAccentClassName } from "./appUiHelpers";
+import { SpellUpgradeActions } from "./SpellUpgradeActions";
 
 const getSpellElementSymbol = (spellId: string): string => {
   const tags = spellConfig[spellId]?.tags ?? [];
@@ -25,23 +27,19 @@ import type { CharacterRecord } from "../shared/types/saveTypes";
 interface SpellsTabProps {
   topBar: ReactNode;
   character: CharacterRecord | null;
-  getSpellAccentClassName: (spellId: string) => string;
-  getSupportAccentClassName: (supportSpellId: string) => string;
   getSpellDetailLines: (spellId: string, supportSpellIds: string[]) => string[];
-  renderSpellUpgradeActions: (spellId: string) => ReactNode;
   onOpenMainSpellPicker: () => void;
   onOpenSupportPicker: (slotIndex: 0 | 1) => void;
+  onUpgradeSpell: (spellId: string) => void;
 }
 
 export const SpellsTab = ({
   topBar,
   character,
-  getSpellAccentClassName,
-  getSupportAccentClassName,
   getSpellDetailLines,
-  renderSpellUpgradeActions,
   onOpenMainSpellPicker,
-  onOpenSupportPicker
+  onOpenSupportPicker,
+  onUpgradeSpell
 }: SpellsTabProps) => {
   const activeMainSpellId = character?.spellLoadout[0]?.mainSpellId ?? "";
   const supportSlots = character?.spellLoadout[0]?.supportSpellIds ?? [];
@@ -188,7 +186,11 @@ export const SpellsTab = ({
             </div>
           </section>
         ) : null}
-        {renderSpellUpgradeActions(activeMainSpellId)}
+        <SpellUpgradeActions
+          character={character}
+          spellId={activeMainSpellId}
+          onUpgradeSpell={onUpgradeSpell}
+        />
       </section>
     </div>
   );

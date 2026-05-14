@@ -6,6 +6,7 @@ import { ItemStatBlock } from "./ItemStatBlock";
 import { useItemComparison } from "./useItemComparison";
 import { summarizeComparison } from "./itemComparison";
 import { toChipModel } from "./comparisonChipUi";
+import { equippedRarityClassName, rarityCardClassName } from "./appUiHelpers";
 
 // ── Weapon sprite mapping ─────────────────────────────────────────────────────
 
@@ -157,7 +158,7 @@ export const GearTab = ({
           .filter((s) => !DOLL_ROWS.flat().includes(s))
           .map((slot) => {
             const equippedItem = character?.equippedItems[slot];
-            const rarityClass = equippedItem ? ` equipped-rarity-${equippedItem.rarity.toLowerCase()}` : "";
+            const rarityClass = equippedItem ? ` ${equippedRarityClassName(equippedItem.rarity)}` : "";
             return (
               <div key={slot} className="inventory-row">
                 <span className="slot-label">{getEquipmentSlotLabel(slot)}</span>
@@ -197,7 +198,7 @@ export const GearTab = ({
           return (
         <div
           key={item.id}
-          className={`loot-entry rarity-card rarity-${item.rarity.toLowerCase()}${selectedInventoryItemId === item.id ? " selected-comparison-item" : ""}`}
+          className={`loot-entry ${rarityCardClassName(item.rarity)}${selectedInventoryItemId === item.id ? " selected-comparison-item" : ""}`}
           onClick={() => setSelectedInventoryItemId(item.id)}
         >
           <div className="inventory-row">

@@ -1,4 +1,4 @@
-import { useEffect, type Dispatch, type MutableRefObject, type SetStateAction } from "react";
+import { useEffect, useRef, type Dispatch, type MutableRefObject, type SetStateAction } from "react";
 import { balanceConfig } from "../game/config/balanceConfig";
 import { mapConfig } from "../game/config/mapConfig";
 import { createArenaRuntime, stepArenaRuntime, type ArenaRuntimeState } from "../game/domain/combat/arenaSimulation";
@@ -21,7 +21,7 @@ interface UseArenaSessionParams {
   activeRunBatch: RunBatchState | null;
   autoSellSettings: AutoSellSettings;
   arenaRuntimeRef: MutableRefObject<ArenaRuntimeState | null>;
-  queuedMapIdsRef: MutableRefObject<string[]>;
+  queuedMapIds: string[];
   commitCharacter: (nextCharacter: CharacterRecord | null) => void;
   persistCharacterNow: (nextCharacter: CharacterRecord, failureMessage: string) => Promise<void>;
   setRecentLoot: Dispatch<SetStateAction<LootEntry[]>>;
@@ -46,7 +46,7 @@ export const useArenaSession = ({
   activeRunBatch,
   autoSellSettings,
   arenaRuntimeRef,
-  queuedMapIdsRef,
+  queuedMapIds,
   commitCharacter,
   persistCharacterNow,
   setRecentLoot,
@@ -61,6 +61,12 @@ export const useArenaSession = ({
   setStatusMessage,
   setErrorMessage
 }: UseArenaSessionParams): void => {
+  const queuedMapIdsRef = useRef<string[]>(queuedMapIds);
+
+  useEffect(() => {
+    queuedMapIdsRef.current = queuedMapIds;
+  }, [queuedMapIds]);
+
   useEffect(() => {
     if (screenMode !== "arena" || !character || !activeMapId) {
       return;
@@ -184,7 +190,6 @@ export const useArenaSession = ({
     activeRunBatch,
     autoSellSettings,
     arenaRuntimeRef,
-    queuedMapIdsRef,
     commitCharacter,
     persistCharacterNow,
     setRecentLoot,

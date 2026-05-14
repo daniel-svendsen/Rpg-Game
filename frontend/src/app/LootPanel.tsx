@@ -1,5 +1,6 @@
 import { ItemSlotIcon } from "./ItemSlotIcon";
 import type { LootEntry } from "../shared/types/saveTypes";
+import { rarityCardClassName } from "./appUiHelpers";
 
 interface LootPanelProps {
   recentLoot: LootEntry[];
@@ -10,7 +11,7 @@ export const LootPanel = ({ recentLoot }: LootPanelProps) => (
     <h4>Recent Loot</h4>
     {recentLoot.length === 0 ? <p className="status-text">No loot recorded yet.</p> : null}
     {recentLoot.map((loot) => {
-      const rarityClass = loot.rarity ? ` rarity-card rarity-${loot.rarity.toLowerCase()}` : "";
+      const rarityClass = loot.rarity ? ` ${rarityCardClassName(loot.rarity)}` : "";
       return (
         <div key={loot.id} className={`loot-entry${rarityClass}`}>
           <div className="inventory-row">

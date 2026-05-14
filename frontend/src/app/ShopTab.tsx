@@ -6,6 +6,7 @@ import { ItemStatBlock } from "./ItemStatBlock";
 import { useItemComparison } from "./useItemComparison";
 import { summarizeComparison } from "./itemComparison";
 import { toChipModel } from "./comparisonChipUi";
+import { rarityCardClassName } from "./appUiHelpers";
 
 type ShopItemState = InventoryItem & { price: number };
 
@@ -88,7 +89,7 @@ export const ShopTab = ({
         const canAfford = (character?.gold ?? 0) >= item.price;
 
         return (
-          <div key={item.id} className={`loot-entry rarity-card rarity-${item.rarity.toLowerCase()}`}>
+          <div key={item.id} className={`loot-entry ${rarityCardClassName(item.rarity)}`}>
             <div className="inventory-row">
               <div className="item-name-row">
                 {item.slot ? <ItemSlotIcon slot={item.slot} /> : null}

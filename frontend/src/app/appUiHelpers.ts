@@ -2,7 +2,7 @@ import { balanceConfig } from "../game/config/balanceConfig";
 import { spellConfig, supportSpellConfig } from "../game/config/spellConfig";
 import { getItemPowerScore } from "../game/domain/items/itemPower";
 import { createShopStock, getShopItemPrice } from "../game/domain/items/shopStock";
-import type { AutoSellRarity, AutoSellSettings, EquipmentSlot, InventoryItem } from "../shared/types/saveTypes";
+import type { AutoSellRarity, AutoSellSettings, EquipmentSlot, InventoryItem, ItemRarity } from "../shared/types/saveTypes";
 
 export type ShopItemState = InventoryItem & { price: number };
 
@@ -20,8 +20,15 @@ export const equipmentSlots: EquipmentSlot[] = [
   "Ring2"
 ];
 
+export const tokenStorageKey = "arpg-token";
 export const accountEmailStorageKey = "arpg-account-email";
 export const autoSellSettingsStorageKey = "arpg-auto-sell-settings";
+
+export const rarityCardClassName = (rarity: ItemRarity): string =>
+  `rarity-card rarity-${rarity.toLowerCase()}`;
+
+export const equippedRarityClassName = (rarity: ItemRarity): string =>
+  `equipped-rarity-${rarity.toLowerCase()}`;
 export const defaultAutoSellSettings: AutoSellSettings = {
   Normal: false,
   Magic: false,

@@ -7,6 +7,7 @@ import { summarizeComparison } from "./itemComparison";
 import { toChipModel } from "./comparisonChipUi";
 import type { CharacterRecord, EquipmentSlot } from "../shared/types/saveTypes";
 import { LootPanel } from "./LootPanel";
+import { rarityCardClassName } from "./appUiHelpers";
 
 interface InventoryTabProps {
   topBar: ReactNode;
@@ -41,7 +42,7 @@ export const InventoryTab = ({
           const summary = summarizeComparison(character, item);
           const chipModel = toChipModel(summary);
           return (
-        <div key={item.id} className={`loot-entry rarity-card rarity-${item.rarity.toLowerCase()}`}>
+        <div key={item.id} className={`loot-entry ${rarityCardClassName(item.rarity)}`}>
           <div className="inventory-row">
             <div className="item-name-row">
               {item.slot ? <ItemSlotIcon slot={item.slot} /> : null}

@@ -1,6 +1,7 @@
 import { ItemSlotIcon } from "./ItemSlotIcon";
 import type { RunSummaryData } from "./appTypes";
 import { countRunSummaryLoot } from "./runSummaryHelpers";
+import { rarityCardClassName } from "./appUiHelpers";
 
 interface RunSummaryScreenProps {
   summaryData: RunSummaryData;
@@ -83,7 +84,7 @@ export const RunSummaryScreen = ({ summaryData, onKeepFarming, onReturnToHub }: 
             )}
             <div className="stack loot-recent">
               {loot.map((entry) => {
-                const rarityClass = entry.rarity ? ` rarity-card rarity-${entry.rarity.toLowerCase()}` : "";
+                const rarityClass = entry.rarity ? ` ${rarityCardClassName(entry.rarity)}` : "";
                 return (
                   <div key={entry.id} className={`loot-entry${rarityClass}`}>
                     <div className="inventory-row">

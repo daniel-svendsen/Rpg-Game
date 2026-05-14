@@ -1,37 +1,31 @@
-import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
-import type { ApiRequestError } from "../api/http";
-import { createCharacter, loadCharacterWithAuthState } from "../api/gameApi";
-import { login, register } from "../api/authApi";
-import type { AuthFieldErrors, AuthFormState } from "../auth/authTypes";
-import { resolveAuthErrorMessage } from "./authFeedback";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
+import { loadCharacterWithAuthState } from "../api/gameApi";
 import { AuthScreen } from "./AuthScreen";
 import type { HubTab, OverlayPanel, RunBatchState, RunSummaryData, ScreenMode, SelectedMapTarget } from "./appTypes";
 import { HubScreen } from "./HubScreen";
 import { RunSummaryScreen } from "./RunSummaryScreen";
 import { InlineFeedbackPanel } from "./InlineFeedbackPanel";
-import {
-  accountEmailStorageKey,
-  autoSellSettingsStorageKey,
-  createShopStock,
-  defaultAutoSellSettings,
-  getItemSellPrice,
-  toShopItemState,
-  type ShopItemState
-} from "./appUiHelpers";
+import { getItemSellPrice } from "./appUiHelpers";
 import { resolveManualSaveCharacter } from "./characterPersistence";
-import { getPreferredMapSelection, getUnlockedTierSelection } from "./mapFlow";
+import { getUnlockedTierSelection } from "./mapFlow";
 import { CharacterCreationScreen } from "./CharacterCreationScreen";
 import { useArenaSession } from "./useArenaSession";
-import { useHubActions } from "./useHubActions";
-import { useMapActions } from "./useMapActions";
+import { useLoadoutActions } from "./useLoadoutActions";
+import { useShopActions } from "./useShopActions";
+import { useCharacterActions } from "./useCharacterActions";
+import { useMapRunning } from "./useMapRunning";
+import { useMapCrafting } from "./useMapCrafting";
 import { useCharacterPersistence } from "./useCharacterPersistence";
-import { balanceConfig } from "../game/config/balanceConfig";
+import { useAutoSellSettings } from "./useAutoSellSettings";
+import { useShopBootstrap } from "./useShopBootstrap";
+import { useAutoMapSelection } from "./useAutoMapSelection";
+import { useAuth } from "./useAuth";
+import { useCharacterCreation } from "./useCharacterCreation";
 import type { ArenaRuntimeState } from "../game/domain/combat/arenaSimulation";
 import { getOwnedMapStack } from "../game/domain/maps/mapProgress";
-import { createNewCharacter, normalizeCharacterRecord } from "../game/domain/player/playerTypes";
+import { normalizeCharacterRecord } from "../game/domain/player/playerTypes";
 import type {
   ArenaSnapshot,
-  CharacterStats,
   EquipmentSlot,
   LootEntry,
   MapEnhancementInstance
@@ -39,30 +33,22 @@ import type {
 
 const ArenaScreen = lazy(() => import("./ArenaScreen"));
 
-const initialAuthForm: AuthFormState = {
-  email: "",
-  password: ""
-};
-
-const initialStats: CharacterStats = {
-  strength: 0,
-  agility: 0,
-  vitality: 0,
-  dexterity: 0,
-  intelligence: 0
-};
-
 export const App = () => {
   const [screenMode, setScreenMode] = useState<ScreenMode>("auth");
   const [hubTab, setHubTab] = useState<HubTab>("maps");
   const [overlayPanel, setOverlayPanel] = useState<OverlayPanel>(null);
-  const [authMode, setAuthMode] = useState<"login" | "register">("register");
-  const [authForm, setAuthForm] = useState<AuthFormState>(initialAuthForm);
-  const [authFieldErrors, setAuthFieldErrors] = useState<AuthFieldErrors>({});
-  const [token, setToken] = useState<string | null>(localStorage.getItem("arpg-token"));
-  const [accountEmail, setAccountEmail] = useState<string>(localStorage.getItem(accountEmailStorageKey) ?? "");
-  const [characterName, setCharacterName] = useState("Warden");
-  const [characterStats, setCharacterStats] = useState<CharacterStats>(initialStats);
+  const {
+    token,
+    setToken,
+    accountEmail,
+    authMode,
+    authForm,
+    authFieldErrors,
+    changeAuthForm,
+    toggleAuthMode,
+    submitAuth,
+    clearSession
+  } = useAuth();
   const [arenaSnapshot, setArenaSnapshot] = useState<ArenaSnapshot | null>(null);
   const [activeMapId, setActiveMapId] = useState<string | null>(null);
   const [activeMapEnhancements, setActiveMapEnhancements] = useState<MapEnhancementInstance[]>([]);
@@ -70,28 +56,15 @@ export const App = () => {
   const [activeRunBatch, setActiveRunBatch] = useState<RunBatchState | null>(null);
   const [selectedMapTarget, setSelectedMapTarget] = useState<SelectedMapTarget>("trainingGrounds");
   const [recentLoot, setRecentLoot] = useState<LootEntry[]>([]);
-  const [shopItems, setShopItems] = useState<ShopItemState[]>([]);
+  const { shopItems, setShopItems, resetShopForTier } = useShopBootstrap();
   const [queuedMapIds, setQueuedMapIds] = useState<string[]>([]);
   const [selectedEquipmentSlot, setSelectedEquipmentSlot] = useState<EquipmentSlot>("Weapon");
   const [selectedSupportSlot, setSelectedSupportSlot] = useState<0 | 1>(0);
-  const [autoSellSettings, setAutoSellSettings] = useState(() => {
-    const saved = localStorage.getItem(autoSellSettingsStorageKey);
-
-    if (!saved) {
-      return defaultAutoSellSettings;
-    }
-
-    try {
-      return { ...defaultAutoSellSettings, ...JSON.parse(saved) };
-    } catch {
-      return defaultAutoSellSettings;
-    }
-  });
+  const [autoSellSettings, setAutoSellSettings] = useAutoSellSettings();
   const [runSummaryData, setRunSummaryData] = useState<RunSummaryData | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const arenaRuntimeRef = useRef<ArenaRuntimeState | null>(null);
-  const queuedMapIdsRef = useRef<string[]>([]);
   const { character, latestCharacterRef, commitCharacter, hydrateCharacter, persistCharacterNow, saveCharacterManually } =
     useCharacterPersistence({
       token,
@@ -99,12 +72,21 @@ export const App = () => {
       onAutosaveError: setErrorMessage
     });
 
-  const remainingStatPoints = useMemo(
-    () =>
-      balanceConfig.progression.startingStatPoints -
-      Object.values(characterStats).reduce((total, value) => total + value, 0),
-    [characterStats]
-  );
+  const {
+    characterName,
+    setCharacterName,
+    characterStats,
+    updateStat,
+    remainingStatPoints,
+    handleCharacterCreation
+  } = useCharacterCreation({
+    token,
+    hydrateCharacter,
+    setScreenMode,
+    resetShopForTier,
+    setStatusMessage,
+    setErrorMessage
+  });
 
   const selectedMapEntry =
     character && selectedMapTarget !== "trainingGrounds" && getUnlockedTierSelection(selectedMapTarget) === null
@@ -115,17 +97,13 @@ export const App = () => {
   const selectedMapEnhancements = selectedMapEntry?.enhancements ?? [];
   const {
     startMapRun,
-    handleConvertShardsToMaps,
-    handleCraftMapAtTier,
-    handleEnhanceSelectedMap,
+    handleStartMap,
     handleRunAllMaps,
-    handleStartBossTier,
-    handleStartMap
-  } = useMapActions({
+    handleStartBossTier
+  } = useMapRunning({
     character,
     selectedMapTarget,
     commitCharacter,
-    persistCharacterNow,
     setQueuedMapIds,
     setActiveMapId,
     setActiveMapEnhancements,
@@ -138,33 +116,56 @@ export const App = () => {
     setErrorMessage
   });
   const {
+    handleEnhanceSelectedMap,
+    handleCraftMapAtTier,
+    handleConvertShardsToMaps
+  } = useMapCrafting({
+    character,
+    selectedMapTarget,
+    commitCharacter,
+    persistCharacterNow,
+    setSelectedMapTarget,
+    setStatusMessage,
+    setErrorMessage
+  });
+  const {
     handleEquipItem,
     handleSelectMainSpell,
     handleSelectSupportSpell,
+    handleUpgradeSpell
+  } = useLoadoutActions({
+    character,
+    selectedSupportSlot,
+    commitCharacter,
+    setOverlayPanel,
+    setStatusMessage,
+    setErrorMessage
+  });
+  const {
     handleBuyShopItem,
     handleRefreshShop,
     handleSellItem,
     handleSellAllItems,
-    handleSellItemsByRarity,
-    handleSpendStatPoint,
-    handleUpgradeSpell,
-    handleUseLifeFlask
-  } = useHubActions({
+    handleSellItemsByRarity
+  } = useShopActions({
     character,
-    selectedSupportSlot,
+    commitCharacter,
+    shopItems,
+    setShopItems,
+    resetShopForTier,
+    setStatusMessage,
+    setErrorMessage,
+    getItemSellPrice
+  });
+  const { handleSpendStatPoint, handleUseLifeFlask } = useCharacterActions({
+    character,
     screenMode,
     arenaRuntimeRef,
     latestCharacterRef,
     commitCharacter,
-    setOverlayPanel,
-    shopItems,
-    setShopItems,
     setArenaSnapshot,
     setStatusMessage,
-    setErrorMessage,
-    createShopStock,
-    toShopItemState,
-    getItemSellPrice
+    setErrorMessage
   });
 
   useEffect(() => {
@@ -177,7 +178,6 @@ export const App = () => {
       const result = await loadCharacterWithAuthState(token);
 
       if (result.isUnauthorized) {
-        localStorage.removeItem("arpg-token");
         setToken(null);
         setScreenMode("auth");
         setStatusMessage("Session expired. Please log in again.");
@@ -191,9 +191,7 @@ export const App = () => {
         hydrateCharacter(normalizedCharacter);
         setScreenMode("hub");
         setStatusMessage("");
-        setShopItems(
-          createShopStock(Math.max(1, normalizedCharacter.mapProgress.highestUnlockedTier + 1)).map(toShopItemState)
-        );
+        resetShopForTier(normalizedCharacter.mapProgress.highestUnlockedTier + 1);
         return;
       }
 
@@ -211,7 +209,7 @@ export const App = () => {
     activeRunBatch,
     autoSellSettings,
     arenaRuntimeRef,
-    queuedMapIdsRef,
+    queuedMapIds,
     commitCharacter,
     persistCharacterNow,
     setRecentLoot,
@@ -235,114 +233,16 @@ export const App = () => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [screenMode, hubTab]);
 
-  useEffect(() => {
-    if (!character || selectedMapTarget === "trainingGrounds") {
-      return;
-    }
-
-    const selectedTier = getUnlockedTierSelection(selectedMapTarget);
-
-    if (selectedTier !== null) {
-      if (selectedTier > character.mapProgress.highestUnlockedTier) {
-        setSelectedMapTarget(getPreferredMapSelection(character, selectedMapTarget));
-      }
-
-      return;
-    }
-
-    if (!getOwnedMapStack(character.mapProgress, selectedMapTarget)) {
-      setSelectedMapTarget(getPreferredMapSelection(character, selectedMapTarget, selectedMapId));
-    }
-  }, [character, selectedMapId, selectedMapTarget]);
-
-  useEffect(() => {
-    queuedMapIdsRef.current = queuedMapIds;
-  }, [queuedMapIds]);
-
-  useEffect(() => {
-    localStorage.setItem(autoSellSettingsStorageKey, JSON.stringify(autoSellSettings));
-  }, [autoSellSettings]);
-
-  const updateStat = (key: keyof CharacterStats, delta: number) => {
-    setCharacterStats((current) => {
-      const nextValue = current[key] + delta;
-
-      if (nextValue < 0) {
-        return current;
-      }
-
-      const nextStats = {
-        ...current,
-        [key]: nextValue
-      };
-      const spentPoints = Object.values(nextStats).reduce((total, value) => total + value, 0);
-
-      if (spentPoints > balanceConfig.progression.startingStatPoints) {
-        return current;
-      }
-
-      return nextStats;
-    });
-  };
-
-  const handleChangeAuthForm = (nextForm: AuthFormState) => {
-    setAuthForm(nextForm);
-    setAuthFieldErrors({});
-  };
+  useAutoMapSelection({ character, selectedMapTarget, selectedMapId, setSelectedMapTarget });
 
   const handleAuth = async (): Promise<void> => {
     setErrorMessage(null);
-    setAuthFieldErrors({});
+    const result = await submitAuth();
 
-    try {
-      const response =
-        authMode === "register"
-          ? await register(authForm.email, authForm.password)
-          : await login(authForm.email, authForm.password);
-
-      localStorage.setItem("arpg-token", response.token);
-      localStorage.setItem(accountEmailStorageKey, authForm.email);
-      setToken(response.token);
-      setAccountEmail(authForm.email);
-      setStatusMessage(authMode === "register" ? "Account created." : "Login successful.");
-    } catch (error) {
-      const requestError = error as ApiRequestError;
-      setAuthFieldErrors((requestError.fieldErrors as AuthFieldErrors | undefined) ?? {});
-      setErrorMessage(error instanceof Error ? resolveAuthErrorMessage(requestError) : "Authentication failed.");
-    }
-  };
-
-  const handleCharacterCreation = async (): Promise<void> => {
-    if (!token) {
-      return;
-    }
-
-    if (remainingStatPoints !== 0) {
-      setErrorMessage("Spend all starting stat points before creating the character.");
-      return;
-    }
-
-    setErrorMessage(null);
-
-    try {
-      const fallbackCharacter = createNewCharacter(characterName, characterStats);
-      const createdCharacter = await createCharacter(
-        {
-          name: fallbackCharacter.name,
-          baseStats: fallbackCharacter.baseStats
-        },
-        token
-      );
-
-      const normalizedCharacter = normalizeCharacterRecord(createdCharacter);
-      hydrateCharacter(normalizedCharacter);
-      setScreenMode("hub");
-      setShopItems(
-        createShopStock(1).map(toShopItemState)
-      );
-      setStatusMessage("Character created. Mobile-first tabs are ready.");
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Character creation failed.");
+    if (result.status === "success") {
+      setStatusMessage(result.message);
+    } else {
+      setErrorMessage(result.message);
     }
   };
 
@@ -368,10 +268,7 @@ export const App = () => {
   };
 
   const handleLogout = (): void => {
-    localStorage.removeItem("arpg-token");
-    localStorage.removeItem(accountEmailStorageKey);
-    setToken(null);
-    setAccountEmail("");
+    clearSession();
     commitCharacter(null);
     setArenaSnapshot(null);
     setActiveMapId(null);
@@ -422,11 +319,10 @@ export const App = () => {
       authMode={authMode}
       authForm={authForm}
       authFieldErrors={authFieldErrors}
-      onChangeAuthForm={handleChangeAuthForm}
+      onChangeAuthForm={changeAuthForm}
       onSubmit={() => void handleAuth()}
       onToggleMode={() => {
-        setAuthMode((current) => (current === "register" ? "login" : "register"));
-        setAuthFieldErrors({});
+        toggleAuthMode();
         setErrorMessage(null);
       }}
     />
