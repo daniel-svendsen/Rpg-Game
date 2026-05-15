@@ -28,6 +28,17 @@ import { applyExperience } from "../progression/progression";
 import { getSpellName, rollSpellDrop } from "../spells/spellDrops";
 import { rollSupportSpellDrop } from "../spells/supportSpellDrops";
 import { resolveSpell } from "../spells/spellEngine";
+import {
+  type RareModId,
+  selectRareMods,
+  applyRareSelfMods,
+  applyPackAuraMods,
+  VOLATILE_EXPLOSION_RADIUS,
+  VOLATILE_EXPLOSION_DAMAGE_PERCENT,
+  ENRAGED_THRESHOLD,
+  ENRAGED_DAMAGE_MULTIPLIER,
+  ENRAGED_SPEED_MULTIPLIER,
+} from "../../config/rareMods";
 import { getCurrencyName, getItemSlotLabel } from "../../config/itemConfig";
 import { uniqueItemDefinitions } from "../../config/itemConfig";
 import { createClientId } from "../../../shared/utils/id";
@@ -162,6 +173,12 @@ interface InternalEnemyState extends ArenaEnemyState {
   lastContactDamageAt: number;
   lastSpellCastAt: number;
   isKeyGuardian: boolean;
+  rareMods: RareModId[];
+  buffedByRareId: string | null;
+  damageTakenMultiplier: number;
+  contactCooldownMultiplier: number;
+  hpRegenPercentPerSecond: number;
+  isEnraged: boolean;
 }
 
 export interface ArenaRuntimeState {
@@ -350,23 +367,39 @@ const createEnemy = (
         map.enhancementEffects.enemyResistanceBonus) * tierTweaks.enemyResistanceMultiplier * bossResistanceMult
     );
 
+  const rareMods = rarity === "Rare" ? selectRareMods(map.tier) : [];
+  const stats = {
+    maxHealth,
+    damage: Math.round(
+      monsterBalance.baseDamage * map.enemyDamageMultiplier * rarityDamageMultiplier * tierTweaks.enemyDamageMultiplier * (isBossMap ? tierTweaks.bossDamageMultiplier : 1)
+    ),
+    movementSpeed:
+      (rarity === "Rare" ? tierBalance.rareMonsterSpeed : tierBalance.normalMonsterSpeed) *
+      map.enhancementEffects.enemySpeedMultiplier *
+      tierTweaks.enemySpeedMultiplier,
+    resistances: {
+      Fire: resolveResistance("Fire"),
+      Cold: resolveResistance("Cold"),
+      Lightning: resolveResistance("Lightning")
+    },
+    hpRegenPercentPerSecond: 0,
+  };
+  if (rareMods.length > 0) {
+    applyRareSelfMods(stats, rareMods);
+  }
+
   return {
     id: `${monsterDefinition.id}-${createClientId()}`,
     packId,
     monsterTypeId: monsterDefinition.id,
     x,
     y,
-    health: maxHealth,
-    maxHealth,
+    health: stats.maxHealth,
+    maxHealth: stats.maxHealth,
     rarity,
-    damage: Math.round(
-      monsterBalance.baseDamage * map.enemyDamageMultiplier * rarityDamageMultiplier * tierTweaks.enemyDamageMultiplier * (isBossMap ? tierTweaks.bossDamageMultiplier : 1)
-    ),
+    damage: stats.damage,
     damageType: resolveEnemyDamageType(monsterDefinition.tags),
-    movementSpeed:
-      (rarity === "Rare" ? tierBalance.rareMonsterSpeed : tierBalance.normalMonsterSpeed) *
-      map.enhancementEffects.enemySpeedMultiplier *
-      tierTweaks.enemySpeedMultiplier,
+    movementSpeed: stats.movementSpeed,
     experienceReward: Math.round(
       (rarity === "Rare"
         ? progressionBalance.rewards.rareExperienceBase
@@ -377,14 +410,16 @@ const createEnemy = (
         ? progressionBalance.rewards.rareGoldBase
         : progressionBalance.rewards.normalGoldBase) * map.goldMultiplier
     ),
-    resistances: {
-      Fire: resolveResistance("Fire"),
-      Cold: resolveResistance("Cold"),
-      Lightning: resolveResistance("Lightning")
-    },
+    resistances: stats.resistances,
     lastContactDamageAt: 0,
     lastSpellCastAt: -999999,
-    isKeyGuardian: false
+    isKeyGuardian: false,
+    rareMods,
+    buffedByRareId: null,
+    damageTakenMultiplier: 1,
+    contactCooldownMultiplier: 1,
+    hpRegenPercentPerSecond: stats.hpRegenPercentPerSecond,
+    isEnraged: false,
   };
 };
 
@@ -437,12 +472,21 @@ const createMonsterPacks = (
   const packCountBonusExtra = Math.min(PACK_COUNT_BONUS_MAX_EXTRA, Math.max(0, Math.floor(map.tier / 2)));
   const packCountBonus = PACK_COUNT_BONUS_BASE + packCountBonusExtra;
 
-  const tierBalance = getMapBalanceByTier(map.tier);
   const tierTweaks = getTierBalanceTweaks(map.tier);
   const monsterCount = Math.max(1, Math.round(map.monsterCount * tierTweaks.monsterCountMultiplier));
   const basePackCount = Math.ceil(monsterCount / averagePackSize) + packCountBonus;
   const packCount = Math.max(1, Math.round(basePackCount * tierTweaks.packCountMultiplier));
-  const rareChancePerPack = isBossMap ? 1 : Math.min(1, tierBalance.rareMonsterChance * tierTweaks.rareSpawnMultiplier);
+
+  const rarePackCount = isBossMap
+    ? packCount
+    : tierTweaks.rareCountMin + Math.floor(Math.random() * (tierTweaks.rareCountMax - tierTweaks.rareCountMin + 1));
+
+  const packIndices = Array.from({ length: packCount }, (_, i) => i);
+  for (let i = packIndices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [packIndices[i], packIndices[j]] = [packIndices[j], packIndices[i]];
+  }
+  const rarePackIndices = new Set(packIndices.slice(0, Math.min(rarePackCount, packCount)));
 
   let remaining = monsterCount;
   let rareMonstersSpawned = 0;
@@ -462,8 +506,10 @@ const createMonsterPacks = (
     );
     remaining -= packSize;
 
-    const hasRare = Math.random() < rareChancePerPack && packSize > 0;
+    const hasRare = rarePackIndices.has(packIndex) && packSize > 0;
     let rareUsed = false;
+
+    const packStartIdx = enemies.length;
 
     for (let memberIndex = 0; memberIndex < packSize; memberIndex += 1) {
       const angle = (memberIndex / Math.max(1, packSize)) * Math.PI * 2 + Math.random() * 0.45;
@@ -480,18 +526,13 @@ const createMonsterPacks = (
       enemies.push(createEnemy(map, rarity, packId, x, y));
     }
 
-    if (!isBossMap && Math.random() < tierTweaks.spellcasterSpawnChance) {
-      const eligibleSpellcasters = monsterDefinitions.filter(
-        (m) => m.spellId && !m.isBossOnly && (m.minTier === undefined || m.minTier <= map.tier)
-      );
-      if (eligibleSpellcasters.length > 0) {
-        const def = eligibleSpellcasters[Math.floor(Math.random() * eligibleSpellcasters.length)];
-        const angle = Math.random() * Math.PI * 2;
-        const radius = 14 + Math.random() * (packRadius - 14);
-        const x = clamp(centerX + Math.cos(angle) * radius, 40, ARENA_WIDTH - 40);
-        const y = clamp(centerY + Math.sin(angle) * radius, 40, ARENA_HEIGHT - 40);
-        rareMonstersSpawned += 1;
-        enemies.push(createEnemy(map, "Rare", packId, x, y, def));
+    const packSlice = enemies.slice(packStartIdx);
+    const rareLeader = packSlice.find((e) => e.rarity === "Rare");
+    if (rareLeader && rareLeader.rareMods.length > 0) {
+      for (const normal of packSlice.filter((e) => e.rarity === "Normal")) {
+        normal.buffedByRareId = rareLeader.id;
+        applyPackAuraMods(normal, rareLeader.rareMods);
+        normal.health = normal.maxHealth;
       }
     }
   }
@@ -1199,7 +1240,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
 
     if (
       !closeEnoughToHit ||
-      nextTime - enemy.lastContactDamageAt < balanceConfig.combat.enemyContactDamageIntervalMs
+      nextTime - enemy.lastContactDamageAt < balanceConfig.combat.enemyContactDamageIntervalMs * enemy.contactCooldownMultiplier
     ) {
       return enemy;
     }
@@ -1256,6 +1297,23 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
       ...enemy,
       lastContactDamageAt: nextTime
     };
+  });
+
+  nextEnemies = nextEnemies.map((enemy) => {
+    let e = enemy;
+    if (!e.isEnraged && e.rareMods.includes("enraged") && e.health / e.maxHealth <= ENRAGED_THRESHOLD) {
+      e = {
+        ...e,
+        isEnraged: true,
+        damage: Math.round(e.damage * ENRAGED_DAMAGE_MULTIPLIER),
+        movementSpeed: e.movementSpeed * ENRAGED_SPEED_MULTIPLIER,
+      };
+    }
+    if (e.hpRegenPercentPerSecond > 0 && e.health < e.maxHealth) {
+      const regen = e.maxHealth * e.hpRegenPercentPerSecond * (deltaMs / 1000);
+      e = { ...e, health: Math.min(e.maxHealth, e.health + regen) };
+    }
+    return e;
   });
 
   nextEnemies = nextEnemies.map((enemy) => {
@@ -1424,7 +1482,7 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
           .map((type) => clampEnemyResistance(enemy.resistances[type] - resolvedSpell.resistancePenetration[type]));
         const appliedResistance =
           relevantResistances.length > 0 ? Math.max(...relevantResistances) : 0;
-        const totalDamage = applyResistanceToDamage(baseDamage, appliedResistance);
+        const totalDamage = Math.max(1, Math.round(applyResistanceToDamage(baseDamage, appliedResistance) * enemy.damageTakenMultiplier));
         telemetry = { ...telemetry, damageDealtByPlayer: telemetry.damageDealtByPlayer + totalDamage };
         const remainingHealth = enemy.health - totalDamage;
 
@@ -1461,6 +1519,25 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
           rareMonstersKilled: telemetry.rareMonstersKilled + (enemy.rarity === "Rare" ? 1 : 0),
           guardianKilled: telemetry.guardianKilled || enemy.isKeyGuardian
         };
+
+        if (enemy.rareMods.includes("volatile") && distance(playerX, playerY, enemy.x, enemy.y) <= VOLATILE_EXPLOSION_RADIUS) {
+          const explodeDamage = Math.max(1, Math.round(enemy.maxHealth * VOLATILE_EXPLOSION_DAMAGE_PERCENT));
+          nextPlayer = {
+            ...nextPlayer,
+            currentHealth: Math.max(0, nextPlayer.currentHealth - explodeDamage)
+          };
+          telemetry = {
+            ...telemetry,
+            damageDealtToPlayer: telemetry.damageDealtToPlayer + explodeDamage,
+            hitsTaken: telemetry.hitsTaken + 1,
+          };
+          floatingTexts.push({
+            id: `volatile-${enemy.id}-${nextTime}`,
+            x: enemy.x,
+            y: enemy.y - 10,
+            text: `${explodeDamage}`
+          });
+        }
 
         if (enemy.isKeyGuardian) {
           const keyDropTier = mapTier >= 1 ? mapTier : null;

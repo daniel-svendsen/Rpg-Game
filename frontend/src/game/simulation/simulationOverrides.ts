@@ -17,7 +17,6 @@ type MutableMapTierFields = {
   nextTierMapDropsPerRunTarget: number;
   enemyHealthMultiplier: number;
   enemyDamageMultiplier: number;
-  rareMonsterChance: number;
 };
 
 type MutableCombatFields = {
@@ -88,9 +87,6 @@ const scaleMapFields = (
     target.enemyDamageMultiplier = Math.max(0.05, target.enemyDamageMultiplier * overrides.mapEnemyDamageMultiplier);
   }
 
-  if (overrides.rareMonsterChanceMultiplier !== undefined) {
-    target.rareMonsterChance = clampChance(target.rareMonsterChance * overrides.rareMonsterChanceMultiplier);
-  }
 };
 
 export const applySimulationBalanceOverrides = (
@@ -213,20 +209,6 @@ export const applySimulationBalanceOverrides = (
   if (overrides.mapShardDropRateMultiplier !== undefined) {
     (itemBalance as { rareMonsterMapShardDropMultiplier: number }).rareMonsterMapShardDropMultiplier =
       Math.max(0, itemBalance.rareMonsterMapShardDropMultiplier * overrides.mapShardDropRateMultiplier);
-  }
-
-  if (overrides.rareMonsterChanceMultiplierByTier !== undefined) {
-    for (const [tierKey, multiplier] of Object.entries(overrides.rareMonsterChanceMultiplierByTier)) {
-      const tier = Number(tierKey);
-      if (!Number.isFinite(tier) || tier <= 0) {
-        continue;
-      }
-      const targetTier = (mapBalance.tiers as unknown as Record<number, MutableMapTierFields>)[tier];
-      if (!targetTier) {
-        continue;
-      }
-      targetTier.rareMonsterChance = clampChance(targetTier.rareMonsterChance * multiplier);
-    }
   }
 
   if (overrides.enemySpeedMultiplierByTier !== undefined) {

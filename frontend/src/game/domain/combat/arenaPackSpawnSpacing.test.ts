@@ -42,16 +42,12 @@ const baseCharacter: CharacterRecord = {
 describe("arenaSimulation pack spawning", () => {
   const tweakSnapshot = {
     monsterCountMultiplier: gameTweaks.monsterCountMultiplier,
-    spellcasterSpawnChance: gameTweaks.spellcasterSpawnChance,
     tier9MonsterCountMultiplier: gameTweaks.tierOverrides[9].monsterCountMultiplier,
-    tier9SpellcasterSpawnChance: gameTweaks.tierOverrides[9].spellcasterSpawnChance
   };
 
   afterEach(() => {
     gameTweaks.monsterCountMultiplier = tweakSnapshot.monsterCountMultiplier;
-    gameTweaks.spellcasterSpawnChance = tweakSnapshot.spellcasterSpawnChance;
     gameTweaks.tierOverrides[9].monsterCountMultiplier = tweakSnapshot.tier9MonsterCountMultiplier;
-    gameTweaks.tierOverrides[9].spellcasterSpawnChance = tweakSnapshot.tier9SpellcasterSpawnChance;
   });
 
   it("keeps packs away from the player and each other", () => {
@@ -86,9 +82,7 @@ describe("arenaSimulation pack spawning", () => {
 
   it("applies global tweak fallbacks to high-tier simulations without explicit tier overrides", () => {
     gameTweaks.monsterCountMultiplier = 0.1;
-    gameTweaks.spellcasterSpawnChance = 0;
     delete gameTweaks.tierOverrides[9].monsterCountMultiplier;
-    delete gameTweaks.tierOverrides[9].spellcasterSpawnChance;
 
     const runtime = createArenaRuntime(
       {

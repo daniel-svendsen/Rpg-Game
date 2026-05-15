@@ -14,8 +14,6 @@ export interface SimulationBalanceOverrides {
   mapShardDropRateMultiplier?: number;
   mapDropRateMultiplier?: number;
   spellDropChanceMultiplier?: number;
-  rareMonsterChanceMultiplier?: number;
-  rareMonsterChanceMultiplierByTier?: Record<number, number>;
   enemySpeedMultiplierByTier?: Record<number, number>;
   enemyAggroRadiusMultiplier?: number;
   enemyContactRangeMultiplier?: number;

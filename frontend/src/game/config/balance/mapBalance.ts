@@ -35,7 +35,6 @@ export interface MapTierBalance {
   goldGainMultiplier: number;
   enemyHealthMultiplier: number;
   enemyDamageMultiplier: number;
-  rareMonsterChance: number;
   rareItemDropsMin: number;
   rareItemDropsMax: number;
   itemStatRanges: ItemStatRangeSet;
@@ -76,7 +75,7 @@ export const mapBalance = {
     goldGainMultiplier: percent(100),
     enemyHealthMultiplier: 1.18,
     enemyDamageMultiplier: 1.12,
-    rareMonsterChance: percent(15),
+
     rareItemDropsMin: 1,
     rareItemDropsMax: 1,
     itemStatRanges: createItemStatRanges(1)
@@ -99,7 +98,7 @@ export const mapBalance = {
       goldGainMultiplier: percent(108),
       enemyHealthMultiplier: 1.28,
       enemyDamageMultiplier: 1.18,
-      rareMonsterChance: percent(15),
+  
       rareItemDropsMin: 1,
       rareItemDropsMax: 1,
       itemStatRanges: createItemStatRanges(1)
@@ -121,7 +120,7 @@ export const mapBalance = {
       goldGainMultiplier: percent(116),
       enemyHealthMultiplier: 1.46,
       enemyDamageMultiplier: 1.28,
-      rareMonsterChance: percent(15.5),
+  
       rareItemDropsMin: 1,
       rareItemDropsMax: 1,
       itemStatRanges: createItemStatRanges(2)
@@ -143,7 +142,7 @@ export const mapBalance = {
       goldGainMultiplier: percent(124),
       enemyHealthMultiplier: 1.62,
       enemyDamageMultiplier: 1.40,
-      rareMonsterChance: percent(16),
+  
       rareItemDropsMin: 1,
       rareItemDropsMax: 1,
       itemStatRanges: createItemStatRanges(3)
@@ -165,7 +164,7 @@ export const mapBalance = {
       goldGainMultiplier: percent(132),
       enemyHealthMultiplier: 1.58,
       enemyDamageMultiplier: 1.38,
-      rareMonsterChance: percent(16.5),
+  
       rareItemDropsMin: 1,
       rareItemDropsMax: 1,
       itemStatRanges: createItemStatRanges(4)
@@ -187,7 +186,7 @@ export const mapBalance = {
       goldGainMultiplier: percent(140),
       enemyHealthMultiplier: 1.46,
       enemyDamageMultiplier: 1.28,
-      rareMonsterChance: percent(17),
+  
       rareItemDropsMin: 1,
       rareItemDropsMax: 1,
       itemStatRanges: createItemStatRanges(5)
@@ -209,7 +208,7 @@ export const mapBalance = {
       goldGainMultiplier: percent(148),
       enemyHealthMultiplier: 1.42,
       enemyDamageMultiplier: 1.24,
-      rareMonsterChance: percent(17.5),
+  
       rareItemDropsMin: 1,
       rareItemDropsMax: 2,
       itemStatRanges: createItemStatRanges(6)
@@ -231,7 +230,7 @@ export const mapBalance = {
       goldGainMultiplier: percent(156),
       enemyHealthMultiplier: 2.22,
       enemyDamageMultiplier: 1.86,
-      rareMonsterChance: percent(18),
+  
       rareItemDropsMin: 1,
       rareItemDropsMax: 2,
       itemStatRanges: createItemStatRanges(7)
@@ -253,7 +252,7 @@ export const mapBalance = {
       goldGainMultiplier: percent(164),
       enemyHealthMultiplier: 2.34,
       enemyDamageMultiplier: 1.94,
-      rareMonsterChance: percent(18.5),
+  
       rareItemDropsMin: 1,
       rareItemDropsMax: 2,
       itemStatRanges: createItemStatRanges(8)
@@ -275,7 +274,7 @@ export const mapBalance = {
       goldGainMultiplier: percent(172),
       enemyHealthMultiplier: 2.46,
       enemyDamageMultiplier: 2.02,
-      rareMonsterChance: percent(19),
+  
       rareItemDropsMin: 1,
       rareItemDropsMax: 2,
       itemStatRanges: createItemStatRanges(9)
@@ -297,7 +296,7 @@ export const mapBalance = {
       goldGainMultiplier: percent(180),
       enemyHealthMultiplier: 2.58,
       enemyDamageMultiplier: 2.10,
-      rareMonsterChance: percent(20),
+  
       rareItemDropsMin: 1,
       rareItemDropsMax: 2,
       itemStatRanges: createItemStatRanges(10)

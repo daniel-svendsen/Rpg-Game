@@ -20,6 +20,7 @@ export class ArenaScene extends Phaser.Scene {
   private playerSprite?: Phaser.GameObjects.Sprite;
   private enemySprites = new Map<string, Phaser.GameObjects.Sprite>();
   private enemyHealthBars = new Map<string, Phaser.GameObjects.Rectangle>();
+  private enemyRings = new Map<string, Phaser.GameObjects.Ellipse>();
   private groundLootObjects = new Map<string, Phaser.GameObjects.Container>();
   private floatingTexts = new Map<string, Phaser.GameObjects.Text>();
   private processedSpellEventIds = new Set<string>();
@@ -240,8 +241,17 @@ export class ArenaScene extends Phaser.Scene {
 
     const activeIds = new Set<string>();
 
+    const rarePackIds = new Set(
+      this.latestSnapshot.enemies
+        .filter((e) => e.rarity === "Rare" && e.packId)
+        .map((e) => e.packId as string)
+    );
+
     for (const enemy of this.latestSnapshot.enemies) {
       activeIds.add(enemy.id);
+
+      const isRare = enemy.rarity === "Rare";
+      const isInRarePack = !isRare && !!enemy.packId && rarePackIds.has(enemy.packId);
 
       let sprite = this.enemySprites.get(enemy.id);
       if (!sprite) {
@@ -250,9 +260,36 @@ export class ArenaScene extends Phaser.Scene {
       }
 
       const cfg = this.getSpriteConfig(enemy.monsterTypeId);
+
+      let ring = this.enemyRings.get(enemy.id);
+      if (!ring && (isRare || isInRarePack)) {
+        if (isRare) {
+          ring = this.add.ellipse(enemy.x, enemy.y + 10, 54, 18, 0, 0)
+            .setStrokeStyle(2.5, 0xffd700, 0.9)
+            .setDepth(4);
+          this.tweens.add({
+            targets: ring,
+            alpha: { from: 0.55, to: 1.0 },
+            duration: 800,
+            yoyo: true,
+            repeat: -1,
+            ease: "Sine.easeInOut"
+          });
+        } else {
+          ring = this.add.ellipse(enemy.x, enemy.y + 10, 40, 14, 0, 0)
+            .setStrokeStyle(1.5, 0xffd700, 0.38)
+            .setDepth(4);
+        }
+        this.enemyRings.set(enemy.id, ring);
+      }
+      if (ring) {
+        ring.setPosition(enemy.x, enemy.y + 10);
+      }
+
+      const barColor = isRare ? 0xffd700 : isInRarePack ? 0xfde68a : 0x22c55e;
       let bar = this.enemyHealthBars.get(enemy.id);
       if (!bar) {
-        bar = this.add.rectangle(enemy.x, enemy.y + cfg.healthBarOffsetY, 36, 4, 0x22c55e).setDepth(6);
+        bar = this.add.rectangle(enemy.x, enemy.y + cfg.healthBarOffsetY, 36, 4, barColor).setDepth(6);
         this.enemyHealthBars.set(enemy.id, bar);
       }
 
@@ -268,6 +305,9 @@ export class ArenaScene extends Phaser.Scene {
 
       const bar = this.enemyHealthBars.get(id);
       if (bar) { bar.destroy(); this.enemyHealthBars.delete(id); }
+
+      const ring = this.enemyRings.get(id);
+      if (ring) { ring.destroy(); this.enemyRings.delete(id); }
 
       sprite.stop();
       this.tweens.add({

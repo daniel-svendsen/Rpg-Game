@@ -16,14 +16,14 @@ export type TierBalanceTweaks = {
   bossDamageMultiplier?: number;
   bossRewardDropMultiplier?: number;
   chaseUniqueChance?: number;
-  rareSpawnMultiplier?: number;
-  spellcasterSpawnChance?: number;
   spellcasterDamageMultiplier?: number;
   spellcasterCooldownMultiplier?: number;
   spellcasterRangeMultiplier?: number;
   packCountMultiplier?: number;
   monsterCountMultiplier?: number;
   mapShardDropMultiplier?: number;
+  rareCountMin?: number;
+  rareCountMax?: number;
 };
 
 export const gameTweaks = {
@@ -50,13 +50,6 @@ export const gameTweaks = {
   // Chance the boss drops its chase unique instead of a common unique. Default: 0.05 (5%)
   chaseUniqueChance: 0.05,
 
-  // Spawn Rates
-  // Per-tier rare-spawn base values: Training 15%, T1 15% -> T10 20%
-  rareSpawnMultiplier: 1.0,
-
-  // Fraction of packs that include a spellcaster (0-1). Default: 0.20
-  spellcasterSpawnChance: 0.40,
-
   // Spellcaster Stats
   // Cooldown multiplier: 0.8 = casts 20% faster, 1.25 = casts 25% slower.
   spellcasterDamageMultiplier: 0.8,
@@ -68,6 +61,11 @@ export const gameTweaks = {
   monsterCountMultiplier: 1.0,
   mapShardDropMultiplier: 1.0,
 
+  // Rare Spawn Count (per map run)
+  // T1-3: 1-2, T4-6: 2-3, T7-10: 4-6 via tier overrides below
+  rareCountMin: 1,
+  rareCountMax: 2,
+
   // Tier Overrides
   // Use these for quick targeted balance passes. Values override the global tweak above
   // only on that map tier. Missing values fall back to the global tweak.
@@ -75,6 +73,26 @@ export const gameTweaks = {
   // Keep these blocks sparse: only add values that should differ from the global
   // tweak. If a neutral 1.0 is left here, it still overrides the global value.
   tierOverrides: {
+    4: {
+      rareCountMin: 2,
+      rareCountMax: 3
+    } as TierBalanceTweaks,
+    5: {
+      rareCountMin: 2,
+      rareCountMax: 3
+    } as TierBalanceTweaks,
+    6: {
+      rareCountMin: 2,
+      rareCountMax: 3
+    } as TierBalanceTweaks,
+    7: {
+      rareCountMin: 4,
+      rareCountMax: 6
+    } as TierBalanceTweaks,
+    8: {
+      rareCountMin: 4,
+      rareCountMax: 6
+    } as TierBalanceTweaks,
     9: {
       enemyHpMultiplier: 1.1,
       enemyResistanceMultiplier: 1.15,
@@ -82,13 +100,14 @@ export const gameTweaks = {
       enemySpeedMultiplier: 1.05,
       rareMonsterHpMultiplier: 1.25,
       rareMonsterDamageMultiplier: 1.15,
-      spellcasterSpawnChance: 0.50,
       spellcasterDamageMultiplier: 1.25,
       spellcasterCooldownMultiplier: 0.9,
       spellcasterRangeMultiplier: 1.1,
       monsterCountMultiplier: 1.05,
       packCountMultiplier: 1.0,
-      mapShardDropMultiplier: 1.1
+      mapShardDropMultiplier: 1.1,
+      rareCountMin: 4,
+      rareCountMax: 6
     } as TierBalanceTweaks,
     10: {
       enemyHpMultiplier: 1.7,
@@ -98,10 +117,11 @@ export const gameTweaks = {
       rareMonsterHpMultiplier: 1.7,
       rareMonsterDamageMultiplier: 1.6,
       bossResistanceMultiplier: 1.5,
-      spellcasterSpawnChance: 0.60,
       spellcasterDamageMultiplier: 1.7,
       spellcasterCooldownMultiplier: 0.8,
-      spellcasterRangeMultiplier: 1.7
+      spellcasterRangeMultiplier: 1.7,
+      rareCountMin: 4,
+      rareCountMax: 6
     } as TierBalanceTweaks
   } satisfies Record<number, TierBalanceTweaks>,
 
@@ -136,13 +156,13 @@ export const getTierBalanceTweaks = (tier: number): Required<TierBalanceTweaks> 
     bossDamageMultiplier: tierTweaks.bossDamageMultiplier ?? gameTweaks.bossDamageMultiplier,
     bossRewardDropMultiplier: tierTweaks.bossRewardDropMultiplier ?? gameTweaks.bossRewardDropMultiplier,
     chaseUniqueChance: tierTweaks.chaseUniqueChance ?? gameTweaks.chaseUniqueChance,
-    rareSpawnMultiplier: tierTweaks.rareSpawnMultiplier ?? gameTweaks.rareSpawnMultiplier,
-    spellcasterSpawnChance: tierTweaks.spellcasterSpawnChance ?? gameTweaks.spellcasterSpawnChance,
     spellcasterDamageMultiplier: tierTweaks.spellcasterDamageMultiplier ?? gameTweaks.spellcasterDamageMultiplier,
     spellcasterCooldownMultiplier: tierTweaks.spellcasterCooldownMultiplier ?? gameTweaks.spellcasterCooldownMultiplier,
     spellcasterRangeMultiplier: tierTweaks.spellcasterRangeMultiplier ?? gameTweaks.spellcasterRangeMultiplier,
     packCountMultiplier: tierTweaks.packCountMultiplier ?? gameTweaks.packCountMultiplier,
     monsterCountMultiplier: tierTweaks.monsterCountMultiplier ?? gameTweaks.monsterCountMultiplier,
-    mapShardDropMultiplier: tierTweaks.mapShardDropMultiplier ?? gameTweaks.mapShardDropMultiplier
+    mapShardDropMultiplier: tierTweaks.mapShardDropMultiplier ?? gameTweaks.mapShardDropMultiplier,
+    rareCountMin: tierTweaks.rareCountMin ?? gameTweaks.rareCountMin,
+    rareCountMax: tierTweaks.rareCountMax ?? gameTweaks.rareCountMax
   };
 };

@@ -363,7 +363,7 @@ export const formatSimulationSummary = (summary: SimulationSummary): string => {
     `Auto life flask: ${flaskText}`,
     `Overrides: ${overridesText}`,
     `Balance tweaks: enemy hp ${formatNumber(tweaks.enemyHpMultiplier)}x / res ${formatNumber(tweaks.enemyResistanceMultiplier)}x / dmg ${formatNumber(tweaks.enemyDamageMultiplier)}x / speed ${formatNumber(tweaks.enemySpeedMultiplier)}x`,
-    `- Rare: hp ${formatNumber(tweaks.rareMonsterHpMultiplier)}x / dmg ${formatNumber(tweaks.rareMonsterDamageMultiplier)}x  Spellcasters: spawn ${formatPercent(tweaks.spellcasterSpawnChance)} / dmg ${formatNumber(tweaks.spellcasterDamageMultiplier)}x / cooldown ${formatNumber(tweaks.spellcasterCooldownMultiplier)}x / range ${formatNumber(tweaks.spellcasterRangeMultiplier)}x`,
+    `- Rare: hp ${formatNumber(tweaks.rareMonsterHpMultiplier)}x / dmg ${formatNumber(tweaks.rareMonsterDamageMultiplier)}x  Spellcasters: dmg ${formatNumber(tweaks.spellcasterDamageMultiplier)}x / cooldown ${formatNumber(tweaks.spellcasterCooldownMultiplier)}x / range ${formatNumber(tweaks.spellcasterRangeMultiplier)}x`,
     `- Density/sustain: packs ${formatNumber(tweaks.packCountMultiplier)}x / monsters ${formatNumber(tweaks.monsterCountMultiplier)}x / map shards ${formatNumber(tweaks.mapShardDropMultiplier)}x`,
     "",
     "Character stats:",
