@@ -185,3 +185,14 @@ export const FX_ANIMS = {
   orbLightning: { key: "fx-orb-lightning", sheet: "fx-sheet-1668", startFrame: 70, frameCount: 14, frameRate: 14 } // 1668 row 6 (14 cols)
 } as const;
 
+// ─── Map tile themes ─────────────────────────────────────────────────────────
+// Each entry is the filename (without .png) in /assets/maptiles/.
+export const MAP_TILE_THEMES = [
+  "ancientstones",
+  "bloodstained",
+  "burnedcathedral",
+  "desert",
+  "frozen"
+] as const;
+
+export type MapTileTheme = typeof MAP_TILE_THEMES[number];

@@ -4,6 +4,7 @@ import {
   FALLBACK_MONSTER_CONFIG,
   FX_ANIMS,
   FX_SHEETS,
+  MAP_TILE_THEMES,
   MONSTER_SPRITE_CONFIG,
   PLAYER_SPRITE_CONFIG,
   SPRITE_BASE_PATH,
@@ -24,6 +25,7 @@ export class ArenaScene extends Phaser.Scene {
   private processedSpellEventIds = new Set<string>();
   private processedMonsterSpellEventIds = new Set<string>();
   private background?: Phaser.GameObjects.TileSprite;
+  private readonly mapTileTheme = MAP_TILE_THEMES[Math.floor(Math.random() * MAP_TILE_THEMES.length)];
 
   constructor() {
     super("ArenaScene");
@@ -60,6 +62,9 @@ export class ArenaScene extends Phaser.Scene {
         );
       }
     }
+
+    // Load selected map tile theme (chosen once at scene creation)
+    this.load.image(`maptile-${this.mapTileTheme}`, `/assets/maptiles/${this.mapTileTheme}.webp`);
 
     // Load monster spritesheets (80x80 files from assets/monsters/)
     const loaded = new Set<string>();
@@ -136,51 +141,56 @@ export class ArenaScene extends Phaser.Scene {
   // ─── Background ────────────────────────────────────────────────────────────
 
   private generateBackground(): void {
-    const brickKey = "arena-bricks";
-    if (this.textures.exists(brickKey)) {
+    const tileKey = `maptile-${this.mapTileTheme}`;
+    if (this.textures.exists(tileKey)) {
       this.background = this.add
-        .tileSprite(0, 0, ARENA_WIDTH, ARENA_HEIGHT, brickKey)
+        .tileSprite(0, 0, ARENA_WIDTH, ARENA_HEIGHT, tileKey)
         .setOrigin(0, 0)
+        .setTileScale(0.25, 0.25)
         .setDepth(-10);
       return;
     }
 
-    const tileSize = 128;
-    const brickWidth = 44;
-    const brickHeight = 22;
-    const mortar = 3;
-    const brickColorBase = 0x111827;
-    const mortarColor = 0x1f2937;
+    // Fallback: procedurally generated brick pattern
+    const brickKey = "arena-bricks";
+    if (!this.textures.exists(brickKey)) {
+      const tileSize = 128;
+      const brickWidth = 44;
+      const brickHeight = 22;
+      const mortar = 3;
+      const brickColorBase = 0x111827;
+      const mortarColor = 0x1f2937;
 
-    const gfx = this.add.graphics();
-    gfx.fillStyle(0x0b1220, 1);
-    gfx.fillRect(0, 0, tileSize, tileSize);
+      const gfx = this.add.graphics();
+      gfx.fillStyle(0x0b1220, 1);
+      gfx.fillRect(0, 0, tileSize, tileSize);
 
-    const rowCount = Math.ceil(tileSize / brickHeight) + 1;
-    const colCount = Math.ceil(tileSize / brickWidth) + 1;
+      const rowCount = Math.ceil(tileSize / brickHeight) + 1;
+      const colCount = Math.ceil(tileSize / brickWidth) + 1;
 
-    for (let row = 0; row < rowCount; row += 1) {
-      const y = row * brickHeight;
-      const offset = row % 2 === 0 ? 0 : Math.floor(brickWidth / 2);
-      for (let col = 0; col < colCount; col += 1) {
-        const x = col * brickWidth - offset;
-        const variation = (row * 17 + col * 31) % 12;
-        const tint = brickColorBase + variation * 0x020202;
-        gfx.fillStyle(tint, 1);
-        gfx.fillRect(
-          x + mortar, y + mortar,
-          Math.max(0, brickWidth - mortar * 2),
-          Math.max(0, brickHeight - mortar * 2)
-        );
+      for (let row = 0; row < rowCount; row += 1) {
+        const y = row * brickHeight;
+        const offset = row % 2 === 0 ? 0 : Math.floor(brickWidth / 2);
+        for (let col = 0; col < colCount; col += 1) {
+          const x = col * brickWidth - offset;
+          const variation = (row * 17 + col * 31) % 12;
+          const tint = brickColorBase + variation * 0x020202;
+          gfx.fillStyle(tint, 1);
+          gfx.fillRect(
+            x + mortar, y + mortar,
+            Math.max(0, brickWidth - mortar * 2),
+            Math.max(0, brickHeight - mortar * 2)
+          );
+        }
       }
+
+      gfx.lineStyle(1, mortarColor, 0.8);
+      for (let y = 0; y <= tileSize; y += brickHeight) gfx.lineBetween(0, y, tileSize, y);
+      for (let x = 0; x <= tileSize; x += brickWidth / 2) gfx.lineBetween(x, 0, x, tileSize);
+
+      gfx.generateTexture(brickKey, tileSize, tileSize);
+      gfx.destroy();
     }
-
-    gfx.lineStyle(1, mortarColor, 0.8);
-    for (let y = 0; y <= tileSize; y += brickHeight) gfx.lineBetween(0, y, tileSize, y);
-    for (let x = 0; x <= tileSize; x += brickWidth / 2) gfx.lineBetween(x, 0, x, tileSize);
-
-    gfx.generateTexture(brickKey, tileSize, tileSize);
-    gfx.destroy();
 
     this.background = this.add
       .tileSprite(0, 0, ARENA_WIDTH, ARENA_HEIGHT, brickKey)
