@@ -16,14 +16,23 @@ const STAT_ORDER: StatKey[] = [
   "vitality",
   "dexterity",
   "intelligence",
+  "strengthAgility",
+  "strengthVitality",
+  "intelligenceDexterity",
   "movementSpeedBonus",
   "fireResistance",
   "coldResistance",
   "lightningResistance",
+  "fireElementalDamageBonus",
+  "coldElementalDamageBonus",
+  "lightningElementalDamageBonus",
   "castSpeedMultiplier",
   "attackSpeedMultiplier",
   "critChance",
-  "spellPowerMultiplier"
+  "spellPowerMultiplier",
+  "magicFind",
+  "rareFind",
+  "lifeRegen"
 ];
 
 const STAT_LABELS: Record<StatKey, string> = {
@@ -35,14 +44,23 @@ const STAT_LABELS: Record<StatKey, string> = {
   vitality: "Vitality",
   dexterity: "Dexterity",
   intelligence: "Intelligence",
+  strengthAgility: "Strength & Agility",
+  strengthVitality: "Strength & Vitality",
+  intelligenceDexterity: "Intelligence & Dexterity",
   movementSpeedBonus: "Movement Speed",
   fireResistance: "Fire Resistance",
   coldResistance: "Cold Resistance",
   lightningResistance: "Lightning Resistance",
+  fireElementalDamageBonus: "Fire Damage",
+  coldElementalDamageBonus: "Cold Damage",
+  lightningElementalDamageBonus: "Lightning Damage",
   castSpeedMultiplier: "Cast Speed",
   attackSpeedMultiplier: "Attack Speed",
   critChance: "Crit Chance",
-  spellPowerMultiplier: "Spell Power"
+  spellPowerMultiplier: "Spell Power",
+  magicFind: "Magic Find",
+  rareFind: "Rare Find",
+  lifeRegen: "Life Regeneration"
 };
 
 const NORMALIZED_PERCENT_KEYS: StatKey[] = [
@@ -50,8 +68,14 @@ const NORMALIZED_PERCENT_KEYS: StatKey[] = [
   "fireResistance",
   "coldResistance",
   "lightningResistance",
+  "fireElementalDamageBonus",
+  "coldElementalDamageBonus",
+  "lightningElementalDamageBonus",
   "critChance",
-  "spellPowerMultiplier"
+  "spellPowerMultiplier",
+  "magicFind",
+  "rareFind",
+  "lifeRegen"
 ];
 
 const MULTIPLIER_PERCENT_KEYS: StatKey[] = ["castSpeedMultiplier", "attackSpeedMultiplier"];

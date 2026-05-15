@@ -1553,7 +1553,10 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
   }
 
   // Apply life regeneration
-  const lifeRegenPercentPerSecond = nextPlayer.statBonuses?.lifeRegen ?? 0;
+  const lifeRegenPercentPerSecond = Object.values(nextPlayer.equippedItems).reduce(
+    (total, item) => total + (item?.statBonuses.lifeRegen ?? 0),
+    0
+  );
   if (lifeRegenPercentPerSecond > 0) {
     const healthGain = Math.round(
       nextPlayer.derivedStats.maxHealth * lifeRegenPercentPerSecond * (deltaMs / 1000)
