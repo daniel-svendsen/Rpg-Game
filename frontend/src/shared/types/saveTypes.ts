@@ -183,6 +183,13 @@ export interface AutoSellSettings {
   Rare: boolean;
 }
 
+export interface CharacterSummary {
+  id: number;
+  name: string;
+  level: number;
+  createdAt: string;
+}
+
 export interface CharacterRecord {
   id?: number;
   name: string;

@@ -1,4 +1,4 @@
-import type { CharacterRecord } from "../shared/types/saveTypes";
+import type { CharacterRecord, CharacterSummary } from "../shared/types/saveTypes";
 import { jsonRequest } from "./http";
 
 export interface CharacterPayload {
@@ -6,24 +6,26 @@ export interface CharacterPayload {
   baseStats: CharacterRecord["baseStats"];
 }
 
-export const loadCharacter = async (token: string): Promise<CharacterRecord | null> => {
-  try {
-    return await jsonRequest<CharacterRecord>("/api/characters/me", { method: "GET" }, token);
-  } catch {
-    return null;
-  }
+export const listCharacters = async (token: string): Promise<CharacterSummary[]> =>
+  jsonRequest<CharacterSummary[]>("/api/characters", { method: "GET" }, token);
+
+export const loadCharacterById = async (id: number, token: string): Promise<CharacterRecord> =>
+  jsonRequest<CharacterRecord>(`/api/characters/${id}`, { method: "GET" }, token);
+
+export const deleteCharacter = async (id: number, token: string): Promise<void> => {
+  await jsonRequest<void>(`/api/characters/${id}`, { method: "DELETE" }, token);
 };
 
-export const loadCharacterWithAuthState = async (
+export const loadCharactersWithAuthState = async (
   token: string
-): Promise<{ character: CharacterRecord | null; isUnauthorized: boolean }> => {
+): Promise<{ characters: CharacterSummary[] | null; isUnauthorized: boolean }> => {
   try {
-    const character = await jsonRequest<CharacterRecord>("/api/characters/me", { method: "GET" }, token);
-    return { character, isUnauthorized: false };
+    const characters = await listCharacters(token);
+    return { characters, isUnauthorized: false };
   } catch (error) {
     const status = (error as Error & { status?: number }).status;
     const isUnauthorized = status === 401 || status === 403;
-    return { character: null, isUnauthorized };
+    return { characters: null, isUnauthorized };
   }
 };
 

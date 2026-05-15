@@ -2,6 +2,7 @@ package com.example.arpg.auth;
 
 import com.example.arpg.character.CharacterProfileService;
 import com.example.arpg.character.CharacterResponse;
+import com.example.arpg.character.CharacterSummaryResponse;
 import com.example.arpg.character.LifeFlaskState;
 import com.example.arpg.character.MapProgressData;
 import com.example.arpg.character.SpellLoadoutEntry;
@@ -91,9 +92,9 @@ class AuthFlowIntegrationTest {
             usersByEmail.put(user.getEmail(), user);
             return user;
         });
-        when(characterProfileService.getCurrentCharacter(anyString())).thenAnswer(invocation -> new CharacterResponse(
+        CharacterResponse fullCharacter = new CharacterResponse(
                 42L,
-                "Warden",
+                "TestChar",
                 4,
                 50,
                 120,
@@ -113,7 +114,11 @@ class AuthFlowIntegrationTest {
                 List.of(new SpellLoadoutEntry("stormChain", List.of())),
                 List.of(),
                 new MapProgressData(1, 0, List.of(), List.of())
-        ));
+        );
+        when(characterProfileService.listCharacters(anyString()))
+                .thenReturn(List.of(new CharacterSummaryResponse(42L, "TestChar", 4, Instant.now())));
+        when(characterProfileService.getCharacterById(anyString(), any()))
+                .thenReturn(fullCharacter);
     }
 
     @Test
@@ -136,11 +141,11 @@ class AuthFlowIntegrationTest {
         String registerToken = registerJson.get("token").asText();
         assertThat(registerToken).isNotBlank();
 
-        mockMvc.perform(get("/api/characters/me")
+        mockMvc.perform(get("/api/characters")
                         .header("Authorization", "Bearer " + registerToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Warden"))
-                .andExpect(jsonPath("$.id").value(42));
+                .andExpect(jsonPath("$[0].name").value("TestChar"))
+                .andExpect(jsonPath("$[0].id").value(42));
 
         String loginResponse = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -160,17 +165,18 @@ class AuthFlowIntegrationTest {
         String loginToken = loginJson.get("token").asText();
         assertThat(loginToken).isNotBlank();
 
-        mockMvc.perform(get("/api/characters/me")
+        mockMvc.perform(get("/api/characters/42")
                         .header("Authorization", "Bearer " + loginToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.unlockedSpellIds[0]").value("stormChain"));
 
-        verify(characterProfileService, times(2)).getCurrentCharacter("player@example.com");
+        verify(characterProfileService, times(1)).listCharacters("player@example.com");
+        verify(characterProfileService, times(1)).getCharacterById("player@example.com", 42L);
     }
 
     @Test
     void protectedCharacterEndpointRejectsMissingToken() throws Exception {
-        mockMvc.perform(get("/api/characters/me"))
+        mockMvc.perform(get("/api/characters"))
                 .andExpect(status().isForbidden());
     }
 

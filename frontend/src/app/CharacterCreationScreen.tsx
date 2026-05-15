@@ -7,9 +7,11 @@ interface CharacterCreationScreenProps {
   characterName: string;
   characterStats: CharacterStats;
   remainingStatPoints: number;
+  canGoBack: boolean;
   onChangeCharacterName: (name: string) => void;
   onUpdateStat: (key: keyof CharacterStats, delta: number) => void;
   onCreateCharacter: () => void;
+  onBack: () => void;
 }
 
 export const CharacterCreationScreen = ({
@@ -17,9 +19,11 @@ export const CharacterCreationScreen = ({
   characterName,
   characterStats,
   remainingStatPoints,
+  canGoBack,
   onChangeCharacterName,
   onUpdateStat,
-  onCreateCharacter
+  onCreateCharacter,
+  onBack
 }: CharacterCreationScreenProps) => (
   <div className="content">
     {feedback}
@@ -45,6 +49,11 @@ export const CharacterCreationScreen = ({
       <button className="primary-button" onClick={onCreateCharacter}>
         Create character
       </button>
+      {canGoBack ? (
+        <button className="secondary-button" onClick={onBack}>
+          Back
+        </button>
+      ) : null}
     </section>
   </div>
 );

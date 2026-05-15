@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
@@ -31,11 +31,27 @@ public class CharacterProfileService {
         this.characterStatCalculator = characterStatCalculator;
     }
 
+    private static final int MAX_CHARACTERS_PER_ACCOUNT = 3;
+
     @Transactional(readOnly = true)
-    public CharacterResponse getCurrentCharacter(String email) {
-        return characterProfileRepository.findByUserEmail(email)
+    public List<CharacterSummaryResponse> listCharacters(String email) {
+        return characterProfileRepository.findAllByUserEmail(email).stream()
+                .map(e -> new CharacterSummaryResponse(e.getId(), e.getName(), e.getLevel(), e.getCreatedAt()))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public CharacterResponse getCharacterById(String email, Long characterId) {
+        return characterProfileRepository.findByIdAndUserEmail(characterId, email)
                 .map(this::toResponse)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Character not found"));
+    }
+
+    @Transactional
+    public void deleteCharacter(String email, Long characterId) {
+        CharacterProfileEntity character = characterProfileRepository.findByIdAndUserEmail(characterId, email)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Character not found"));
+        characterProfileRepository.delete(character);
     }
 
     @Transactional
@@ -43,8 +59,8 @@ public class CharacterProfileService {
         UserAccountEntity user = userAccountRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found"));
 
-        if (characterProfileRepository.findByUserEmail(email).isPresent()) {
-            throw new ResponseStatusException(CONFLICT, "A character already exists for this account");
+        if (characterProfileRepository.countByUserEmail(email) >= MAX_CHARACTERS_PER_ACCOUNT) {
+            throw new ResponseStatusException(BAD_REQUEST, "Maximum number of characters reached");
         }
 
         CharacterProfileEntity character = new CharacterProfileEntity();

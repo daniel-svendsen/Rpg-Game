@@ -56,6 +56,8 @@ interface HubScreenProps {
   onEnhanceSelectedMap: () => void;
   onEquipItem: (itemId: string, targetSlotOverride?: EquipmentSlot) => void;
   onLogout: () => void;
+  onSwitchCharacter: () => void;
+  onDeleteCharacter: () => Promise<void>;
   onOpenEquipmentPicker: () => void;
   onOpenMainSpellPicker: () => void;
   onOpenSupportPicker: (slotIndex: 0 | 1) => void;
@@ -106,6 +108,8 @@ export const HubScreen = ({
   onEnhanceSelectedMap,
   onEquipItem,
   onLogout,
+  onSwitchCharacter,
+  onDeleteCharacter,
   onOpenEquipmentPicker,
   onOpenMainSpellPicker,
   onOpenSupportPicker,
@@ -248,6 +252,8 @@ export const HubScreen = ({
           character={character}
           selectedMapId={selectedMapId}
           onLogout={onLogout}
+          onSwitchCharacter={onSwitchCharacter}
+          onDeleteCharacter={onDeleteCharacter}
           onSpendStatPoint={onSpendStatPoint}
         />
       ) : null}

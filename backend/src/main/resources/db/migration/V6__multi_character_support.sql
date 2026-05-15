@@ -1,0 +1,1 @@
+alter table character_profile drop constraint character_profile_user_id_key;

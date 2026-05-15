@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useRef, useState } from "react";
-import { loadCharacterWithAuthState } from "../api/gameApi";
+import { loadCharactersWithAuthState, loadCharacterById, listCharacters, deleteCharacter } from "../api/gameApi";
 import { AuthScreen } from "./AuthScreen";
 import type { HubTab, OverlayPanel, RunBatchState, RunSummaryData, ScreenMode, SelectedMapTarget } from "./appTypes";
 import { HubScreen } from "./HubScreen";
@@ -9,6 +9,7 @@ import { getItemSellPrice } from "./appUiHelpers";
 import { resolveManualSaveCharacter } from "./characterPersistence";
 import { getUnlockedTierSelection } from "./mapFlow";
 import { CharacterCreationScreen } from "./CharacterCreationScreen";
+import { CharacterSelectScreen } from "./CharacterSelectScreen";
 import { useArenaSession } from "./useArenaSession";
 import { useLoadoutActions } from "./useLoadoutActions";
 import { useShopActions } from "./useShopActions";
@@ -27,6 +28,7 @@ import { getOwnedMapStack } from "../game/domain/maps/mapProgress";
 import { normalizeCharacterRecord } from "../game/domain/player/playerTypes";
 import type {
   ArenaSnapshot,
+  CharacterSummary,
   EquipmentSlot,
   LootEntry,
   MapEnhancementInstance
@@ -50,6 +52,7 @@ export const App = () => {
     submitAuth,
     clearSession
   } = useAuth();
+  const [characterList, setCharacterList] = useState<CharacterSummary[]>([]);
   const [arenaSnapshot, setArenaSnapshot] = useState<ArenaSnapshot | null>(null);
   const [activeMapId, setActiveMapId] = useState<string | null>(null);
   const [activeMapEnhancements, setActiveMapEnhancements] = useState<MapEnhancementInstance[]>([]);
@@ -188,7 +191,7 @@ export const App = () => {
     }
 
     void (async () => {
-      const result = await loadCharacterWithAuthState(token);
+      const result = await loadCharactersWithAuthState(token);
 
       if (result.isUnauthorized) {
         setToken(null);
@@ -197,19 +200,16 @@ export const App = () => {
         return;
       }
 
-      const loadedCharacter = result.character;
+      const characters = result.characters ?? [];
+      setCharacterList(characters);
 
-      if (loadedCharacter) {
-        const normalizedCharacter = normalizeCharacterRecord(loadedCharacter);
-        hydrateCharacter(normalizedCharacter);
-        setScreenMode("hub");
+      if (characters.length === 0) {
+        setScreenMode("character");
+        setStatusMessage("No character found yet. Create one to begin.");
+      } else {
+        setScreenMode("characterSelect");
         setStatusMessage("");
-        resetShopForTier(normalizedCharacter.mapProgress.highestUnlockedTier + 1);
-        return;
       }
-
-      setScreenMode("character");
-      setStatusMessage("No character found yet. Create one to begin.");
     })();
   }, [token]);
 
@@ -280,6 +280,59 @@ export const App = () => {
     }
   };
 
+  const handleSelectCharacter = async (id: number): Promise<void> => {
+    if (!token) return;
+    try {
+      const loaded = await loadCharacterById(id, token);
+      const normalized = normalizeCharacterRecord(loaded);
+      hydrateCharacter(normalized);
+      resetShopForTier(normalized.mapProgress.highestUnlockedTier + 1);
+      setScreenMode("hub");
+      setStatusMessage("");
+      setErrorMessage(null);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to load character.");
+    }
+  };
+
+  const handleSwitchCharacter = async (): Promise<void> => {
+    if (!token) return;
+    commitCharacter(null);
+    setArenaSnapshot(null);
+    setActiveMapId(null);
+    setActiveMapEnhancements([]);
+    setActiveRunBatch(null);
+    setShopItems([]);
+    setOverlayPanel(null);
+    setHubTab("maps");
+    setRunSummaryData(null);
+    setStatusMessage("");
+    setErrorMessage(null);
+    try {
+      const characters = await listCharacters(token);
+      setCharacterList(characters);
+    } catch {
+      setCharacterList([]);
+    }
+    setScreenMode("characterSelect");
+  };
+
+  const handleDeleteCharacter = async (): Promise<void> => {
+    if (!token || !character?.id) return;
+    try {
+      await deleteCharacter(character.id, token);
+      await handleSwitchCharacter();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Delete failed.");
+    }
+  };
+
+  const handleDeleteCharacterById = async (id: number): Promise<void> => {
+    if (!token) return;
+    await deleteCharacter(id, token);
+    setCharacterList((prev) => prev.filter((c) => c.id !== id));
+  };
+
   const handleLogout = (): void => {
     clearSession();
     commitCharacter(null);
@@ -341,15 +394,27 @@ export const App = () => {
     />
   );
 
+  const renderCharacterSelect = () => (
+    <CharacterSelectScreen
+      feedback={renderInlineFeedback(false)}
+      characters={characterList}
+      onSelectCharacter={(id) => void handleSelectCharacter(id)}
+      onCreateNew={() => setScreenMode("character")}
+      onDeleteCharacter={handleDeleteCharacterById}
+    />
+  );
+
   const renderCharacterCreation = () => (
     <CharacterCreationScreen
       feedback={renderInlineFeedback(true)}
       characterName={characterName}
       characterStats={characterStats}
       remainingStatPoints={remainingStatPoints}
+      canGoBack={characterList.length > 0}
       onChangeCharacterName={setCharacterName}
       onUpdateStat={updateStat}
       onCreateCharacter={() => void handleCharacterCreation()}
+      onBack={() => setScreenMode("characterSelect")}
     />
   );
 
@@ -379,6 +444,8 @@ export const App = () => {
         onEnhanceSelectedMap={handleEnhanceSelectedMap}
         onEquipItem={handleEquipItem}
         onLogout={handleLogout}
+        onSwitchCharacter={() => void handleSwitchCharacter()}
+        onDeleteCharacter={handleDeleteCharacter}
         onOpenEquipmentPicker={() => setOverlayPanel("equipmentPicker")}
         onOpenMainSpellPicker={() => setOverlayPanel("mainSpellPicker")}
         onOpenSupportPicker={(slotIndex) => {
@@ -456,6 +523,7 @@ export const App = () => {
         </section>
       </aside>
       {screenMode === "auth" ? renderAuthPanel() : null}
+      {screenMode === "characterSelect" ? renderCharacterSelect() : null}
       {screenMode === "character" ? renderCharacterCreation() : null}
       {screenMode === "hub" ? renderHub() : null}
       {screenMode === "arena" ? renderArena() : null}

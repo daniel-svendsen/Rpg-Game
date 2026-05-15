@@ -9,6 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -16,10 +17,12 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @ExtendWith(MockitoExtension.class)
 class CharacterProfileServiceTest {
@@ -204,8 +207,14 @@ class CharacterProfileServiceTest {
         AtomicReference<CharacterProfileEntity> storedCharacter = new AtomicReference<>();
 
         when(userAccountRepository.findByEmail("player@example.com")).thenReturn(Optional.of(user));
-        when(characterProfileRepository.findByUserEmail("player@example.com"))
-                .thenAnswer(invocation -> Optional.ofNullable(storedCharacter.get()));
+        when(characterProfileRepository.countByUserEmail("player@example.com")).thenReturn(0L);
+        when(characterProfileRepository.findByIdAndUserEmail(any(), any())).thenAnswer(invocation -> {
+            CharacterProfileEntity entity = storedCharacter.get();
+            if (entity != null && entity.getId().equals(invocation.getArgument(0))) {
+                return Optional.of(entity);
+            }
+            return Optional.empty();
+        });
         when(characterProfileRepository.findById(any())).thenAnswer(invocation -> {
             CharacterProfileEntity entity = storedCharacter.get();
             if (entity != null && entity.getId().equals(invocation.getArgument(0))) {
@@ -320,7 +329,7 @@ class CharacterProfileServiceTest {
         );
 
         characterProfileService.saveProgress("player@example.com", created.id(), saveRequest);
-        CharacterResponse loaded = characterProfileService.getCurrentCharacter("player@example.com");
+        CharacterResponse loaded = characterProfileService.getCharacterById("player@example.com", created.id());
 
         assertThat(loaded.level()).isEqualTo(8);
         assertThat(loaded.currentHealth()).isEqualTo(220);
@@ -383,6 +392,88 @@ class CharacterProfileServiceTest {
                 )),
                 List.of(1)
         ));
+    }
+
+    @Test
+    void listCharactersReturnsSummaryForEachCharacter() {
+        UserAccountEntity user = new UserAccountEntity();
+        user.setEmail("player@example.com");
+
+        CharacterProfileEntity c1 = new CharacterProfileEntity();
+        c1.setUser(user);
+        c1.setName("CharA");
+        c1.setLevel(5);
+        setEntityId(c1, 1L);
+
+        CharacterProfileEntity c2 = new CharacterProfileEntity();
+        c2.setUser(user);
+        c2.setName("CharB");
+        c2.setLevel(10);
+        setEntityId(c2, 2L);
+
+        when(characterProfileRepository.findAllByUserEmail("player@example.com"))
+                .thenReturn(List.of(c1, c2));
+
+        List<CharacterSummaryResponse> result = characterProfileService.listCharacters("player@example.com");
+
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).id()).isEqualTo(1L);
+        assertThat(result.get(0).name()).isEqualTo("CharA");
+        assertThat(result.get(0).level()).isEqualTo(5);
+        assertThat(result.get(1).id()).isEqualTo(2L);
+        assertThat(result.get(1).name()).isEqualTo("CharB");
+    }
+
+    @Test
+    void createCharacterRejectsWhenMaxSlotsReached() {
+        when(userAccountRepository.findByEmail("player@example.com"))
+                .thenReturn(Optional.of(new UserAccountEntity()));
+        when(characterProfileRepository.countByUserEmail("player@example.com")).thenReturn(3L);
+
+        CharacterStatsRequest stats = new CharacterStatsRequest(1, 1, 1, 1, 1);
+
+        assertThatThrownBy(() ->
+                characterProfileService.createCharacter("player@example.com", new CreateCharacterRequest("TestChar", stats))
+        )
+                .hasFieldOrPropertyWithValue("status", BAD_REQUEST);
+    }
+
+    @Test
+    void getCharacterByIdRejectsWhenOwnedByOtherUser() {
+        when(characterProfileRepository.findByIdAndUserEmail(99L, "attacker@example.com"))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() ->
+                characterProfileService.getCharacterById("attacker@example.com", 99L)
+        )
+                .hasFieldOrPropertyWithValue("status", NOT_FOUND);
+    }
+
+    @Test
+    void deleteCharacterRejectsWhenOwnedByOtherUser() {
+        when(characterProfileRepository.findByIdAndUserEmail(99L, "attacker@example.com"))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() ->
+                characterProfileService.deleteCharacter("attacker@example.com", 99L)
+        )
+                .hasFieldOrPropertyWithValue("status", NOT_FOUND);
+    }
+
+    @Test
+    void deleteCharacterRemovesEntity() {
+        UserAccountEntity user = new UserAccountEntity();
+        user.setEmail("player@example.com");
+        CharacterProfileEntity entity = new CharacterProfileEntity();
+        entity.setUser(user);
+        setEntityId(entity, 5L);
+
+        when(characterProfileRepository.findByIdAndUserEmail(5L, "player@example.com"))
+                .thenReturn(Optional.of(entity));
+
+        characterProfileService.deleteCharacter("player@example.com", 5L);
+
+        verify(characterProfileRepository).delete(entity);
     }
 
     private void setEntityId(CharacterProfileEntity entity, long id) {
