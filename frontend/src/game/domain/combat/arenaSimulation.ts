@@ -1552,6 +1552,18 @@ export const stepArenaRuntime = (state: ArenaRuntimeState, deltaMs: number): Are
     }
   }
 
+  // Apply life regeneration
+  const lifeRegenPercentPerSecond = nextPlayer.statBonuses?.lifeRegen ?? 0;
+  if (lifeRegenPercentPerSecond > 0) {
+    const healthGain = Math.round(
+      nextPlayer.derivedStats.maxHealth * lifeRegenPercentPerSecond * (deltaMs / 1000)
+    );
+    nextPlayer = {
+      ...nextPlayer,
+      currentHealth: Math.min(nextPlayer.derivedStats.maxHealth, nextPlayer.currentHealth + healthGain)
+    };
+  }
+
   const snapshot: ArenaSnapshot = {
     timeElapsedMs: nextTime,
     mapName: state.mapName,
