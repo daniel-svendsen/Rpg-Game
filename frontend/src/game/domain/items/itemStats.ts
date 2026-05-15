@@ -36,8 +36,13 @@ const statKeyLabels: Record<ItemStatKey, string> = {
 
 export type StatEntry = { label: string; formattedValue: string; tier: number | null; isBase: boolean };
 
+const extraStatLabels: Record<string, string> = {
+  attackSpeedMultiplier: "Attack Speed",
+  castSpeedMultiplier: "Cast Speed"
+};
+
 export const getStatLabel = (statKey: string): string =>
-  statKeyLabels[statKey as ItemStatKey] ?? statKey;
+  statKeyLabels[statKey as ItemStatKey] ?? extraStatLabels[statKey] ?? statKey;
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
@@ -71,10 +76,26 @@ export const getItemStatEntries = (item: InventoryItem): StatEntry[] => [
     ? [{ label: "Evasion", formattedValue: `${item.statBonuses.evasion}`, tier: null, isBase: true }]
     : []),
   ...(item.statBonuses.attackSpeedMultiplier !== undefined
-    ? [{ label: "Attack Speed", formattedValue: `+${Math.round((Number(item.statBonuses.attackSpeedMultiplier) - 1) * 100)}%`, tier: null, isBase: true }]
+    ? (() => {
+        const val = Number(item.statBonuses.attackSpeedMultiplier);
+        const isBase = val >= 1.0;
+        const ranges = getAffixTierRangesForStat(item.tier, "attackSpeedMultiplier");
+        const tier = isBase
+          ? null
+          : (Number(Object.entries(ranges).find(([, [mn, mx]]) => val >= mn && val <= mx)?.[0]) || 5) as AffixTier | null;
+        return [{ label: "Attack Speed", formattedValue: `+${Math.round((isBase ? val - 1 : val) * 100)}%`, tier, isBase }];
+      })()
     : []),
   ...(item.statBonuses.castSpeedMultiplier !== undefined
-    ? [{ label: "Cast Speed", formattedValue: `+${Math.round((Number(item.statBonuses.castSpeedMultiplier) - 1) * 100)}%`, tier: null, isBase: true }]
+    ? (() => {
+        const val = Number(item.statBonuses.castSpeedMultiplier);
+        const isBase = val >= 1.0;
+        const ranges = getAffixTierRangesForStat(item.tier, "castSpeedMultiplier");
+        const tier = isBase
+          ? null
+          : (Number(Object.entries(ranges).find(([, [mn, mx]]) => val >= mn && val <= mx)?.[0]) || 5) as AffixTier | null;
+        return [{ label: "Cast Speed", formattedValue: `+${Math.round((isBase ? val - 1 : val) * 100)}%`, tier, isBase }];
+      })()
     : []),
   ...orderedStatKeys.flatMap((statKey): StatEntry[] => {
     const value = item.statBonuses[statKey];

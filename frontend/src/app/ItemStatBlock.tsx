@@ -5,6 +5,7 @@ import {
   getComparisonNeutralValue,
   type ItemComparison
 } from "./itemComparison";
+import { getAffixCountByRarity } from "../game/config/itemAffixConfig";
 
 const buildKindByLabel = (item: InventoryItem): Map<string, "Prefix" | "Suffix"> =>
   new Map((item.affixes ?? []).map((a) => [getStatLabel(a.statKey), a.kind]));
@@ -53,6 +54,8 @@ export const ItemStatBlock = ({
   const ungrouped = allAffixes.filter((e) => !kindByLabel.has(e.label));
   const hasGroups = prefixes.length > 0 || suffixes.length > 0;
 
+  const affixSlots = item.rarity !== "Unique" ? getAffixCountByRarity(item.rarity) : null;
+
   const renderAffix = (entry: ReturnType<typeof getItemStatEntries>[number]) => {
     const delta = deltaByLabel.get(entry.label);
     const comparisonTierClass = delta?.tier ? ` stat-tier-${delta.tier}` : "";
@@ -93,14 +96,18 @@ export const ItemStatBlock = ({
       {hasGroups && ungrouped.length > 0 && <div className="item-divider" />}
       {prefixes.length > 0 && (
         <>
-          <p className="affix-group-label">Prefix</p>
+          <p className="affix-group-label">
+            Prefix{affixSlots ? <span className="affix-slot-count">{prefixes.length}/{affixSlots.maxPrefixes}</span> : null}
+          </p>
           {prefixes.map(renderAffix)}
         </>
       )}
       {prefixes.length > 0 && suffixes.length > 0 && <div className="item-divider" />}
       {suffixes.length > 0 && (
         <>
-          <p className="affix-group-label">Suffix</p>
+          <p className="affix-group-label">
+            Suffix{affixSlots ? <span className="affix-slot-count">{suffixes.length}/{affixSlots.maxSuffixes}</span> : null}
+          </p>
           {suffixes.map(renderAffix)}
         </>
       )}
