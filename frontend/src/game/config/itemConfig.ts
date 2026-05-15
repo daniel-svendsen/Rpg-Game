@@ -78,7 +78,6 @@ export const currencyDefinitions: CurrencyDefinition[] = [
   { code: "gemcuttersPrism", name: "Gemcutter's Prism", tags: ["Currency"] },
   { code: "craftingShard", name: "Crafting Shard", tags: ["Currency"] },
   { code: "orbOfAwakening", name: "Orb of Awakening", tags: ["Currency"] },
-  { code: "orbOfBinding", name: "Orb of Binding", tags: ["Currency"] },
   { code: "orbOfAscension", name: "Orb of Ascension", tags: ["Currency"] },
   { code: "orbOfUnmaking", name: "Orb of Unmaking", tags: ["Currency"] },
   { code: "orbOfUnraveling", name: "Orb of Unraveling", tags: ["Currency"] }

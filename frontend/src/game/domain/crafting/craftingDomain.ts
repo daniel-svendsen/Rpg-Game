@@ -100,17 +100,6 @@ export const canApplyOrb = (item: InventoryItem, orbId: CraftingOrbId): Crafting
       }
       return null;
 
-    case "orbOfBinding": {
-      if (item.rarity !== "Magic") {
-        return { ok: false, error: "wrong_rarity", message: "Orb of Binding requires a Magic item." };
-      }
-      const { maxPrefixes, maxSuffixes } = getMaxAffixCounts(item);
-      if (getPrefixCount(item) >= maxPrefixes && getSuffixCount(item) >= maxSuffixes) {
-        return { ok: false, error: "item_full", message: "This item already has a prefix and a suffix." };
-      }
-      return null;
-    }
-
     case "orbOfAscension": {
       if (item.rarity !== "Magic" && item.rarity !== "Rare") {
         return { ok: false, error: "wrong_rarity", message: "Orb of Ascension requires a Magic or Rare item." };
@@ -155,12 +144,6 @@ export const applyOrb = (item: InventoryItem, orbId: CraftingOrbId): CraftingRes
       if (!affix) return { ok: false, error: "no_valid_slot", message: "No valid affixes available for this item." };
       next = applyAffixToItem(next, affix);
       return { ok: true, item: next };
-    }
-
-    case "orbOfBinding": {
-      const affix = rollOneAffix(item);
-      if (!affix) return { ok: false, error: "no_valid_slot", message: "No valid affixes available for this item." };
-      return { ok: true, item: applyAffixToItem(item, affix) };
     }
 
     case "orbOfAscension": {

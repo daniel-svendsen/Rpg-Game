@@ -23,7 +23,6 @@ const buildKindByLabel = (item: InventoryItem): Map<string, "Prefix" | "Suffix">
 
 const orbOrder: CraftingOrbId[] = [
   "orbOfAwakening",
-  "orbOfBinding",
   "orbOfAscension",
   "orbOfUnmaking",
   "orbOfUnraveling"

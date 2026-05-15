@@ -1929,6 +1929,22 @@ button {
   font-weight: 700;
 }
 
+.craft-selected-item-name.rarity-normal {
+  color: #bba990;
+}
+
+.craft-selected-item-name.rarity-magic {
+  color: #9fd5ff;
+}
+
+.craft-selected-item-name.rarity-rare {
+  color: #ffd879;
+}
+
+.craft-selected-item-name.rarity-unique {
+  color: #ffb172;
+}
+
 .craft-selected-item-meta {
   font-size: 0.72rem;
   color: var(--text-dim);

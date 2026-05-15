@@ -1,6 +1,5 @@
 export type CraftingOrbId =
   | "orbOfAwakening"
-  | "orbOfBinding"
   | "orbOfAscension"
   | "orbOfUnmaking"
   | "orbOfUnraveling";
@@ -26,12 +25,6 @@ export const craftingOrbs: Record<CraftingOrbId, CraftingOrbDefinition> = {
     currencyCode: "orbOfAwakening",
     name: "Orb of Awakening",
     description: "Upgrades a Normal item to Magic and adds one affix."
-  },
-  orbOfBinding: {
-    id: "orbOfBinding",
-    currencyCode: "orbOfBinding",
-    name: "Orb of Binding",
-    description: "Adds one affix to a Magic item, filling its remaining prefix or suffix slot."
   },
   orbOfAscension: {
     id: "orbOfAscension",
@@ -60,14 +53,9 @@ export const craftingRecipes: CraftingRecipe[] = [
     inputs: [{ code: "craftingShard", amount: 3 }]
   },
   {
-    outputCode: "orbOfBinding",
-    outputAmount: 1,
-    inputs: [{ code: "orbOfAwakening", amount: 3 }]
-  },
-  {
     outputCode: "orbOfAscension",
     outputAmount: 1,
-    inputs: [{ code: "orbOfBinding", amount: 3 }]
+    inputs: [{ code: "orbOfAwakening", amount: 3 }]
   },
   {
     outputCode: "orbOfUnmaking",
@@ -84,7 +72,6 @@ export const craftingRecipes: CraftingRecipe[] = [
 export const craftingCurrencyNames: Record<CraftingCurrencyCode, string> = {
   craftingShard: "Crafting Shard",
   orbOfAwakening: "Orb of Awakening",
-  orbOfBinding: "Orb of Binding",
   orbOfAscension: "Orb of Ascension",
   orbOfUnmaking: "Orb of Unmaking",
   orbOfUnraveling: "Orb of Unraveling"
