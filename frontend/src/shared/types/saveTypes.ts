@@ -86,6 +86,15 @@ export interface InventoryItem {
     attackSpeedMultiplier?: number;
     critChance?: number;
     spellPowerMultiplier?: number;
+    fireElementalDamageBonus?: number;
+    coldElementalDamageBonus?: number;
+    lightningElementalDamageBonus?: number;
+    magicFind?: number;
+    rareFind?: number;
+    lifeRegen?: number;
+    strengthAgility?: number;
+    strengthVitality?: number;
+    intelligenceDexterity?: number;
   };
 }
 

@@ -422,6 +422,8 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 - [x] Add support upgrade progression, persistence, and UI actions so supports scale alongside main spells.
 - [ ] Add more support spells (in small curated batches) to expand build expression without flooding the current spell/support UI, and keep each new support simulator-checkable plus clearly communicated in spell detail output.
 - [x] Add first-impact secondary-effect spell logic (split/chain/projectile/area follow-up) plus matching visual-event behavior so support-driven chaining originates from the actual first hit target and remains readable in runtime presentation.
+- [ ] **Mana system**: Introduce mana as a spell resource, with mana pool (intelligence-derived), mana regen (intelligence bonus), and mana cost per spell. Affixes can grant mana and mana regen.
+- [ ] **Attack builds**: Add attack-based main skills (non-spell damage) with attack speed (dexterity-derived), accuracy (dexterity bonus), and attack-specific supports. Enable physical damage, bleed, and other attack mechanics.
 
 ### Map pacing and sustain
 
