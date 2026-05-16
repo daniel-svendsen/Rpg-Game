@@ -5,7 +5,6 @@ import type { CharacterRecord } from "../shared/types/saveTypes";
 
 interface BossTabProps {
   topBar: ReactNode;
-  healthHud: ReactNode;
   character: CharacterRecord | null;
   onStartBossTier: (tier: number) => void;
 }
@@ -25,7 +24,7 @@ const countBossKeysByTier = (character: CharacterRecord | null): Record<number, 
   }, {});
 };
 
-export const BossTab = ({ topBar, healthHud, character, onStartBossTier }: BossTabProps) => {
+export const BossTab = ({ topBar, character, onStartBossTier }: BossTabProps) => {
   const highestUnlockedTier = character?.mapProgress.highestUnlockedTier ?? 1;
   const bossKeysByTier = countBossKeysByTier(character);
   const nextTier = character ? getNextUnclearedBossTier(character.mapProgress, mapBalance.maxTier) : 1;
@@ -33,7 +32,6 @@ export const BossTab = ({ topBar, healthHud, character, onStartBossTier }: BossT
   return (
     <div className="content stack mobile-content">
       {topBar}
-      {healthHud}
       <section className="panel stack">
         <h4>Bosses</h4>
         <p className="status-text">

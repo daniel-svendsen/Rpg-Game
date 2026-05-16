@@ -1,33 +1,21 @@
-﻿import { useState, type ReactNode } from "react";
+﻿import { type ReactNode } from "react";
 import type { CharacterRecord } from "../shared/types/saveTypes";
 import { getCharacterCombatSummary } from "./combatSummary";
 import { getCharacterDefenseEstimate } from "./defenseEstimate";
 
 interface CharacterTabProps {
   topBar: ReactNode;
-  healthHud: ReactNode;
-  accountEmail: string;
   character: CharacterRecord | null;
   selectedMapId: string;
-  onLogout: () => void;
-  onSwitchCharacter: () => void;
-  onDeleteCharacter: () => Promise<void>;
   onSpendStatPoint: (statKey: "strength" | "agility" | "vitality" | "dexterity" | "intelligence") => void;
 }
 
 export const CharacterTab = ({
   topBar,
-  healthHud,
-  accountEmail,
   character,
   selectedMapId,
-  onLogout,
-  onSwitchCharacter,
-  onDeleteCharacter,
   onSpendStatPoint
 }: CharacterTabProps) => {
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const combatSummary = character ? getCharacterCombatSummary(character) : null;
   const defenseEstimate = character ? getCharacterDefenseEstimate(character, selectedMapId) : null;
   const defenseContextLabel = defenseEstimate
@@ -39,49 +27,6 @@ export const CharacterTab = ({
   return (
     <div className="content stack mobile-content">
       {topBar}
-      {healthHud}
-      <section className="panel stack">
-        <h4>Account</h4>
-        <div className="status-text">Email: {accountEmail || "Current session"}</div>
-        <div className="status-text">Character: {character?.name ?? "None"}</div>
-        <div className="status-text">Level: {character?.level ?? 0}</div>
-        <div className="actions">
-          <button className="secondary-button" onClick={onSwitchCharacter}>
-            Switch Character
-          </button>
-          <button className="secondary-button" onClick={onLogout}>
-            Log out
-          </button>
-        </div>
-        {character ? (
-          <div className="actions">
-            {showDeleteConfirm ? (
-              <>
-                <p className="status-text">Delete {character.name}? This cannot be undone.</p>
-                <button
-                  className="secondary-button"
-                  disabled={isDeleting}
-                  onClick={async () => {
-                    setIsDeleting(true);
-                    await onDeleteCharacter();
-                    setIsDeleting(false);
-                    setShowDeleteConfirm(false);
-                  }}
-                >
-                  {isDeleting ? "Deleting..." : "Confirm Delete"}
-                </button>
-                <button className="secondary-button" onClick={() => setShowDeleteConfirm(false)}>
-                  Cancel
-                </button>
-              </>
-            ) : (
-              <button className="secondary-button" onClick={() => setShowDeleteConfirm(true)}>
-                Delete Character
-              </button>
-            )}
-          </div>
-        ) : null}
-      </section>
       <section className="panel stack">
         <h4>Character Stats</h4>
         <div className="stat-section stack">

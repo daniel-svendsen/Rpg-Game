@@ -16,7 +16,8 @@ const mainTabs: Array<{ id: HubTab; label: string; icon: string }> = [
 
 const menuTabs: Array<{ id: HubTab; label: string }> = [
   { id: "shop", label: "Shop" },
-  { id: "character", label: "Character" }
+  { id: "character", label: "Character" },
+  { id: "account", label: "Account" }
 ];
 
 export const HubBottomTabs = ({ activeTab, onSelectTab }: HubBottomTabsProps) => {

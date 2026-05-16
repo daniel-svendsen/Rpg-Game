@@ -71,8 +71,8 @@ export const spellConfig: Record<string, SpellDefinition> = {
     areaRadius: 0,
     criticalBonus: 0.04,
     levelScaling: {
-      damageMultiplierPerLevel: 0.18,
-      cooldownMultiplierStep: 0.03,
+      damageMultiplierPerLevel: 0.12,
+      cooldownMultiplierStep: 0.02,
       chainRangePerLevel: 10,
       areaRadiusPerLevel: 0,
       critChancePerLevel: 0.005
@@ -91,8 +91,8 @@ export const spellConfig: Record<string, SpellDefinition> = {
     areaRadius: 38,
     criticalBonus: 0.02,
     levelScaling: {
-      damageMultiplierPerLevel: 0.2,
-      cooldownMultiplierStep: 0.025,
+      damageMultiplierPerLevel: 0.13,
+      cooldownMultiplierStep: 0.016,
       chainRangePerLevel: 0,
       areaRadiusPerLevel: 4,
       critChancePerLevel: 0.004
@@ -111,8 +111,8 @@ export const spellConfig: Record<string, SpellDefinition> = {
     areaRadius: 54,
     criticalBonus: 0.07,
     levelScaling: {
-      damageMultiplierPerLevel: 0.17,
-      cooldownMultiplierStep: 0.02,
+      damageMultiplierPerLevel: 0.11,
+      cooldownMultiplierStep: 0.013,
       chainRangePerLevel: 0,
       areaRadiusPerLevel: 5,
       critChancePerLevel: 0.007
@@ -131,8 +131,8 @@ export const spellConfig: Record<string, SpellDefinition> = {
     areaRadius: 0,
     criticalBonus: 0.09,
     levelScaling: {
-      damageMultiplierPerLevel: 0.24,
-      cooldownMultiplierStep: 0.02,
+      damageMultiplierPerLevel: 0.16,
+      cooldownMultiplierStep: 0.013,
       chainRangePerLevel: 0,
       areaRadiusPerLevel: 0,
       critChancePerLevel: 0.008
@@ -151,8 +151,8 @@ export const spellConfig: Record<string, SpellDefinition> = {
     areaRadius: 62,
     criticalBonus: 0.04,
     levelScaling: {
-      damageMultiplierPerLevel: 0.26,
-      cooldownMultiplierStep: 0.018,
+      damageMultiplierPerLevel: 0.17,
+      cooldownMultiplierStep: 0.012,
       chainRangePerLevel: 0,
       areaRadiusPerLevel: 6,
       critChancePerLevel: 0.004
@@ -171,8 +171,8 @@ export const spellConfig: Record<string, SpellDefinition> = {
     areaRadius: 58,
     criticalBonus: 0.08,
     levelScaling: {
-      damageMultiplierPerLevel: 0.28,
-      cooldownMultiplierStep: 0.018,
+      damageMultiplierPerLevel: 0.18,
+      cooldownMultiplierStep: 0.012,
       chainRangePerLevel: 10,
       areaRadiusPerLevel: 6,
       critChancePerLevel: 0.008

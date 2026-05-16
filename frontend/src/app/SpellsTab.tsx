@@ -193,7 +193,7 @@ export const SpellsTab = ({
                 <strong>{resolvedSpell.damage}</strong>
                 <span className="status-text">Cooldown</span>
                 <strong>{(resolvedSpell.cooldownMs / 1000).toFixed(2)}s</strong>
-                <span className="status-text">Cast cadence</span>
+                <span className="status-text">Cast rate</span>
                 <strong>{(1000 / resolvedSpell.cooldownMs).toFixed(2)} casts/s</strong>
                 <span className="status-text">Projectiles</span>
                 <strong>{resolvedSpell.projectileCount}</strong>

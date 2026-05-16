@@ -1,5 +1,4 @@
 import type { Dispatch, SetStateAction } from "react";
-import { HealthHud } from "./HealthHud";
 import { HubBottomTabs } from "./HubBottomTabs";
 import { HubOverlayPanel } from "./HubOverlayPanel";
 import { HubTopBar } from "./HubTopBar";
@@ -9,6 +8,7 @@ import { GearTab } from "./GearTab";
 import { MapsTab } from "./MapsTab";
 import { ShopTab } from "./ShopTab";
 import { SpellsTab } from "./SpellsTab";
+import { AccountTab } from "./AccountTab";
 import { CharacterTab } from "./CharacterTab";
 import {
   equipmentSlots,
@@ -21,7 +21,6 @@ import {
   getMapDisplayName,
   getMapVariantLabel
 } from "./mapFlow";
-import { canUseLifeFlask } from "../game/domain/player/lifeFlask";
 import type {
   AutoSellRarity,
   AutoSellSettings,
@@ -87,7 +86,6 @@ interface HubScreenProps {
 
 export const HubScreen = ({
   accountEmail,
-  arenaSnapshot,
   character,
   hubTab,
   overlayPanel,
@@ -134,8 +132,7 @@ export const HubScreen = ({
   onSpendStatPoint,
   onStartMap,
   onUpgradeSpell,
-  onUpgradeSupport,
-  onUseLifeFlask
+  onUpgradeSupport
 }: HubScreenProps) => {
   const totalBossKeys = character
     ? character.mapProgress.consumableMaps
@@ -146,19 +143,12 @@ export const HubScreen = ({
   const topBar = (
     <HubTopBar
       level={character?.level}
+      skillPoints={character?.unspentStatPoints}
       gold={character?.gold}
       mapShards={character ? getCurrencyAmount(character, "mapShard") : undefined}
       gemcuttersPrisms={character ? getCurrencyAmount(character, "gemcuttersPrism") : undefined}
       bossKeys={totalBossKeys}
       onSave={onSave}
-    />
-  );
-  const displayedCharacter = arenaSnapshot?.player ?? character;
-  const healthHud = (
-    <HealthHud
-      character={displayedCharacter}
-      canUseLifeFlask={character ? canUseLifeFlask(displayedCharacter ?? character) : false}
-      onUseLifeFlask={onUseLifeFlask}
     />
   );
   const sellAllValue = character ? character.inventory.reduce((total, item) => total + getItemSellPrice(item), 0) : 0;
@@ -174,7 +164,6 @@ export const HubScreen = ({
       {hubTab === "maps" ? (
         <MapsTab
           topBar={topBar}
-          healthHud={healthHud}
           character={character}
           selectedMapTarget={selectedMapTarget}
           selectedMapId={selectedMapId}
@@ -193,7 +182,7 @@ export const HubScreen = ({
         />
       ) : null}
       {hubTab === "boss" ? (
-        <BossTab topBar={topBar} healthHud={healthHud} character={character} onStartBossTier={onStartBossTier} />
+        <BossTab topBar={topBar} character={character} onStartBossTier={onStartBossTier} />
       ) : null}
       {hubTab === "equipment" ? (
         <GearTab
@@ -247,14 +236,19 @@ export const HubScreen = ({
       {hubTab === "character" ? (
         <CharacterTab
           topBar={topBar}
-          healthHud={healthHud}
-          accountEmail={accountEmail}
           character={character}
           selectedMapId={selectedMapId}
+          onSpendStatPoint={onSpendStatPoint}
+        />
+      ) : null}
+      {hubTab === "account" ? (
+        <AccountTab
+          topBar={topBar}
+          accountEmail={accountEmail}
+          character={character}
           onLogout={onLogout}
           onSwitchCharacter={onSwitchCharacter}
           onDeleteCharacter={onDeleteCharacter}
-          onSpendStatPoint={onSpendStatPoint}
         />
       ) : null}
       <HubBottomTabs activeTab={hubTab} onSelectTab={onSelectHubTab} />

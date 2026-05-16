@@ -2,6 +2,7 @@ import { useState } from "react";
 
 interface HubTopBarProps {
   level: number | undefined;
+  skillPoints: number | undefined;
   gold: number | undefined;
   mapShards: number | undefined;
   gemcuttersPrisms: number | undefined;
@@ -9,7 +10,7 @@ interface HubTopBarProps {
   onSave: () => void;
 }
 
-export const HubTopBar = ({ level, gold, mapShards, gemcuttersPrisms, bossKeys, onSave }: HubTopBarProps) => {
+export const HubTopBar = ({ level, skillPoints, gold, mapShards, gemcuttersPrisms, bossKeys, onSave }: HubTopBarProps) => {
   const [justSaved, setJustSaved] = useState(false);
 
   const handleSave = () => {
@@ -22,6 +23,9 @@ export const HubTopBar = ({ level, gold, mapShards, gemcuttersPrisms, bossKeys, 
     <section className="hub-summary-bar">
       <div className="hub-summary-chips">
         <span className="summary-chip">Lv {level}</span>
+        {typeof skillPoints === "number" && skillPoints > 0 ? (
+          <span className="summary-chip summary-chip--sp">{skillPoints} SP</span>
+        ) : null}
         <span className="summary-chip summary-chip--gold">{gold}g</span>
         {typeof mapShards === "number" ? (
           <span className="summary-chip summary-chip--shards">{mapShards} Shards</span>

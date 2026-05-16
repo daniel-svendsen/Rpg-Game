@@ -39,10 +39,8 @@ export const getSpellLevel = (character: CharacterRecord, spellId: string): numb
   character.spellProgress.find((entry) => entry.spellId === normalizeSpellId(spellId))?.level ?? 1;
 
 export const getSpellUpgradeGoldCost = (level: number): number =>
-  Math.round(
-    balanceConfig.spellProgression.baseUpgradeGoldCost *
-      balanceConfig.spellProgression.upgradeGoldGrowthFactor ** (level - 1)
-  );
+  balanceConfig.spellProgression.baseUpgradeGoldCost +
+  (level - 1) * balanceConfig.spellProgression.upgradeGoldStep;
 
 export const getSpellUpgradeShardCost = (level: number): number => {
   if (level < balanceConfig.spellProgression.shardUpgradeStartLevel) {
@@ -54,6 +52,8 @@ export const getSpellUpgradeShardCost = (level: number): number => {
 
 export const getSpellUpgradeTierRequirement = (level: number): number => Math.min(balanceConfig.mapTierScaling.maxTier, level);
 
+export const getSpellUpgradeGemcuttersPrismCost = (_level: number): number => 2;
+
 export const canUpgradeSpell = (character: CharacterRecord, spellId: string): boolean => {
   const normalizedSpellId = normalizeSpellId(spellId);
   const currentLevel = getSpellLevel(character, normalizedSpellId);
@@ -62,15 +62,16 @@ export const canUpgradeSpell = (character: CharacterRecord, spellId: string): bo
     return false;
   }
 
-  const nextLevel = currentLevel + 1;
   const goldCost = getSpellUpgradeGoldCost(currentLevel);
   const shardCost = getSpellUpgradeShardCost(currentLevel);
+  const prismCost = getSpellUpgradeGemcuttersPrismCost(currentLevel);
   const shardAmount = character.currencies.find((entry) => entry.code === "mapShard")?.amount ?? 0;
+  const prismAmount = character.currencies.find((entry) => entry.code === "gemcuttersPrism")?.amount ?? 0;
 
   return (
     character.gold >= goldCost &&
     shardAmount >= shardCost &&
-    character.mapProgress.highestUnlockedTier >= getSpellUpgradeTierRequirement(nextLevel)
+    prismAmount >= prismCost
   );
 };
 
@@ -84,14 +85,17 @@ export const upgradeSpell = (character: CharacterRecord, spellId: string): Chara
 
   const goldCost = getSpellUpgradeGoldCost(currentLevel);
   const shardCost = getSpellUpgradeShardCost(currentLevel);
+  const prismCost = getSpellUpgradeGemcuttersPrismCost(currentLevel);
 
   return {
     ...character,
     gold: character.gold - goldCost,
     currencies: character.currencies
-      .map((entry) =>
-        entry.code === "mapShard" ? { ...entry, amount: entry.amount - shardCost } : entry
-      )
+      .map((entry) => {
+        if (entry.code === "mapShard") return { ...entry, amount: entry.amount - shardCost };
+        if (entry.code === "gemcuttersPrism") return { ...entry, amount: entry.amount - prismCost };
+        return entry;
+      })
       .filter((entry) => entry.amount > 0),
     spellProgress: character.spellProgress.map((entry) =>
       entry.spellId === normalizedSpellId ? { ...entry, level: clampSpellLevel(entry.level + 1) } : entry

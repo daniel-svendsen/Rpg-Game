@@ -3,9 +3,9 @@ import { resolveSpell } from "../game/domain/spells/spellEngine";
 import {
   canUpgradeSpell,
   getSpellLevel,
+  getSpellUpgradeGemcuttersPrismCost,
   getSpellUpgradeGoldCost,
-  getSpellUpgradeShardCost,
-  getSpellUpgradeTierRequirement
+  getSpellUpgradeShardCost
 } from "../game/domain/spells/spellProgression";
 import type { CharacterRecord } from "../shared/types/saveTypes";
 
@@ -25,7 +25,7 @@ export const SpellUpgradeActions = ({ character, spellId, onUpgradeSpell }: Spel
   const spellLevel = getSpellLevel(character, spellId);
   const goldCost = getSpellUpgradeGoldCost(spellLevel);
   const shardCost = getSpellUpgradeShardCost(spellLevel);
-  const nextTierRequirement = getSpellUpgradeTierRequirement(spellLevel + 1);
+  const prismCost = getSpellUpgradeGemcuttersPrismCost(spellLevel);
   const isUpgradeable = canUpgradeSpell(character, spellId);
   const isMaxLevel = spellLevel >= balanceConfig.spellProgression.maxLevel;
   const matchingLoadout = character.spellLoadout.find((loadout) => loadout.mainSpellId === spellId);
@@ -46,7 +46,7 @@ export const SpellUpgradeActions = ({ character, spellId, onUpgradeSpell }: Spel
       <div className="status-text">
         {isMaxLevel
           ? "Max level reached"
-          : `Upgrade cost: ${goldCost} gold${shardCost > 0 ? ` | ${shardCost} Map Shard${shardCost > 1 ? "s" : ""}` : ""} | Requires Tier ${nextTierRequirement}`}
+          : `Upgrade cost: ${goldCost} gold${shardCost > 0 ? ` | ${shardCost} Map Shard${shardCost > 1 ? "s" : ""}` : ""} | ${prismCost} Gemcutter's Prism${prismCost > 1 ? "s" : ""}`}
       </div>
       {nextResolved ? (
         <div className="spell-upgrade-preview">

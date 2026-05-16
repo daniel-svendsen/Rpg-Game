@@ -24,9 +24,9 @@ export const progressionBalance = {
     rareGoldBase: 24
   },
   spellProgression: {
-    maxLevel: 10,
-    baseUpgradeGoldCost: 30,
-    upgradeGoldGrowthFactor: 1.45,
+    maxLevel: 20,
+    baseUpgradeGoldCost: 50,
+    upgradeGoldStep: 275,
     shardUpgradeStartLevel: 4,
     shardUpgradeInterval: 3
   },

@@ -13,7 +13,6 @@ import { createUnlockedTierSelection, getUnlockedTierSelection } from "./mapFlow
 
 interface MapsTabProps {
   topBar: ReactNode;
-  healthHud: ReactNode;
   character: CharacterRecord | null;
   selectedMapTarget: SelectedMapTarget;
   selectedMapId: string;
@@ -33,7 +32,6 @@ interface MapsTabProps {
 
 export const MapsTab = ({
   topBar,
-  healthHud,
   character,
   selectedMapTarget,
   selectedMapId,
@@ -72,7 +70,6 @@ export const MapsTab = ({
   return (
     <div className="content stack mobile-content">
       {topBar}
-      {healthHud}
       <section className="panel stack">
         <h4>Maps</h4>
         <div className="actions">

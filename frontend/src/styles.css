@@ -1511,6 +1511,12 @@ button {
   color: #fb923c;
 }
 
+.summary-chip--sp {
+  background: rgba(167, 139, 250, 0.12);
+  border-color: rgba(167, 139, 250, 0.24);
+  color: #a78bfa;
+}
+
 /* ── Arena combat HUD overlays ────────────────────────────────────────────── */
 
 .arena-top-hud {
