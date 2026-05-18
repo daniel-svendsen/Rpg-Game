@@ -37,6 +37,21 @@ const getMaxAffixCounts = (item: InventoryItem) => {
   return { maxPrefixes: 0, maxSuffixes: 0 };
 };
 
+const hasRollableAffix = (item: InventoryItem): boolean => {
+  if (!item.slot) return false;
+  const slot = item.slot === "Ring1" || item.slot === "Ring2" ? "Ring" : item.slot;
+  const pool = itemAffixPoolsBySlot[slot];
+  if (!pool) return false;
+  const usedIds = new Set(getAffixes(item).map((a) => a.id));
+  const { maxPrefixes, maxSuffixes } = getMaxAffixCounts(item);
+  const prefixCount = getPrefixCount(item);
+  const suffixCount = getSuffixCount(item);
+  return (
+    pool.prefixes.some((e) => !usedIds.has(e.id) && prefixCount < maxPrefixes) ||
+    pool.suffixes.some((e) => !usedIds.has(e.id) && suffixCount < maxSuffixes)
+  );
+};
+
 const rollOneAffix = (item: InventoryItem): ItemAffixInstance | null => {
   if (!item.slot) return null;
 
@@ -104,11 +119,14 @@ export const canApplyOrb = (item: InventoryItem, orbId: CraftingOrbId): Crafting
       if (item.rarity !== "Magic" && item.rarity !== "Rare") {
         return { ok: false, error: "wrong_rarity", message: "Orb of Ascension requires a Magic or Rare item." };
       }
-      if (item.rarity === "Rare") {
-        const total = getPrefixCount(item) + getSuffixCount(item);
-        if (total >= 6) {
-          return { ok: false, error: "item_full", message: "This Rare item is full (6/6 affixes)." };
-        }
+      const checkItem = item.rarity === "Magic" ? { ...item, rarity: "Rare" as const } : item;
+      if (!hasRollableAffix(checkItem)) {
+        const total = getPrefixCount(checkItem) + getSuffixCount(checkItem);
+        const message =
+          total >= 6
+            ? "This Rare item is full (6/6 affixes)."
+            : "No valid affixes can be added to this item.";
+        return { ok: false, error: "item_full", message };
       }
       return null;
     }
