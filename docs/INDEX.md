@@ -3,6 +3,8 @@
 This folder collects longer-form project documentation that would otherwise bloat the repo root.
 
 - [Project Vision](PROJECT_VISION.md)
+- [Local Workflow Notes](LOCAL_WORKFLOW.md)
+- [Asset Credits](ASSET_CREDITS.md)
 - [Simulation Guide](SIMULATION.md)
 - [Command Reference](COMMANDS.md)
 - [System Flowcharts](SYSTEM_FLOWCHARTS.md)

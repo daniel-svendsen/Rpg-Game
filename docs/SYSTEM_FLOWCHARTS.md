@@ -143,10 +143,10 @@ Primary code paths:
 
 - `frontend/src/app/App.tsx`
 - `frontend/src/api/authApi.ts`
-- `backend/src/main/java/com/example/arpg/auth/AuthController.java`
-- `backend/src/main/java/com/example/arpg/auth/AuthService.java`
-- `backend/src/main/java/com/example/arpg/config/SecurityConfig.java`
-- `backend/src/main/java/com/example/arpg/security/JwtAuthenticationFilter.java`
+- `backend/src/main/java/com/shardborne/auth/AuthController.java`
+- `backend/src/main/java/com/shardborne/auth/AuthService.java`
+- `backend/src/main/java/com/shardborne/config/SecurityConfig.java`
+- `backend/src/main/java/com/shardborne/security/JwtAuthenticationFilter.java`
 
 ```mermaid
 flowchart TD
@@ -221,7 +221,7 @@ Primary code paths:
 - `frontend/src/app/characterPersistence.ts`
 - `frontend/src/app/useArenaSession.ts`
 - `frontend/src/api/gameApi.ts`
-- `backend/src/main/java/com/example/arpg/character/CharacterProfileService.java`
+- `backend/src/main/java/com/shardborne/character/CharacterProfileService.java`
 
 ```mermaid
 flowchart TD

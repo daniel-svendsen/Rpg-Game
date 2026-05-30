@@ -1,5 +1,5 @@
 param(
-    [string]$VerificationDatabasePrefix = "simple_arpg_verify",
+    [string]$VerificationDatabasePrefix = "shardborne_verify",
     [int]$VerificationPort = 18081,
     [int]$StartupTimeoutSeconds = 90
 )
@@ -132,7 +132,7 @@ try {
 
         if (Test-Path $backendLogPath) {
             $backendLog = Get-Content $backendLogPath -Raw
-            if ($backendLog -match "Started SimpleArpgApplication") {
+            if ($backendLog -match "Started ShardborneApplication") {
                 $startupVerified = $true
                 break
             }

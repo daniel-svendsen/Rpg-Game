@@ -21,7 +21,7 @@
 - Gameplay truth: `frontend/src/game/domain`.
 - Rendering only: `frontend/src/game/phaser`.
 - Balance/content config: `frontend/src/game/config`.
-- Persistence/API authority: `backend/src/main/java/com/example/arpg`.
+- Persistence/API authority: `backend/src/main/java/com/shardborne`.
 
 ## External Services And Env Vars
 - Database: `APP_DATABASE_URL`, `APP_DATABASE_USERNAME`, `APP_DATABASE_PASSWORD`.

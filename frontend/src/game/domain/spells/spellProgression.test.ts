@@ -3,6 +3,7 @@ import { balanceConfig } from "../../config/balanceConfig";
 import {
   canUpgradeSpell,
   getSpellLevel,
+  getSpellUpgradeGemcuttersPrismCost,
   getSpellUpgradeGoldCost,
   getSpellUpgradeShardCost,
   getSpellUpgradeTierRequirement,
@@ -34,10 +35,14 @@ describe("spellProgression", () => {
     const currentLevel = balanceConfig.spellProgression.shardUpgradeStartLevel;
     const goldCost = getSpellUpgradeGoldCost(currentLevel);
     const shardCost = getSpellUpgradeShardCost(currentLevel);
+    const prismCost = getSpellUpgradeGemcuttersPrismCost(currentLevel);
     const nextLevelRequirement = getSpellUpgradeTierRequirement(currentLevel + 1);
     const character = createTestCharacter({
       gold: goldCost,
-      currencies: [{ code: "mapShard", amount: shardCost }],
+      currencies: [
+        { code: "mapShard", amount: shardCost },
+        { code: "gemcuttersPrism", amount: prismCost }
+      ],
       mapProgress: {
         highestUnlockedTier: nextLevelRequirement,
         lastCompletedTier: nextLevelRequirement,
