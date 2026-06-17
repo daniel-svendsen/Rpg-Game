@@ -44,6 +44,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -53,7 +54,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                         + "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,"
                         + "org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,"
                         + "org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration,"
-                        + "org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration"
+                        + "org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration",
+                "app.request-size.auth-json-max=256B",
+                "app.request-size.api-json-max=512B"
         }
 )
 @AutoConfigureMockMvc
@@ -470,6 +473,52 @@ class AuthFlowIntegrationTest {
                 .andExpect(jsonPath("$.message").value("Please correct the highlighted fields."))
                 .andExpect(jsonPath("$.fieldErrors.email").value("Enter a valid email address."))
                 .andExpect(jsonPath("$.fieldErrors.password").value("Password must be between 8 and 100 characters."));
+    }
+
+    @Test
+    void oversizedAuthPayloadReturnsRequestTooLarge() throws Exception {
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "player@example.com",
+                                  "password": "%s"
+                                }
+                                """.formatted("x".repeat(300))))
+                .andExpect(status().isPayloadTooLarge())
+                .andExpect(jsonPath("$.code").value("REQUEST_TOO_LARGE"))
+                .andExpect(jsonPath("$.message").value("Request body is too large. Maximum allowed size is 256 bytes."));
+    }
+
+    @Test
+    void oversizedSavePayloadReturnsRequestTooLarge() throws Exception {
+        String registerResponse = mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "save-size@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String token = objectMapper.readTree(registerResponse).get("token").asText();
+
+        mockMvc.perform(put("/api/characters/42/progress")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "gold": 1,
+                                  "padding": "%s"
+                                }
+                                """.formatted("x".repeat(600))))
+                .andExpect(status().isPayloadTooLarge())
+                .andExpect(jsonPath("$.code").value("REQUEST_TOO_LARGE"))
+                .andExpect(jsonPath("$.message").value("Request body is too large. Maximum allowed size is 512 bytes."));
     }
 
     @Test

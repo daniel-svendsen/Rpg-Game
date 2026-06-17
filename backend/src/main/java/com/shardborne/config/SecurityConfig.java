@@ -32,7 +32,8 @@ import java.util.List;
         JwtProperties.class,
         ClientProperties.class,
         AuthRateLimitProperties.class,
-        SecurityHardeningProperties.class
+        SecurityHardeningProperties.class,
+        RequestSizeLimitProperties.class
 })
 public class SecurityConfig {
 

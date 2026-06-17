@@ -21,6 +21,9 @@ server:
   port: ${APP_PORT:8080}
 
 app:
+  request-size:
+    auth-json-max: ${APP_REQUEST_SIZE_AUTH_JSON_MAX:16KB}
+    api-json-max: ${APP_REQUEST_SIZE_API_JSON_MAX:1MB}
   security:
     production-mode: ${APP_SECURITY_PRODUCTION_MODE:false}
   client:

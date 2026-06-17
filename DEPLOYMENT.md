@@ -29,6 +29,8 @@ Set at least:
 POSTGRES_PASSWORD=replace-with-a-local-demo-password
 APP_JWT_SECRET=replace-this-with-a-secret-at-least-32-characters-long
 APP_JWT_EXPIRATION_SECONDS=86400
+APP_REQUEST_SIZE_AUTH_JSON_MAX=16KB
+APP_REQUEST_SIZE_API_JSON_MAX=1MB
 APP_SECURITY_PRODUCTION_MODE=true
 APP_CLIENT_ALLOWED_ORIGIN_PATTERNS=https://shardborne.pages.dev
 APP_AUTH_LOGIN_RATE_LIMIT_ENABLED=true
@@ -197,6 +199,7 @@ The frontend uses `/api/...` requests in the background.
 - Registration requires a valid email address
 - Passwords must be between `8` and `100` characters
 - Registration and failed login attempts are rate limited per client IP and normalized email; repeated failed login attempts return a `429` API error.
+- Oversized JSON API bodies are rejected with a `413` API error before request parsing. Auth payloads default to `16KB`; other API payloads, including character saves, default to `1MB`.
 - If the Docker database is fresh, register a new account before logging in
 
 ## Production Safety Switch

@@ -427,9 +427,9 @@ Implementation strategy:
    - Acceptance: production startup/config review makes unsafe defaults obvious before deploy.
 
 3. Request size limits
-   - [ ] Set conservative backend request/body size limits for JSON APIs.
-   - [ ] Confirm oversized auth and save payloads fail cleanly.
-   - [ ] Keep limits high enough for legitimate character save payloads.
+   - [x] Set conservative backend request/body size limits for JSON APIs.
+   - [x] Confirm oversized auth and save payloads fail cleanly.
+   - [x] Keep limits high enough for legitimate character save payloads.
    - Acceptance: oversized requests cannot tie up the backend with large JSON payloads and return a clear client error.
 
 4. Security headers
@@ -461,6 +461,7 @@ Current security baseline:
 - [x] Register rate limiting first pass: `POST /api/auth/register` is limited in memory per IP and normalized email, configurable through `APP_AUTH_REGISTER_RATE_LIMIT_*`.
 - [x] Login rate limiting first pass: failed `POST /api/auth/login` attempts are limited in memory per IP and normalized email, configurable through `APP_AUTH_LOGIN_RATE_LIMIT_*`; successful login clears prior failures for that normalized email while IP abuse pressure remains tracked for the active window.
 - [x] Production safety switch first pass: `APP_SECURITY_PRODUCTION_MODE=true` fails backend startup unless `APP_JWT_SECRET` is non-default and at least 32 characters, and CORS origins are exact deployed HTTPS frontend origins.
+- [x] Request size limits first pass: JSON API bodies are rejected early with `REQUEST_TOO_LARGE` / `413`; auth defaults to `16KB`, and non-auth APIs including character saves default to `1MB`, configurable through `APP_REQUEST_SIZE_*`.
 
 ### UX and feedback
 
