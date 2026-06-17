@@ -28,7 +28,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
-@EnableConfigurationProperties({JwtProperties.class, ClientProperties.class, AuthRateLimitProperties.class})
+@EnableConfigurationProperties({
+        JwtProperties.class,
+        ClientProperties.class,
+        AuthRateLimitProperties.class,
+        SecurityHardeningProperties.class
+})
 public class SecurityConfig {
 
     private final ClientProperties clientProperties;

@@ -8,15 +8,34 @@ import java.time.Duration;
 public class AuthRateLimitProperties {
 
     private final Register register = new Register();
+    private final Login login = new Login();
 
     public Register getRegister() {
         return register;
     }
 
-    public static class Register {
+    public Login getLogin() {
+        return login;
+    }
+
+    public static class Register extends AttemptLimits {
+        public Register() {
+            setMaxAttemptsPerIp(10);
+            setMaxAttemptsPerEmail(5);
+        }
+    }
+
+    public static class Login extends AttemptLimits {
+        public Login() {
+            setMaxAttemptsPerIp(8);
+            setMaxAttemptsPerEmail(5);
+        }
+    }
+
+    public static class AttemptLimits {
         private boolean enabled = true;
-        private int maxAttemptsPerIp = 10;
-        private int maxAttemptsPerEmail = 5;
+        private int maxAttemptsPerIp;
+        private int maxAttemptsPerEmail;
         private Duration window = Duration.ofMinutes(1);
 
         public boolean isEnabled() {

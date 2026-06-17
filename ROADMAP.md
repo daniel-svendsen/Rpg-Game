@@ -414,16 +414,16 @@ Goal:
 Implementation strategy:
 
 1. Login rate limiting
-   - [ ] Add rate limiting to `POST /api/auth/login`, using the same configurable pattern as register rate limiting.
-   - [ ] Track limits per client IP and normalized email.
-   - [ ] Use a stricter budget for failed login attempts than for normal traffic.
-   - [ ] Return a consistent `429` API error that the frontend can display clearly.
+   - [x] Add rate limiting to `POST /api/auth/login`, using the same configurable pattern as register rate limiting.
+   - [x] Track limits per client IP and normalized email.
+   - [x] Use a stricter budget for failed login attempts than for normal traffic.
+   - [x] Return a consistent `429` API error that the frontend can display clearly.
    - Acceptance: repeated bad login attempts for one IP or email are blocked without breaking valid login flow.
 
 2. Production JWT secret and CORS configuration
-   - [ ] Require a real `APP_JWT_SECRET` in production-like environments; do not rely on the local fallback outside development.
-   - [ ] Document required production auth env vars in the relevant setup docs or example config.
-   - [ ] Restrict production CORS to the deployed frontend origin instead of wildcard localhost patterns.
+   - [x] Require a real `APP_JWT_SECRET` in production-like environments; do not rely on the local fallback outside development.
+   - [x] Document required production auth env vars in the relevant setup docs or example config.
+   - [x] Restrict production CORS to the deployed frontend origin instead of wildcard localhost patterns.
    - Acceptance: production startup/config review makes unsafe defaults obvious before deploy.
 
 3. Request size limits
@@ -459,6 +459,8 @@ Implementation strategy:
 Current security baseline:
 
 - [x] Register rate limiting first pass: `POST /api/auth/register` is limited in memory per IP and normalized email, configurable through `APP_AUTH_REGISTER_RATE_LIMIT_*`.
+- [x] Login rate limiting first pass: failed `POST /api/auth/login` attempts are limited in memory per IP and normalized email, configurable through `APP_AUTH_LOGIN_RATE_LIMIT_*`; successful login clears prior failures for that normalized email while IP abuse pressure remains tracked for the active window.
+- [x] Production safety switch first pass: `APP_SECURITY_PRODUCTION_MODE=true` fails backend startup unless `APP_JWT_SECRET` is non-default and at least 32 characters, and CORS origins are exact deployed HTTPS frontend origins.
 
 ### UX and feedback
 

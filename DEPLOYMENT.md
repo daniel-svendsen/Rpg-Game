@@ -29,6 +29,12 @@ Set at least:
 POSTGRES_PASSWORD=replace-with-a-local-demo-password
 APP_JWT_SECRET=replace-this-with-a-secret-at-least-32-characters-long
 APP_JWT_EXPIRATION_SECONDS=86400
+APP_SECURITY_PRODUCTION_MODE=true
+APP_CLIENT_ALLOWED_ORIGIN_PATTERNS=https://shardborne.pages.dev
+APP_AUTH_LOGIN_RATE_LIMIT_ENABLED=true
+APP_AUTH_LOGIN_RATE_LIMIT_MAX_ATTEMPTS_PER_IP=8
+APP_AUTH_LOGIN_RATE_LIMIT_MAX_ATTEMPTS_PER_EMAIL=5
+APP_AUTH_LOGIN_RATE_LIMIT_WINDOW=1m
 ```
 
 ## Cloudflare Pages Setup
@@ -190,7 +196,16 @@ The frontend uses `/api/...` requests in the background.
 
 - Registration requires a valid email address
 - Passwords must be between `8` and `100` characters
+- Registration and failed login attempts are rate limited per client IP and normalized email; repeated failed login attempts return a `429` API error.
 - If the Docker database is fresh, register a new account before logging in
+
+## Production Safety Switch
+
+Set `APP_SECURITY_PRODUCTION_MODE=true` before exposing the backend publicly. In that mode startup fails unless:
+
+- `APP_JWT_SECRET` is a non-default secret with at least `32` characters
+- `APP_CLIENT_ALLOWED_ORIGIN_PATTERNS` contains exact deployed HTTPS frontend origins, for example `https://shardborne.pages.dev`
+- wildcard, localhost, private-network, Capacitor, and Ionic origins have been removed from backend CORS
 
 ## What To Restart After Changes
 

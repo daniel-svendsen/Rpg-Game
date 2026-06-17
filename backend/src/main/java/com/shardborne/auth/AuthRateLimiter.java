@@ -21,6 +21,8 @@ public class AuthRateLimiter {
     private final Clock clock;
     private final Map<String, AttemptWindow> registerIpAttempts = new ConcurrentHashMap<>();
     private final Map<String, AttemptWindow> registerEmailAttempts = new ConcurrentHashMap<>();
+    private final Map<String, AttemptWindow> loginIpFailures = new ConcurrentHashMap<>();
+    private final Map<String, AttemptWindow> loginEmailFailures = new ConcurrentHashMap<>();
 
     @Autowired
     public AuthRateLimiter(AuthRateLimitProperties properties) {
@@ -62,9 +64,73 @@ public class AuthRateLimiter {
         }
     }
 
+    public void checkLoginAllowed(HttpServletRequest request, String email) {
+        AuthRateLimitProperties.Login loginProperties = properties.getLogin();
+        if (!loginProperties.isEnabled()) {
+            return;
+        }
+
+        Instant now = clock.instant();
+        Duration window = loginProperties.getWindow();
+        if (isInvalidWindow(window)) {
+            return;
+        }
+
+        pruneExpired(loginIpFailures, now, window);
+        pruneExpired(loginEmailFailures, now, window);
+
+        boolean ipAllowed = isWithinLimit(
+                loginIpFailures,
+                loginIpKey(request),
+                loginProperties.getMaxAttemptsPerIp(),
+                now,
+                window
+        );
+        boolean emailAllowed = isWithinLimit(
+                loginEmailFailures,
+                loginEmailKey(email),
+                loginProperties.getMaxAttemptsPerEmail(),
+                now,
+                window
+        );
+
+        if (!ipAllowed || !emailAllowed) {
+            throw new AuthException(
+                    HttpStatus.TOO_MANY_REQUESTS,
+                    "AUTH_RATE_LIMITED",
+                    "Too many failed login attempts. Please wait a moment and try again."
+            );
+        }
+    }
+
+    public void recordFailedLogin(HttpServletRequest request, String email) {
+        AuthRateLimitProperties.Login loginProperties = properties.getLogin();
+        if (!loginProperties.isEnabled()) {
+            return;
+        }
+
+        Instant now = clock.instant();
+        Duration window = loginProperties.getWindow();
+        if (isInvalidWindow(window)) {
+            return;
+        }
+
+        pruneExpired(loginIpFailures, now, window);
+        pruneExpired(loginEmailFailures, now, window);
+
+        recordAttempt(loginIpFailures, loginIpKey(request), loginProperties.getMaxAttemptsPerIp(), now, window);
+        recordAttempt(loginEmailFailures, loginEmailKey(email), loginProperties.getMaxAttemptsPerEmail(), now, window);
+    }
+
+    public void clearLoginFailures(String email) {
+        loginEmailFailures.remove(loginEmailKey(email));
+    }
+
     void clear() {
         registerIpAttempts.clear();
         registerEmailAttempts.clear();
+        loginIpFailures.clear();
+        loginEmailFailures.clear();
     }
 
     private boolean recordAttempt(
@@ -88,8 +154,27 @@ public class AuthRateLimiter {
         return attemptWindow.count() <= maxAttempts;
     }
 
+    private boolean isWithinLimit(
+            Map<String, AttemptWindow> attempts,
+            String key,
+            int maxAttempts,
+            Instant now,
+            Duration window
+    ) {
+        if (maxAttempts <= 0) {
+            return false;
+        }
+
+        AttemptWindow attemptWindow = attempts.get(key);
+        return attemptWindow == null || attemptWindow.isExpired(now, window) || attemptWindow.count() < maxAttempts;
+    }
+
     private void pruneExpired(Map<String, AttemptWindow> attempts, Instant now, Duration window) {
         attempts.entrySet().removeIf(entry -> entry.getValue().isExpired(now, window));
+    }
+
+    private boolean isInvalidWindow(Duration window) {
+        return window == null || window.isZero() || window.isNegative();
     }
 
     private String resolveClientAddress(HttpServletRequest request) {
@@ -104,6 +189,14 @@ public class AuthRateLimiter {
 
     private String normalizeEmail(String email) {
         return email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String loginIpKey(HttpServletRequest request) {
+        return "login:ip:" + resolveClientAddress(request);
+    }
+
+    private String loginEmailKey(String email) {
+        return "login:email:" + normalizeEmail(email);
     }
 
     private record AttemptWindow(Instant startedAt, int count) {

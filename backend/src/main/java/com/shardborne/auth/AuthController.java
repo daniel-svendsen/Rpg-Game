@@ -2,6 +2,7 @@ package com.shardborne.auth;
 
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,8 +27,18 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@Valid @RequestBody AuthRequest request) {
-        return authService.login(request);
+    public AuthResponse login(@Valid @RequestBody AuthRequest request, HttpServletRequest httpRequest) {
+        authRateLimiter.checkLoginAllowed(httpRequest, request.email());
+        try {
+            AuthResponse response = authService.login(request);
+            authRateLimiter.clearLoginFailures(request.email());
+            return response;
+        } catch (AuthException exception) {
+            if (exception.getStatus() == HttpStatus.UNAUTHORIZED && "INVALID_CREDENTIALS".equals(exception.getCode())) {
+                authRateLimiter.recordFailedLogin(httpRequest, request.email());
+            }
+            throw exception;
+        }
     }
 }
 

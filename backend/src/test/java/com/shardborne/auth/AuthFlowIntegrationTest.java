@@ -305,6 +305,157 @@ class AuthFlowIntegrationTest {
     }
 
     @Test
+    void loginRateLimitRejectsTooManyFailedAttemptsForOneEmail() throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "limited-login@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        for (int attempt = 0; attempt < 5; attempt++) {
+            int remoteAddressSuffix = attempt + 30;
+            mockMvc.perform(post("/api/auth/login")
+                            .with(request -> {
+                                request.setRemoteAddr("203.0.113.%d".formatted(remoteAddressSuffix));
+                                return request;
+                            })
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "email": "limited-login@example.com",
+                                      "password": "wrongpass123"
+                                    }
+                                    """))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        mockMvc.perform(post("/api/auth/login")
+                        .with(request -> {
+                            request.setRemoteAddr("203.0.113.99");
+                            return request;
+                        })
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "limited-login@example.com",
+                                  "password": "wrongpass123"
+                                }
+                                """))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.code").value("AUTH_RATE_LIMITED"))
+                .andExpect(jsonPath("$.message").value("Too many failed login attempts. Please wait a moment and try again."));
+    }
+
+    @Test
+    void loginRateLimitRejectsTooManyFailedAttemptsFromOneIp() throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "ip-limited-login@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        for (int attempt = 0; attempt < 8; attempt++) {
+            mockMvc.perform(post("/api/auth/login")
+                            .with(request -> {
+                                request.setRemoteAddr("203.0.113.77");
+                                return request;
+                            })
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "email": "unknown-%d@example.com",
+                                      "password": "wrongpass123"
+                                    }
+                                    """.formatted(attempt)))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        mockMvc.perform(post("/api/auth/login")
+                        .with(request -> {
+                            request.setRemoteAddr("203.0.113.77");
+                            return request;
+                        })
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "another-unknown@example.com",
+                                  "password": "wrongpass123"
+                                }
+                                """))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.code").value("AUTH_RATE_LIMITED"));
+    }
+
+    @Test
+    void successfulLoginClearsPreviousFailedAttemptsForSameEmail() throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "cleared-login@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        for (int attempt = 0; attempt < 4; attempt++) {
+            mockMvc.perform(post("/api/auth/login")
+                            .with(request -> {
+                                request.setRemoteAddr("203.0.113.88");
+                                return request;
+                            })
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "email": "cleared-login@example.com",
+                                      "password": "wrongpass123"
+                                    }
+                                    """))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        mockMvc.perform(post("/api/auth/login")
+                        .with(request -> {
+                            request.setRemoteAddr("203.0.113.88");
+                            return request;
+                        })
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "cleared-login@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isString());
+
+        for (int attempt = 0; attempt < 5; attempt++) {
+            int remoteAddressSuffix = attempt + 100;
+            mockMvc.perform(post("/api/auth/login")
+                            .with(request -> {
+                                request.setRemoteAddr("203.0.113.%d".formatted(remoteAddressSuffix));
+                                return request;
+                            })
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "email": "cleared-login@example.com",
+                                      "password": "wrongpass123"
+                                    }
+                                    """))
+                    .andExpect(status().isUnauthorized());
+        }
+    }
+
+    @Test
     void invalidRegistrationPayloadReturnsFieldErrors() throws Exception {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
