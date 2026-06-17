@@ -23,6 +23,13 @@ server:
 app:
   client:
     allowed-origin-patterns: ${APP_CLIENT_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*,capacitor://localhost,ionic://localhost}
+  auth:
+    rate-limit:
+      register:
+        enabled: ${APP_AUTH_REGISTER_RATE_LIMIT_ENABLED:true}
+        max-attempts-per-ip: ${APP_AUTH_REGISTER_RATE_LIMIT_MAX_ATTEMPTS_PER_IP:10}
+        max-attempts-per-email: ${APP_AUTH_REGISTER_RATE_LIMIT_MAX_ATTEMPTS_PER_EMAIL:5}
+        window: ${APP_AUTH_REGISTER_RATE_LIMIT_WINDOW:1m}
   jwt:
     secret: ${APP_JWT_SECRET:change-this-secret-before-production}
     expiration-seconds: ${APP_JWT_EXPIRATION_SECONDS:86400}

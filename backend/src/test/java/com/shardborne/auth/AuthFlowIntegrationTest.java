@@ -71,6 +71,9 @@ class AuthFlowIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private AuthRateLimiter authRateLimiter;
+
     @MockBean
     private UserAccountRepository userAccountRepository;
 
@@ -81,6 +84,7 @@ class AuthFlowIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        authRateLimiter.clear();
         usersByEmail = new HashMap<>();
 
         when(userAccountRepository.existsByEmail(anyString()))
@@ -203,6 +207,76 @@ class AuthFlowIntegrationTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("EMAIL_ALREADY_REGISTERED"))
                 .andExpect(jsonPath("$.message").value("An account with this email already exists."));
+    }
+
+    @Test
+    void registrationRateLimitRejectsTooManyAttemptsFromOneIp() throws Exception {
+        for (int attempt = 0; attempt < 10; attempt++) {
+            mockMvc.perform(post("/api/auth/register")
+                            .with(request -> {
+                                request.setRemoteAddr("203.0.113.10");
+                                return request;
+                            })
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "email": "player-%d@example.com",
+                                      "password": "password123"
+                                    }
+                                    """.formatted(attempt)))
+                    .andExpect(status().isOk());
+        }
+
+        mockMvc.perform(post("/api/auth/register")
+                        .with(request -> {
+                            request.setRemoteAddr("203.0.113.10");
+                            return request;
+                        })
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "player-11@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.code").value("AUTH_RATE_LIMITED"))
+                .andExpect(jsonPath("$.message").value("Too many account creation attempts. Please wait a moment and try again."));
+    }
+
+    @Test
+    void registrationRateLimitRejectsTooManyAttemptsForOneEmail() throws Exception {
+        for (int attempt = 0; attempt < 5; attempt++) {
+            int remoteAddressSuffix = attempt + 20;
+            mockMvc.perform(post("/api/auth/register")
+                            .with(request -> {
+                                request.setRemoteAddr("203.0.113.%d".formatted(remoteAddressSuffix));
+                                return request;
+                            })
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "email": "limited@example.com",
+                                      "password": "password123"
+                                    }
+                                    """))
+                    .andExpect(attempt == 0 ? status().isOk() : status().isConflict());
+        }
+
+        mockMvc.perform(post("/api/auth/register")
+                        .with(request -> {
+                            request.setRemoteAddr("203.0.113.99");
+                            return request;
+                        })
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "limited@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.code").value("AUTH_RATE_LIMITED"));
     }
 
     @Test

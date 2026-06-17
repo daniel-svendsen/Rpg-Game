@@ -405,6 +405,61 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 - [x] Start larger tasks with a short brainstorming / impact-check step before coding.
 - [x] Add a visual system guide documenting how to add new monster sprites and spell effects (`docs/VISUALS.md`).
 
+### Public release security hardening
+
+Goal:
+
+- make the current prototype safer to expose publicly without overbuilding enterprise auth infrastructure too early
+
+Implementation strategy:
+
+1. Login rate limiting
+   - [ ] Add rate limiting to `POST /api/auth/login`, using the same configurable pattern as register rate limiting.
+   - [ ] Track limits per client IP and normalized email.
+   - [ ] Use a stricter budget for failed login attempts than for normal traffic.
+   - [ ] Return a consistent `429` API error that the frontend can display clearly.
+   - Acceptance: repeated bad login attempts for one IP or email are blocked without breaking valid login flow.
+
+2. Production JWT secret and CORS configuration
+   - [ ] Require a real `APP_JWT_SECRET` in production-like environments; do not rely on the local fallback outside development.
+   - [ ] Document required production auth env vars in the relevant setup docs or example config.
+   - [ ] Restrict production CORS to the deployed frontend origin instead of wildcard localhost patterns.
+   - Acceptance: production startup/config review makes unsafe defaults obvious before deploy.
+
+3. Request size limits
+   - [ ] Set conservative backend request/body size limits for JSON APIs.
+   - [ ] Confirm oversized auth and save payloads fail cleanly.
+   - [ ] Keep limits high enough for legitimate character save payloads.
+   - Acceptance: oversized requests cannot tie up the backend with large JSON payloads and return a clear client error.
+
+4. Security headers
+   - [ ] Add production security headers through reverse proxy or backend configuration: HSTS, `X-Content-Type-Options`, frame protection, and a baseline CSP.
+   - [ ] Keep CSP compatible with the Vite-built frontend assets.
+   - [ ] Document whether headers are owned by the proxy or Spring Boot so they are not configured inconsistently in two places.
+   - Acceptance: deployed responses include baseline browser hardening headers without breaking frontend loading.
+
+5. Character ownership and authorization review
+   - [ ] Review all character create/list/load/save endpoints for server-side ownership checks.
+   - [ ] Add or update tests that try to access another user's character id.
+   - [ ] Verify save requests cannot reassign ownership or mutate another account's progression.
+   - Acceptance: cross-account read/write attempts are rejected by tests and by implementation.
+
+6. Auth abuse monitoring and logging
+   - [ ] Log structured auth events for rate-limit hits, failed login attempts, duplicate registrations, and unexpected auth errors.
+   - [ ] Avoid logging passwords, tokens, secrets, or full personal data.
+   - [ ] Add simple counters or deploy notes for monitoring `401`, `403`, `409`, `429`, and `5xx` spikes.
+   - Acceptance: suspicious auth behavior is visible in logs/metrics without exposing sensitive data.
+
+7. Email verification or bot challenge for open registration
+   - [ ] Decide whether public registration needs email verification, captcha/Turnstile, invite codes, or a temporary closed beta switch.
+   - [ ] Prefer the smallest control that matches the actual release audience.
+   - [ ] Keep local development registration frictionless.
+   - Acceptance: open internet registration has an explicit anti-abuse gate, or the release is intentionally restricted.
+
+Current security baseline:
+
+- [x] Register rate limiting first pass: `POST /api/auth/register` is limited in memory per IP and normalized email, configurable through `APP_AUTH_REGISTER_RATE_LIMIT_*`.
+
 ### UX and feedback
 
 - [x] Improve login/register error handling so the UI shows clear causes such as wrong password, invalid email, existing account, missing fields, short password, and backend/API failures.
