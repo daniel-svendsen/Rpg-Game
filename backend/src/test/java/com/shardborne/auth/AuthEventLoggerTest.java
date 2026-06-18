@@ -6,7 +6,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AuthEventLoggerTest {
 
-    private final AuthEventLogger authEventLogger = new AuthEventLogger();
+    private final AuthEventLogger authEventLogger = new AuthEventLogger(
+            new AuthClientAddressResolver(new AuthClientAddressProperties())
+    );
 
     @Test
     void hashForLogNormalizesWithoutExposingOriginalValue() {

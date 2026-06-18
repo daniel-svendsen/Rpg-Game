@@ -248,6 +248,42 @@ class AuthFlowIntegrationTest {
     }
 
     @Test
+    void registrationRateLimitIgnoresForwardedForByDefault() throws Exception {
+        for (int attempt = 0; attempt < 10; attempt++) {
+            mockMvc.perform(post("/api/auth/register")
+                            .with(request -> {
+                                request.setRemoteAddr("203.0.113.50");
+                                request.addHeader("X-Forwarded-For", "198.51.100.%d".formatted(attempt));
+                                return request;
+                            })
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "email": "forwarded-%d@example.com",
+                                      "password": "password123"
+                                    }
+                                    """.formatted(attempt)))
+                    .andExpect(status().isOk());
+        }
+
+        mockMvc.perform(post("/api/auth/register")
+                        .with(request -> {
+                            request.setRemoteAddr("203.0.113.50");
+                            request.addHeader("X-Forwarded-For", "198.51.100.99");
+                            return request;
+                        })
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "forwarded-11@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.code").value("AUTH_RATE_LIMITED"));
+    }
+
+    @Test
     void registrationRateLimitRejectsTooManyAttemptsForOneEmail() throws Exception {
         for (int attempt = 0; attempt < 5; attempt++) {
             int remoteAddressSuffix = attempt + 20;

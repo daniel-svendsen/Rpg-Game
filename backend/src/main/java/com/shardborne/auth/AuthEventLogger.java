@@ -15,7 +15,12 @@ import java.util.Locale;
 public class AuthEventLogger {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthEventLogger.class);
-    private static final String UNKNOWN_CLIENT = "unknown";
+
+    private final AuthClientAddressResolver clientAddressResolver;
+
+    public AuthEventLogger(AuthClientAddressResolver clientAddressResolver) {
+        this.clientAddressResolver = clientAddressResolver;
+    }
 
     public void failedLogin(HttpServletRequest request, String email) {
         LOGGER.warn(
@@ -66,13 +71,7 @@ public class AuthEventLogger {
     }
 
     private String resolveClientAddress(HttpServletRequest request) {
-        String forwardedFor = request.getHeader("X-Forwarded-For");
-        if (forwardedFor != null && !forwardedFor.isBlank()) {
-            return forwardedFor.split(",", 2)[0].trim();
-        }
-
-        String remoteAddress = request.getRemoteAddr();
-        return remoteAddress == null || remoteAddress.isBlank() ? UNKNOWN_CLIENT : remoteAddress;
+        return clientAddressResolver.resolve(request);
     }
 
     private String normalizeEmail(String email) {

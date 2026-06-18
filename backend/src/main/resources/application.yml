@@ -29,6 +29,8 @@ app:
   client:
     allowed-origin-patterns: ${APP_CLIENT_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*,capacitor://localhost,ionic://localhost}
   auth:
+    client-address:
+      trust-forward-headers: ${APP_AUTH_TRUST_FORWARD_HEADERS:false}
     rate-limit:
       register:
         enabled: ${APP_AUTH_REGISTER_RATE_LIMIT_ENABLED:true}

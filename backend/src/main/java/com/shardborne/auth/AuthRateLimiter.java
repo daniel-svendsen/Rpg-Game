@@ -15,10 +15,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class AuthRateLimiter {
 
-    private static final String UNKNOWN_CLIENT = "unknown";
-
     private final AuthRateLimitProperties properties;
     private final AuthEventLogger authEventLogger;
+    private final AuthClientAddressResolver clientAddressResolver;
     private final Clock clock;
     private final Map<String, AttemptWindow> registerIpAttempts = new ConcurrentHashMap<>();
     private final Map<String, AttemptWindow> registerEmailAttempts = new ConcurrentHashMap<>();
@@ -26,13 +25,23 @@ public class AuthRateLimiter {
     private final Map<String, AttemptWindow> loginEmailFailures = new ConcurrentHashMap<>();
 
     @Autowired
-    public AuthRateLimiter(AuthRateLimitProperties properties, AuthEventLogger authEventLogger) {
-        this(properties, authEventLogger, Clock.systemUTC());
+    public AuthRateLimiter(
+            AuthRateLimitProperties properties,
+            AuthEventLogger authEventLogger,
+            AuthClientAddressResolver clientAddressResolver
+    ) {
+        this(properties, authEventLogger, clientAddressResolver, Clock.systemUTC());
     }
 
-    AuthRateLimiter(AuthRateLimitProperties properties, AuthEventLogger authEventLogger, Clock clock) {
+    AuthRateLimiter(
+            AuthRateLimitProperties properties,
+            AuthEventLogger authEventLogger,
+            AuthClientAddressResolver clientAddressResolver,
+            Clock clock
+    ) {
         this.properties = properties;
         this.authEventLogger = authEventLogger;
+        this.clientAddressResolver = clientAddressResolver;
         this.clock = clock;
     }
 
@@ -182,13 +191,7 @@ public class AuthRateLimiter {
     }
 
     private String resolveClientAddress(HttpServletRequest request) {
-        String forwardedFor = request.getHeader("X-Forwarded-For");
-        if (forwardedFor != null && !forwardedFor.isBlank()) {
-            return forwardedFor.split(",", 2)[0].trim();
-        }
-
-        String remoteAddress = request.getRemoteAddr();
-        return remoteAddress == null || remoteAddress.isBlank() ? UNKNOWN_CLIENT : remoteAddress;
+        return clientAddressResolver.resolve(request);
     }
 
     private String normalizeEmail(String email) {

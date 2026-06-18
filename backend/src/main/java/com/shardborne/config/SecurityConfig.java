@@ -2,6 +2,7 @@ package com.shardborne.config;
 
 import com.shardborne.security.JwtAuthenticationFilter;
 import com.shardborne.security.JwtService;
+import com.shardborne.auth.AuthClientAddressProperties;
 import com.shardborne.auth.AuthRateLimitProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -31,6 +32,7 @@ import java.util.List;
 @EnableConfigurationProperties({
         JwtProperties.class,
         ClientProperties.class,
+        AuthClientAddressProperties.class,
         AuthRateLimitProperties.class,
         SecurityHardeningProperties.class,
         RequestSizeLimitProperties.class
