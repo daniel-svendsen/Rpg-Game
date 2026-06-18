@@ -250,10 +250,11 @@ class AuthFlowIntegrationTest {
     @Test
     void registrationRateLimitIgnoresForwardedForByDefault() throws Exception {
         for (int attempt = 0; attempt < 10; attempt++) {
+            int forwardedAddressSuffix = attempt;
             mockMvc.perform(post("/api/auth/register")
                             .with(request -> {
                                 request.setRemoteAddr("203.0.113.50");
-                                request.addHeader("X-Forwarded-For", "198.51.100.%d".formatted(attempt));
+                                request.addHeader("X-Forwarded-For", "198.51.100.%d".formatted(forwardedAddressSuffix));
                                 return request;
                             })
                             .contentType(MediaType.APPLICATION_JSON)
