@@ -165,6 +165,27 @@ This repo also includes a template at:
 
 After that, the frontend can keep the same backend URL between restarts.
 
+## Dev Vs Public Demo Mode
+
+`start-demo.ps1` can start the same Docker + tunnel flow in two modes:
+
+- `LocalDev` is the default. It sets `APP_SECURITY_PRODUCTION_MODE=false` and allows localhost/dev CORS origins. Use it when testing with `npm run dev`, local devices, or private iteration.
+- `PublicDemo` sets `APP_SECURITY_PRODUCTION_MODE=true` and locks CORS to `https://shardborne.pages.dev`. Use it before sharing the public frontend link in Discord, Reddit, or similar communities.
+
+Public demo session:
+
+```powershell
+.\start-demo.ps1 -Mode PublicDemo -BuildBackend
+```
+
+Local/dev session:
+
+```powershell
+.\start-demo.ps1 -Mode LocalDev
+```
+
+The mode only overrides safety/CORS values for the current script run. Keep real secrets such as `POSTGRES_PASSWORD` and `APP_JWT_SECRET` in the local `.env` file.
+
 ### Every time you want the demo online
 
 Run from the repo root:
@@ -179,7 +200,11 @@ If backend code changed and Docker should rebuild first:
 .\start-demo.ps1 -BuildBackend
 ```
 
-This starts Docker Compose and then runs the named tunnel `rpg-game-backend`.
+This starts Docker Compose in `LocalDev` mode and then runs the named tunnel `rpg-game-backend`. For a public test window, prefer:
+
+```powershell
+.\start-demo.ps1 -Mode PublicDemo -BuildBackend
+```
 
 Then open the frontend:
 
@@ -200,15 +225,26 @@ The frontend uses `/api/...` requests in the background.
 - Passwords must be between `8` and `100` characters
 - Registration and failed login attempts are rate limited per client IP and normalized email; repeated failed login attempts return a `429` API error.
 - Oversized JSON API bodies are rejected with a `413` API error before request parsing. Auth payloads default to `16KB`; other API payloads, including character saves, default to `1MB`.
+- Auth abuse signals are logged as structured `auth_event=...` lines for failed logins, rate-limit hits, and duplicate registrations. Logs use hashes for client and email values; passwords and tokens are never logged.
+- During a public test window, watch Docker/backend logs for `auth_event=...` and spikes in `401`, `403`, `409`, `429`, or `5xx`.
 - If the Docker database is fresh, register a new account before logging in
 
 ## Production Safety Switch
 
-Set `APP_SECURITY_PRODUCTION_MODE=true` before exposing the backend publicly. In that mode startup fails unless:
+Use `.\start-demo.ps1 -Mode PublicDemo -BuildBackend` before exposing the backend publicly. In that mode the script sets `APP_SECURITY_PRODUCTION_MODE=true`, and startup fails unless:
 
 - `APP_JWT_SECRET` is a non-default secret with at least `32` characters
 - `APP_CLIENT_ALLOWED_ORIGIN_PATTERNS` contains exact deployed HTTPS frontend origins, for example `https://shardborne.pages.dev`
 - wildcard, localhost, private-network, Capacitor, and Ionic origins have been removed from backend CORS
+
+## Security Headers
+
+Security headers are split by response owner:
+
+- Backend API responses are owned by Spring Boot security configuration. They include HSTS, `X-Content-Type-Options`, frame denial, and an API-safe CSP that blocks browser loading contexts by default.
+- Frontend static responses are owned by Cloudflare Pages through [frontend/public/_headers](frontend/public/_headers). The frontend CSP allows app assets from `self` and API calls to `https://rpg-api.svendsenphotography.com`.
+
+If the public backend hostname changes, update both Cloudflare Pages `VITE_API_BASE_URL` and the `connect-src` entry in `frontend/public/_headers`.
 
 ## What To Restart After Changes
 

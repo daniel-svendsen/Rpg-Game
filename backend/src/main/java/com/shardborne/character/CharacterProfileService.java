@@ -109,12 +109,8 @@ public class CharacterProfileService {
 
     @Transactional
     public CharacterResponse saveProgress(String email, Long characterId, SaveCharacterProgressRequest request) {
-        CharacterProfileEntity character = characterProfileRepository.findById(characterId)
+        CharacterProfileEntity character = characterProfileRepository.findByIdAndUserEmail(characterId, email)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Character not found"));
-
-        if (!character.getUser().getEmail().equals(email)) {
-            throw new ResponseStatusException(NOT_FOUND, "Character not found");
-        }
 
         character.setName(request.name());
         character.setLevel(request.level());

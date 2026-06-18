@@ -14,16 +14,29 @@ public class AuthController {
 
     private final AuthService authService;
     private final AuthRateLimiter authRateLimiter;
+    private final AuthEventLogger authEventLogger;
 
-    public AuthController(AuthService authService, AuthRateLimiter authRateLimiter) {
+    public AuthController(
+            AuthService authService,
+            AuthRateLimiter authRateLimiter,
+            AuthEventLogger authEventLogger
+    ) {
         this.authService = authService;
         this.authRateLimiter = authRateLimiter;
+        this.authEventLogger = authEventLogger;
     }
 
     @PostMapping("/register")
     public AuthResponse register(@Valid @RequestBody AuthRequest request, HttpServletRequest httpRequest) {
         authRateLimiter.checkRegisterAllowed(httpRequest, request.email());
-        return authService.register(request);
+        try {
+            return authService.register(request);
+        } catch (AuthException exception) {
+            throw exception;
+        } catch (RuntimeException exception) {
+            authEventLogger.unexpectedAuthError(httpRequest, request.email(), "register");
+            throw exception;
+        }
     }
 
     @PostMapping("/login")
@@ -36,7 +49,11 @@ public class AuthController {
         } catch (AuthException exception) {
             if (exception.getStatus() == HttpStatus.UNAUTHORIZED && "INVALID_CREDENTIALS".equals(exception.getCode())) {
                 authRateLimiter.recordFailedLogin(httpRequest, request.email());
+                authEventLogger.failedLogin(httpRequest, request.email());
             }
+            throw exception;
+        } catch (RuntimeException exception) {
+            authEventLogger.unexpectedAuthError(httpRequest, request.email(), "login");
             throw exception;
         }
     }

@@ -50,6 +50,7 @@ public class SecurityConfig {
                 .securityMatcher("/api/auth/**")
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
+                .headers(this::configureApiSecurityHeaders)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll());
 
@@ -69,6 +70,7 @@ public class SecurityConfig {
         httpSecurity
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
+                .headers(this::configureApiSecurityHeaders)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/error").permitAll()
@@ -79,6 +81,21 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return httpSecurity.build();
+    }
+
+    private void configureApiSecurityHeaders(
+            org.springframework.security.config.annotation.web.configurers.HeadersConfigurer<HttpSecurity> headers
+    ) {
+        headers
+                .contentTypeOptions(Customizer.withDefaults())
+                .frameOptions(frameOptions -> frameOptions.deny())
+                .httpStrictTransportSecurity(hsts -> hsts
+                        .includeSubDomains(true)
+                        .maxAgeInSeconds(31536000)
+                )
+                .contentSecurityPolicy(csp -> csp.policyDirectives(
+                        "default-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
+                ));
     }
 
     @Bean

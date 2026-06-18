@@ -404,6 +404,7 @@ These workstreams are now part of the roadmap direction, but many of their indiv
 - [x] Keep roadmap/checklist status updated when implementation changes project status.
 - [x] Start larger tasks with a short brainstorming / impact-check step before coding.
 - [x] Add a visual system guide documenting how to add new monster sprites and spell effects (`docs/VISUALS.md`).
+- [x] Add explicit `LocalDev` / `PublicDemo` modes to `start-demo.ps1` so local Vite testing and public demo sessions switch CORS and production-safety behavior without hand-editing `.env`.
 
 ### Public release security hardening
 
@@ -433,21 +434,21 @@ Implementation strategy:
    - Acceptance: oversized requests cannot tie up the backend with large JSON payloads and return a clear client error.
 
 4. Security headers
-   - [ ] Add production security headers through reverse proxy or backend configuration: HSTS, `X-Content-Type-Options`, frame protection, and a baseline CSP.
-   - [ ] Keep CSP compatible with the Vite-built frontend assets.
-   - [ ] Document whether headers are owned by the proxy or Spring Boot so they are not configured inconsistently in two places.
+   - [x] Add production security headers through reverse proxy or backend configuration: HSTS, `X-Content-Type-Options`, frame protection, and a baseline CSP.
+   - [x] Keep CSP compatible with the Vite-built frontend assets.
+   - [x] Document whether headers are owned by the proxy or Spring Boot so they are not configured inconsistently in two places.
    - Acceptance: deployed responses include baseline browser hardening headers without breaking frontend loading.
 
 5. Character ownership and authorization review
-   - [ ] Review all character create/list/load/save endpoints for server-side ownership checks.
-   - [ ] Add or update tests that try to access another user's character id.
-   - [ ] Verify save requests cannot reassign ownership or mutate another account's progression.
+   - [x] Review all character create/list/load/save endpoints for server-side ownership checks.
+   - [x] Add or update tests that try to access another user's character id.
+   - [x] Verify save requests cannot reassign ownership or mutate another account's progression.
    - Acceptance: cross-account read/write attempts are rejected by tests and by implementation.
 
 6. Auth abuse monitoring and logging
-   - [ ] Log structured auth events for rate-limit hits, failed login attempts, duplicate registrations, and unexpected auth errors.
-   - [ ] Avoid logging passwords, tokens, secrets, or full personal data.
-   - [ ] Add simple counters or deploy notes for monitoring `401`, `403`, `409`, `429`, and `5xx` spikes.
+   - [x] Log structured auth events for rate-limit hits, failed login attempts, duplicate registrations, and unexpected auth errors.
+   - [x] Avoid logging passwords, tokens, secrets, or full personal data.
+   - [x] Add simple counters or deploy notes for monitoring `401`, `403`, `409`, `429`, and `5xx` spikes.
    - Acceptance: suspicious auth behavior is visible in logs/metrics without exposing sensitive data.
 
 7. Email verification or bot challenge for open registration
@@ -462,6 +463,9 @@ Current security baseline:
 - [x] Login rate limiting first pass: failed `POST /api/auth/login` attempts are limited in memory per IP and normalized email, configurable through `APP_AUTH_LOGIN_RATE_LIMIT_*`; successful login clears prior failures for that normalized email while IP abuse pressure remains tracked for the active window.
 - [x] Production safety switch first pass: `APP_SECURITY_PRODUCTION_MODE=true` fails backend startup unless `APP_JWT_SECRET` is non-default and at least 32 characters, and CORS origins are exact deployed HTTPS frontend origins.
 - [x] Request size limits first pass: JSON API bodies are rejected early with `REQUEST_TOO_LARGE` / `413`; auth defaults to `16KB`, and non-auth APIs including character saves default to `1MB`, configurable through `APP_REQUEST_SIZE_*`.
+- [x] Character ownership review: list/load/delete/save paths are scoped server-side to the authenticated user's email; save now uses the same `findByIdAndUserEmail` repository lookup as read/delete, and cross-account save attempts are covered by regression tests.
+- [x] Security headers first pass: Spring Boot owns baseline API headers and CSP; Cloudflare Pages owns frontend headers through `frontend/public/_headers`, with `connect-src` pinned to the named backend URL.
+- [x] Auth abuse logging first pass: failed logins, auth rate-limit hits, and duplicate registrations emit structured `auth_event=...` log lines with hashed client/email values and no passwords, tokens, or raw personal data.
 
 ### UX and feedback
 

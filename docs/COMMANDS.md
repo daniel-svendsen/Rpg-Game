@@ -38,6 +38,18 @@ Start the normal demo flow:
 .\start-demo.ps1
 ```
 
+Start a local-dev-friendly demo backend and tunnel:
+
+```powershell
+.\start-demo.ps1 -Mode LocalDev
+```
+
+Start a public demo session with production safety checks and locked CORS:
+
+```powershell
+.\start-demo.ps1 -Mode PublicDemo -BuildBackend
+```
+
 Rebuild backend first, then start demo:
 
 ```powershell

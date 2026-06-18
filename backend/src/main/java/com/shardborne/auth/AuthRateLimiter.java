@@ -18,6 +18,7 @@ public class AuthRateLimiter {
     private static final String UNKNOWN_CLIENT = "unknown";
 
     private final AuthRateLimitProperties properties;
+    private final AuthEventLogger authEventLogger;
     private final Clock clock;
     private final Map<String, AttemptWindow> registerIpAttempts = new ConcurrentHashMap<>();
     private final Map<String, AttemptWindow> registerEmailAttempts = new ConcurrentHashMap<>();
@@ -25,12 +26,13 @@ public class AuthRateLimiter {
     private final Map<String, AttemptWindow> loginEmailFailures = new ConcurrentHashMap<>();
 
     @Autowired
-    public AuthRateLimiter(AuthRateLimitProperties properties) {
-        this(properties, Clock.systemUTC());
+    public AuthRateLimiter(AuthRateLimitProperties properties, AuthEventLogger authEventLogger) {
+        this(properties, authEventLogger, Clock.systemUTC());
     }
 
-    AuthRateLimiter(AuthRateLimitProperties properties, Clock clock) {
+    AuthRateLimiter(AuthRateLimitProperties properties, AuthEventLogger authEventLogger, Clock clock) {
         this.properties = properties;
+        this.authEventLogger = authEventLogger;
         this.clock = clock;
     }
 
@@ -56,6 +58,7 @@ public class AuthRateLimiter {
         boolean emailAllowed = recordAttempt(registerEmailAttempts, emailKey, registerProperties.getMaxAttemptsPerEmail(), now, window);
 
         if (!ipAllowed || !emailAllowed) {
+            authEventLogger.registerRateLimited(request, email);
             throw new AuthException(
                     HttpStatus.TOO_MANY_REQUESTS,
                     "AUTH_RATE_LIMITED",
@@ -95,6 +98,7 @@ public class AuthRateLimiter {
         );
 
         if (!ipAllowed || !emailAllowed) {
+            authEventLogger.loginRateLimited(request, email);
             throw new AuthException(
                     HttpStatus.TOO_MANY_REQUESTS,
                     "AUTH_RATE_LIMITED",

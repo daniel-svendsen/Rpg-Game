@@ -1,5 +1,7 @@
 param(
     [switch]$BuildBackend,
+    [ValidateSet("LocalDev", "PublicDemo")]
+    [string]$Mode = "LocalDev",
     [ValidateSet("quick", "named")]
     [string]$TunnelMode = "named",
     [string]$NamedTunnelName = "rpg-game-backend"
@@ -47,6 +49,35 @@ function Stop-TrackedTunnel {
     Remove-Item $tunnelPidPath -Force -ErrorAction SilentlyContinue
 }
 
+function Apply-DemoMode {
+    param(
+        [string]$SelectedMode
+    )
+
+    if ($SelectedMode -eq "PublicDemo") {
+        $env:APP_SECURITY_PRODUCTION_MODE = "true"
+        $env:APP_CLIENT_ALLOWED_ORIGIN_PATTERNS = "https://shardborne.pages.dev"
+
+        Write-Host ""
+        Write-Host "Starting PUBLIC DEMO mode"
+        Write-Host "- APP_SECURITY_PRODUCTION_MODE=true"
+        Write-Host "- CORS locked to https://shardborne.pages.dev"
+        Write-Host "- Use this for Discord/Reddit test windows while this computer is online."
+        Write-Host ""
+        return
+    }
+
+    $env:APP_SECURITY_PRODUCTION_MODE = "false"
+    $env:APP_CLIENT_ALLOWED_ORIGIN_PATTERNS = "http://localhost:*,http://127.0.0.1:*,http://192.168.*:*,http://10.*:*,http://172.16.*:*,http://172.17.*:*,http://172.18.*:*,http://172.19.*:*,http://172.20.*:*,http://172.21.*:*,http://172.22.*:*,http://172.23.*:*,http://172.24.*:*,http://172.25.*:*,http://172.26.*:*,http://172.27.*:*,http://172.28.*:*,http://172.29.*:*,http://172.30.*:*,http://172.31.*:*,https://*.pages.dev,https://*.github.io,https://*.trycloudflare.com,capacitor://localhost,ionic://localhost"
+
+    Write-Host ""
+    Write-Host "Starting LOCAL DEV demo mode"
+    Write-Host "- APP_SECURITY_PRODUCTION_MODE=false"
+    Write-Host "- CORS allows localhost/dev origins"
+    Write-Host "- Use this when testing with npm run dev or local devices."
+    Write-Host ""
+}
+
 if (-not (Test-Path (Join-Path $projectRoot ".env"))) {
     Write-Host "Missing .env. Copy compose.env.example to .env and fill in local demo values."
     exit 1
@@ -59,6 +90,8 @@ $cloudflaredPath = Resolve-CloudflaredPath
 Stop-TrackedTunnel
 
 Remove-Item $tunnelLogPath, $tunnelErrorLogPath -Force -ErrorAction SilentlyContinue
+
+Apply-DemoMode -SelectedMode $Mode
 
 Write-Host "Starting backend and database with Docker Compose..."
 

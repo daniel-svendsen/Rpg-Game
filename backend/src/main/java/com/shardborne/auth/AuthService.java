@@ -22,24 +22,28 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final UserPrincipalService userPrincipalService;
+    private final AuthEventLogger authEventLogger;
 
     public AuthService(
             UserAccountRepository userAccountRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             AuthenticationManager authenticationManager,
-            UserPrincipalService userPrincipalService
+            UserPrincipalService userPrincipalService,
+            AuthEventLogger authEventLogger
     ) {
         this.userAccountRepository = userAccountRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
         this.userPrincipalService = userPrincipalService;
+        this.authEventLogger = authEventLogger;
     }
 
     @Transactional
     public AuthResponse register(AuthRequest request) {
         if (userAccountRepository.existsByEmail(request.email())) {
+            authEventLogger.duplicateRegistration(request.email());
             throw new AuthException(CONFLICT, "EMAIL_ALREADY_REGISTERED", "An account with this email already exists.");
         }
 

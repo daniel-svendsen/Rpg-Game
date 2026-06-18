@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -76,7 +77,7 @@ class CharacterProfileServiceTest {
                 new MapProgressRequest(2, 1, List.of(), List.of())
         );
 
-        when(characterProfileRepository.findById(42L)).thenReturn(Optional.of(entity));
+        when(characterProfileRepository.findByIdAndUserEmail(42L, "player@example.com")).thenReturn(Optional.of(entity));
         when(characterStatCalculator.deriveStats(baseStats)).thenReturn(derivedStats);
         when(characterStatCalculator.toBaseStatsMap(baseStats)).thenReturn(Map.of(
                 "strength", 2,
@@ -152,7 +153,7 @@ class CharacterProfileServiceTest {
                 new MapProgressRequest(1, 1, List.of(), List.of())
         );
 
-        when(characterProfileRepository.findById(7L)).thenReturn(Optional.of(entity));
+        when(characterProfileRepository.findByIdAndUserEmail(7L, "player@example.com")).thenReturn(Optional.of(entity));
         when(characterStatCalculator.deriveStats(baseStats)).thenReturn(derivedStats);
         when(characterStatCalculator.toBaseStatsMap(baseStats)).thenReturn(Map.of(
                 "strength", 1,
@@ -209,13 +210,6 @@ class CharacterProfileServiceTest {
         when(userAccountRepository.findByEmail("player@example.com")).thenReturn(Optional.of(user));
         when(characterProfileRepository.countByUserEmail("player@example.com")).thenReturn(0L);
         when(characterProfileRepository.findByIdAndUserEmail(any(), any())).thenAnswer(invocation -> {
-            CharacterProfileEntity entity = storedCharacter.get();
-            if (entity != null && entity.getId().equals(invocation.getArgument(0))) {
-                return Optional.of(entity);
-            }
-            return Optional.empty();
-        });
-        when(characterProfileRepository.findById(any())).thenAnswer(invocation -> {
             CharacterProfileEntity entity = storedCharacter.get();
             if (entity != null && entity.getId().equals(invocation.getArgument(0))) {
                 return Optional.of(entity);
@@ -461,6 +455,20 @@ class CharacterProfileServiceTest {
     }
 
     @Test
+    void saveProgressRejectsWhenOwnedByOtherUser() {
+        SaveCharacterProgressRequest request = minimalSaveRequest();
+        when(characterProfileRepository.findByIdAndUserEmail(99L, "attacker@example.com"))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() ->
+                characterProfileService.saveProgress("attacker@example.com", 99L, request)
+        )
+                .hasFieldOrPropertyWithValue("status", NOT_FOUND);
+
+        verify(characterProfileRepository, never()).save(any(CharacterProfileEntity.class));
+    }
+
+    @Test
     void deleteCharacterRemovesEntity() {
         UserAccountEntity user = new UserAccountEntity();
         user.setEmail("player@example.com");
@@ -484,5 +492,30 @@ class CharacterProfileServiceTest {
         } catch (ReflectiveOperationException exception) {
             throw new AssertionError("Failed to assign test entity id", exception);
         }
+    }
+
+    private SaveCharacterProgressRequest minimalSaveRequest() {
+        return new SaveCharacterProgressRequest(
+                "Warden",
+                1,
+                0,
+                120,
+                0,
+                100,
+                0,
+                new LifeFlaskRequest(18),
+                new CharacterStatsRequest(1, 1, 1, 1, 1),
+                new DerivedStatsRequest(100, 1.0, 0.01, 1.0),
+                List.of(),
+                Map.of(),
+                List.of("stormChain"),
+                List.of("fasterCasting"),
+                List.of(),
+                List.of(new SpellProgressRequest("stormChain", 1)),
+                List.of(new SupportProgressRequest("fasterCasting", 1)),
+                List.of(new SpellLinkRequest("stormChain", List.of())),
+                List.of(),
+                new MapProgressRequest(1, 0, List.of(), List.of())
+        );
     }
 }
