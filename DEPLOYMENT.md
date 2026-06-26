@@ -242,7 +242,7 @@ Use `.\start-demo.ps1 -Mode PublicDemo -BuildBackend` before exposing the backen
 Security headers are split by response owner:
 
 - Backend API responses are owned by Spring Boot security configuration. They include HSTS, `X-Content-Type-Options`, frame denial, and an API-safe CSP that blocks browser loading contexts by default.
-- Frontend static responses are owned by Cloudflare Pages through [frontend/public/_headers](frontend/public/_headers). The frontend CSP allows app assets from `self` and API calls to `https://rpg-api.svendsenphotography.com`.
+- Frontend static responses are owned by Cloudflare Pages through [frontend/public/_headers](frontend/public/_headers). The frontend CSP allows app assets from `self`, image blobs generated while Phaser processes spritesheets, and API calls to `https://rpg-api.svendsenphotography.com`.
 
 If the public backend hostname changes, update both Cloudflare Pages `VITE_API_BASE_URL` and the `connect-src` entry in `frontend/public/_headers`.
 
