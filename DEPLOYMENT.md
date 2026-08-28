@@ -124,13 +124,13 @@ This project uses:
 2. Create a named tunnel:
 
 ```powershell
-& "C:\Program Files (x86)\cloudflared\cloudflared.exe" tunnel create rpg-game-backend
+& "C:\Program Files (x86)\cloudflared\cloudflared.exe" tunnel create rpg-game-backend-new
 ```
 
 3. Route DNS to the tunnel:
 
 ```powershell
-& "C:\Program Files (x86)\cloudflared\cloudflared.exe" tunnel route dns rpg-game-backend rpg-api.svendsenphotography.com
+& "C:\Program Files (x86)\cloudflared\cloudflared.exe" tunnel route dns rpg-game-backend-new rpg-api.svendsenphotography.com
 ```
 
 4. Create the local config file:
@@ -200,7 +200,7 @@ If backend code changed and Docker should rebuild first:
 .\start-demo.ps1 -BuildBackend
 ```
 
-This starts Docker Compose in `LocalDev` mode and then runs the named tunnel `rpg-game-backend`. For a public test window, prefer:
+This starts Docker Compose in `LocalDev` mode and then runs the named tunnel `rpg-game-backend-new`. For a public test window, prefer:
 
 ```powershell
 .\start-demo.ps1 -Mode PublicDemo -BuildBackend

@@ -4,7 +4,7 @@ param(
     [string]$Mode = "LocalDev",
     [ValidateSet("quick", "named")]
     [string]$TunnelMode = "named",
-    [string]$NamedTunnelName = "rpg-game-backend"
+    [string]$NamedTunnelName = "rpg-game-backend-new"
 )
 
 $ErrorActionPreference = "Stop"
